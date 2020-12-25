@@ -1,8 +1,5 @@
 dependencies:
   '@msgpack/msgpack': 2.3.0
-devDependencies:
-  '@types/node': 14.14.14
-  esbuild: 0.8.24
 lockfileVersion: 5.2
 packages:
   /@msgpack/msgpack/2.3.0:
@@ -11,17 +8,5 @@ packages:
       node: '>= 10'
     resolution:
       integrity: sha512-xxRejzNpiVQ2lzxMG/yo2ocfZSk+cKo2THq54AimaubMucg66DpQm9Yj7ESMr/l2EqDkmF2Dx4r0F/cbsitAaw==
-  /@types/node/14.14.14:
-    dev: true
-    resolution:
-      integrity: sha512-UHnOPWVWV1z+VV8k6L1HhG7UbGBgIdghqF3l9Ny9ApPghbjICXkUJSd/b9gOgQfjM1r+37cipdw/HJ3F6ICEnQ==
-  /esbuild/0.8.24:
-    dev: true
-    hasBin: true
-    requiresBuild: true
-    resolution:
-      integrity: sha512-bqgEa2VemAN+YM52SM1626+/pdLp+p9NyqISB06ixcvauKIJk6akia3UTTsGAgn0oHEdReZ97gL+LYX+UjgwKA==
 specifiers:
   '@msgpack/msgpack': ^2.3.0
-  '@types/node': ^14.14.14
-  esbuild: ^0.8.24

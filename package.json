@@ -1,10 +1,11 @@
 {
   "name": "bunker",
   "version": "1.0.0",
+  "type": "module",
   "description": "A fast and compact JSON alternative to store, pass or retrieve data",
   "main": "index.js",
   "scripts": {
-    "test": "esbuild test/index.ts --bundle --sourcemap --outfile=test/index.js & node test",
+    "test": "node test",
     "build": "esbuild src/Bunker.ts --bundle --minify --outfile=dist/index.js"
   },
   "repository": {
@@ -18,10 +19,6 @@
     "url": "https://github.com/digital-loukoum/bunker/issues"
   },
   "homepage": "https://github.com/digital-loukoum/bunker#readme",
-  "devDependencies": {
-    "@types/node": "^14.14.14",
-    "esbuild": "^0.8.24"
-  },
   "dependencies": {
     "@msgpack/msgpack": "^2.3.0"
   }
