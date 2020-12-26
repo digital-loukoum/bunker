@@ -1,12 +1,12 @@
 
 export default {
-	Unknown: 0,
-	Boolean: 1,
-	Integer: 2,
-	BigInteger: 3,
-	Number: 4,
-	String: 5,
-	Date: 6,
-	Object: 7,
-	Array: 8,
+	Unknown: 1,
+	Boolean: 2,
+	Integer: 3,
+	BigInteger: 4,
+	Number: 5,
+	String: 6,
+	Date: 7,
+	Object: 8,
+	Array: 9,
 }

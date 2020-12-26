@@ -1,10 +1,9 @@
 
 import Type from '../Type.js'
-import utf8string from '../utf8string.js'
-import { sizeofSchema } from '../schema.js'
+import { encode } from '../utf8string.js'
 
-export default function toSize(object, schema) {
-	let size = sizeofSchema(schema)
+export default function toSize() {
+	let size = 0
 
 	return {
 		get result() { return size },
@@ -14,13 +13,6 @@ export default function toSize(object, schema) {
 		[Type.BigInteger]: () => size += 8,
 		[Type.Number]: () => size += 8,
 		[Type.Date]: () => size += 8,
-		[Type.String]: (value) => size += utf8string(value).length,
-		
-		// [Type.Object] (object) {
-		// 	let sum = 0
-		// 	for (let key in this)
-		// 		sum += this[key](object[key])
-		// 	return sum
-		// },
+		[Type.String]: (value) => size += encode(value).length,
 	}
 }

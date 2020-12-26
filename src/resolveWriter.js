@@ -16,7 +16,7 @@ function createResolver(type, writer) {
 	return writer[type]
 }
 
-export default function resolve(object, schema, to) {
+export default function resolveWriter(object, schema, to) {
 	if (!schema) schema = schemaOf(object)
 
 	const writer = to(object, schema)
