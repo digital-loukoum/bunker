@@ -1,0 +1,9 @@
+{
+	"include": [ "dist" ],
+	"compilerOptions": {
+		"target": "esnext",
+		"lib": [ "es2020", "dom" ],
+		"module": "es2020",
+		"strict": true,
+	}
+}
