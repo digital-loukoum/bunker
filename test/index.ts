@@ -1,7 +1,6 @@
-import { bunker } from '../src/main'
+import { bunkerRawData } from '../src'
 
 import simpleObject from './samples/simple-object'
 
-bunker.file(simpleObject, 'test/samples/simple-object.bunker').then(() => {
-	console.log("Done")
-})
+const rawData = bunkerRawData(simpleObject)
+console.log(rawData)

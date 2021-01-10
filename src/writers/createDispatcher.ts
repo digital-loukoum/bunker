@@ -1,7 +1,7 @@
-import Schema from '../Schema'
-import Type from '../Type'
-import Dispatcher from './Dispatcher'
-import Handler from './Handler'
+import Schema from '../Schema.js'
+import Type from '../Type.js'
+import Dispatcher from './Dispatcher.js'
+import Handler from './Handler.js'
 
 type PropertyDispatcher = { [key: string]: Dispatcher }
 
