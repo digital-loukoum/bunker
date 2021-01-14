@@ -16,7 +16,7 @@ const endOfString = new Uint8Array([0])
 export default function toRawData(value: any, schema: Schema): [Array<TypedArray>, number] {
 	const schemaSize = sizeofSchema(schema)
 	const schemaBuffer = new Uint8Array(schemaSize)
-	let size = schemaSize
+	let size = schemaSize + 4
 	writeSchema(schema, schemaBuffer)
 
 	const buffers: Array<TypedArray> = [new Uint32Array([schemaSize]), schemaBuffer]

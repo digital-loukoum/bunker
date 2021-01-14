@@ -3,11 +3,12 @@ import Schema from './Schema'
 import guessSchema from './schema/guessSchema'
 import toRawData from './writers/toRawData'
 import toFile from './writers/toFile'
+import toBuffer from './writers/toBuffer'
 
 export { Type as BunkerType, Schema, guessSchema }
 
-export function bunker() {
-
+export function bunker(value: any, schema: Schema = guessSchema(value)) {
+	return toBuffer(value, schema)
 }
 
 export function debunker() {
