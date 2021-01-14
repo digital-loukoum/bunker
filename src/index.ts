@@ -2,6 +2,7 @@ import Type from './Type'
 import Schema from './Schema'
 import guessSchema from './schema/guessSchema'
 import toRawData from './writers/toRawData'
+import toFile from './writers/toFile'
 
 export { Type as BunkerType, Schema, guessSchema }
 
@@ -13,8 +14,8 @@ export function debunker() {
 
 }
 
-export function bunkerFile() {
-
+export async function bunkerFile(file: string, value: any, schema: Schema = guessSchema(value)) {
+	toFile(file, value, schema)
 }
 
 export function debunkerFile() {

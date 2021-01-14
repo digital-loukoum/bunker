@@ -13,7 +13,7 @@ type TypedArray =
 
 const endOfString = new Uint8Array([0])
 
-export default function toBufferArray(value: any, schema: Schema) {
+export default function toRawData(value: any, schema: Schema): [Array<TypedArray>, number] {
 	const schemaSize = sizeofSchema(schema)
 	const schemaBuffer = new Uint8Array(schemaSize)
 	let size = schemaSize

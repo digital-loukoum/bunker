@@ -1,10 +1,11 @@
 {
   "name": "bunker",
   "version": "1.0.0",
-  "type": "module",
   "description": "A fast and compact JSON alternative to store, pass or retrieve data",
   "main": "lib/index.js",
-  "files": ["lib/**/*"],
+  "files": [
+    "lib/**/*"
+  ],
   "scripts": {
     "test": "node test",
     "build": "esbuild --outdir=dist src/**/*.ts & cp -r src/* dist"
