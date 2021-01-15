@@ -11,7 +11,7 @@ import simpleObject from './samples/simple-object'
 console.time("To buffer")
 const buffer = bunker(simpleObject)
 console.timeEnd("To buffer")
-console.log(buffer)
+console.log("buffer.length:", buffer.length)
 
 console.time("From buffer")
 const simpleObjectFromBunker = debunker(buffer)

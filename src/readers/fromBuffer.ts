@@ -6,6 +6,7 @@ import createDispatcher from './createDispatcher'
 export default function fromBuffer(buffer: Uint8Array): unknown {
 	const view = new DataView(buffer.buffer)
 	let [schema, offset] = readSchema(buffer)
+	console.log("Schema:", schema)
 
 	const shift = (value: number) => {
 		const before = offset

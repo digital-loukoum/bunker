@@ -26,10 +26,15 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 
 		else {
 			const schema: Schema = {}
+			console.log("SCHEMA | New object!")
 
-			for (const key in object)
-				if (object[key] !== undefined && typeof object[key] != 'function')
+			for (const key in object) {
+				console.log("SCHEMA | key:", key)
+				if (object[key] !== undefined && typeof object[key] != 'function') {
+					console.log("SCHEMA | value:", object[key])
 					schema[key] = guessSchema(object[key])
+				}
+			}
 	
 			return schema
 		}
