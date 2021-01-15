@@ -1,7 +1,13 @@
 import { bunker, debunker, bunkerRawData, bunkerFile } from '../src'
 import { encode, decode } from "@msgpack/msgpack"
+import { guessSchema, BunkerType } from '../src'
 
 import simpleObject from './samples/simple-object'
+
+console.time("Guess simple schema")
+const simpleSchema = guessSchema(simpleObject)
+console.timeEnd("Guess simple schema")
+console.log("simpleSchema:", simpleSchema)
 
 // console.time("To raw data")
 // const rawData = bunkerRawData(simpleObject)
@@ -9,7 +15,7 @@ import simpleObject from './samples/simple-object'
 // console.log(rawData)
 
 console.time("To buffer")
-const buffer = bunker(simpleObject)
+const buffer = bunker(simpleObject, simpleSchema)
 console.timeEnd("To buffer")
 console.log("buffer.length:", buffer.length)
 
