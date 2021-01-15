@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "test": "esrun test",
-    "build": "tsc"
+    "build": "rm -r lib/* & tsc"
   },
   "repository": {
     "type": "git",
