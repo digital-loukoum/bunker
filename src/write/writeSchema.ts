@@ -1,7 +1,7 @@
 import { encode } from '../utf8string'
 import Schema from '../Schema'
 import Type from '../Type'
-import ArrayOfBuffers from '../ArrayOfBuffers'
+import ArrayOfBuffers from './ArrayOfBuffers'
 import stopToken from '../stopToken'
 import { uint8 } from './buffers'
 

@@ -3,7 +3,7 @@ import Schema from '../Schema'
 import { encode } from '../utf8string'
 import writeSchema from './writeSchema'
 import createDispatcher from './createDispatcher'
-import ArrayOfBuffers from '../ArrayOfBuffers'
+import ArrayOfBuffers from './ArrayOfBuffers'
 import stopToken from '../stopToken'
 import { uint8, int32, uint32, float64, bigInt64 } from './buffers'
 
