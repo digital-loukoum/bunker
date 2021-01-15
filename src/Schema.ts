@@ -3,12 +3,13 @@ import Type from './Type'
 type Schema = Type | { [key: string]: Schema } | [ Schema, { [key: string]: Schema }? ]
 
 const schemaFromType: Record<string, (value: any) => Schema> = {
+	undefined: () => Type.Undefined,
 	number: (value: number) => Number.isInteger(value) ? Type.Integer : Type.Number,
 	bigint: () => Type.BigInteger,
 	string: () => Type.String,
 	boolean: () => Type.Boolean,
 	object: (object: Record<string, any>) => {
-		if (!object) return Type.Object
+		if (!object) return Type.Null
 		if (object instanceof Date) return Type.Date
 
 		if (Array.isArray(object)) {
@@ -16,7 +17,7 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 			
 			for (const key in object)
 				if (!Number.isInteger(+key))
-					if (object[key] !== undefined && typeof object[key] != 'function') {
+					if (typeof object[key] != 'function') {
 						// @ts-ignore (compiler complains schema[1] might be undefined but it's obviously not)
 						schema[1][key] = guessSchema(object[key])
 					}
@@ -26,16 +27,11 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 
 		else {
 			const schema: Schema = {}
-			console.log("SCHEMA | New object!")
-
 			for (const key in object) {
-				console.log("SCHEMA | key:", key)
-				if (object[key] !== undefined && typeof object[key] != 'function') {
-					console.log("SCHEMA | value:", object[key])
+				if (typeof object[key] != 'function') {
 					schema[key] = guessSchema(object[key])
 				}
 			}
-	
 			return schema
 		}
 	},

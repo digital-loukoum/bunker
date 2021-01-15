@@ -12,6 +12,8 @@ export default function toRawData(value: any, schema: Schema): ArrayOfBuffers {
 	writeSchema(schema, buffers)
 
 	const dispatch = createDispatcher(schema, {
+		[Type.Null]: () => {},
+		[Type.Undefined]: () => {},
 		[Type.Boolean]: (value) => buffers.push(uint8(value ? 1 : 0)),
 		[Type.Integer]: (value) => buffers.push(int32(value)),
 		[Type.BigInteger]: (value) => buffers.push(bigInt64(value)),

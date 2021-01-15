@@ -1,5 +1,7 @@
 enum Type {
 	// Unknown,
+	Null,
+	Undefined,
 	Boolean,
 	Integer,
 	BigInteger,

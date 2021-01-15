@@ -2,6 +2,8 @@ import Dispatcher from './Dispatcher'
 import Type from '../Type'
 
 type Handler = {
+	[Type.Null]: Dispatcher<null>
+	[Type.Undefined]: Dispatcher<undefined>
 	[Type.Boolean]: Dispatcher<boolean>
 	[Type.Number]: Dispatcher<number>
 	[Type.Integer]: Dispatcher<number>
