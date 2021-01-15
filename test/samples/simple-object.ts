@@ -7,6 +7,7 @@ export default new class {
 	null = null
 	true = true
 	false = false
+	date = new Date
 	infinity = Infinity
 	'-Infinity' = -Infinity
 	string = "Hey my friends"
