@@ -23,6 +23,12 @@ export default function toRawData(value: any, schema: Schema, buffers = new Arra
 			buffers.push(encode(value))
 			buffers.push(stopToken)
 		},
+		[Type.RegExp]: value => {
+			buffers.push(encode(value.source))
+			buffers.push(stopToken)
+			buffers.push(encode(value.flags))
+			buffers.push(stopToken)
+		},
 		[Type.Array]: value => buffers.push(uint32(value.length)),  // the length of the array
 	})
 

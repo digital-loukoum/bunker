@@ -3,6 +3,7 @@ import { decode } from '../utf8string'
 import readSchema from './readSchema'
 import createDispatcher from './createDispatcher'
 import Schema from '../Schema'
+import { read } from 'fs/promises'
 
 export default function fromBuffer(buffer: Uint8Array, offset = 0): unknown {
 	const view = new DataView(buffer.buffer)
@@ -10,6 +11,11 @@ export default function fromBuffer(buffer: Uint8Array, offset = 0): unknown {
 		const before = offset
 		offset += value
 		return before
+	}
+	const readString = () => {
+		const begin = offset
+		while (buffer[++offset]);
+		return decode(buffer, begin, offset++)
 	}
 
 	const _fromBuffer = () => {
@@ -25,11 +31,8 @@ export default function fromBuffer(buffer: Uint8Array, offset = 0): unknown {
 			[Type.BigInteger]: () => view.getBigInt64(shift(8)),
 			[Type.Number]: () => view.getFloat64(shift(8)),
 			[Type.Date]: () => new Date(Number(view.getBigInt64(shift(8)))),
-			[Type.String]: () => {
-				const begin = offset
-				while (buffer[++offset]);
-				return decode(buffer, begin, offset++)
-			},
+			[Type.String]: readString,
+			[Type.RegExp]: () => new RegExp(readString(), readString()),
 			[Type.Array]: () => view.getUint32(shift(4)),
 		})
 	

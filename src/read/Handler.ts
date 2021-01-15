@@ -11,6 +11,7 @@ type Handler = {
 	[Type.BigInteger]: Dispatcher<bigint>
 	[Type.Date]: Dispatcher<Date>
 	[Type.String]: Dispatcher<string>
+	[Type.RegExp]: Dispatcher<RegExp>
 	[Type.Array]: Dispatcher<number>
 	[Type.Object]?: Dispatcher<Object>
 }

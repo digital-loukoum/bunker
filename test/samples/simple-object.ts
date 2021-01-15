@@ -1,5 +1,6 @@
 export default new class {
 	zero = 0
+	negativeZero = -0
 	one = 1
 	arrayOfIntegers = [[5, 6], [32, 33], [78, 88]]
 	arrayOfStrings = ["Hercule", "Coco"]
@@ -10,6 +11,8 @@ export default new class {
 	date = new Date
 	infinity = Infinity
 	'-Infinity' = -Infinity
+	nan = NaN
+	regexp = /zabu|coco/gi
 	string = "Hey my friends"
 	int = 765768657
 
