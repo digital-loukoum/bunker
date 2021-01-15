@@ -1,6 +1,5 @@
 import Type from './Type'
-import Schema from './Schema'
-import guessSchema from './schema/guessSchema'
+import Schema, { guessSchema } from './Schema'
 import toRawData from './writers/toRawData'
 import toFile from './writers/toFile'
 import toBuffer from './writers/toBuffer'

@@ -2,8 +2,8 @@ import toRawData from './toRawData'
 import Schema from '../Schema'
 
 export default function toBuffer(value: any, schema: Schema) {
-	const [rawData, size] = toRawData(value, schema)
-	const buffer = new Uint8Array(size)
+	const rawData = toRawData(value, schema)
+	const buffer = new Uint8Array(rawData.byteLength)
 	let offset = 0
 	rawData.forEach(array => {
 		// @ts-ignore
