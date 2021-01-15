@@ -5,22 +5,25 @@ import Handler from './Handler.js'
 
 type PropertyDispatcher = Record<string, Dispatcher>
 
-function objectHandler(propertyDispatcher: PropertyDispatcher, value: Record<string, any>) {
+function objectHandler(propertyDispatcher: PropertyDispatcher): Record<string, any> {
+	const result: Record<string, any> = {}
 	for (const key in propertyDispatcher)
-		propertyDispatcher[key](value[key])
+		result[key] = propertyDispatcher[key]()
+	return result
 }
 
 function arrayHandler(
 	dispatchArray: Dispatcher,
 	dispatchElement: Dispatcher,
-	propertyDispatcher: PropertyDispatcher,
-	value: Array<any>
+	propertyDispatcher: PropertyDispatcher
 ) {
-	dispatchArray(value)
-	for (let element of value)
-		dispatchElement(element)
+	const result: any = []
+	result.length = dispatchArray()
+	for (let i = 0; i < result.length; i++)
+		result.push(dispatchElement())
 	for (const key in propertyDispatcher)
-		propertyDispatcher[key](value[key as any])
+		result[key] = propertyDispatcher[key]()
+	return result
 }
 
 /**

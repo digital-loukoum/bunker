@@ -2,12 +2,12 @@ import Type from './Type'
 
 type Schema = Type | { [key: string]: Schema } | [ Schema, { [key: string]: Schema }? ]
 
-const schemaFromType: { [key: string]: (value: any) => Schema } = {
+const schemaFromType: Record<string, (value: any) => Schema> = {
 	number: (value: number) => Number.isInteger(value) ? Type.Integer : Type.Number,
 	bigint: () => Type.BigInteger,
 	string: () => Type.String,
 	boolean: () => Type.Boolean,
-	object: (object: { [key: string]: any}) => {
+	object: (object: Record<string, any>) => {
 		if (!object) return Type.Object
 		if (object instanceof Date) return Type.Date
 

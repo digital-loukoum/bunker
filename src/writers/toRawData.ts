@@ -8,9 +8,7 @@ import stopToken from '../stopToken'
 
 export default function toRawData(value: any, schema: Schema): ArrayOfBuffers {
 	const buffers = new ArrayOfBuffers
-	buffers.push(new Uint32Array([0]))
 	writeSchema(schema, buffers)
-	buffers[0] = new Uint32Array([buffers.byteLength])
 
 	const dispatch = createDispatcher(schema, {
 		[Type.Boolean]: (value) => buffers.push(new Uint8Array([value ? 0 : 1])),

@@ -1,4 +1,4 @@
-const cache: { [key: string]: Uint8Array } = {}
+const cache: Record<string, Uint8Array> = {}
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 
