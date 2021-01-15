@@ -20,7 +20,7 @@ function arrayHandler(
 	const result: any = []
 	result.length = dispatchArray()
 	for (let i = 0; i < result.length; i++)
-		result.push(dispatchElement())
+		result[i] = dispatchElement()
 	for (const key in propertyDispatcher)
 		result[key] = propertyDispatcher[key]()
 	return result

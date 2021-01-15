@@ -4,10 +4,12 @@ import readSchema from './readSchema'
 import createDispatcher from './createDispatcher'
 
 export default function fromBuffer(buffer: Uint8Array): unknown {
-	const view = new DataView(buffer)
+	const view = new DataView(buffer.buffer)
 	let [schema, offset] = readSchema(buffer)
+	console.log("schema", schema)
 
 	const shift = (value: number) => {
+		console.log('offset:', offset, 'incrementBy:', value)
 		const before = offset
 		offset += value
 		return before
@@ -24,7 +26,11 @@ export default function fromBuffer(buffer: Uint8Array): unknown {
 			while (buffer[++offset]);
 			return decode(buffer, begin, offset++)
 		},
-		[Type.Array]: () => view.getUint32(shift(4))
+		[Type.Array]: () => {
+			const length = view.getUint32(shift(4))
+			console.log('Found array with length:', length)
+			return length
+		}
 	})
 
 	return dispatch()

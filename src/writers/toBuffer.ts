@@ -6,9 +6,8 @@ export default function toBuffer(value: any, schema: Schema) {
 	const buffer = new Uint8Array(rawData.byteLength)
 	let offset = 0
 	rawData.forEach(array => {
-		// @ts-ignore
 		buffer.set(array, offset)
-		offset += array.buffer.byteLength
+		offset += array.length
 	})
 	return buffer
 }
