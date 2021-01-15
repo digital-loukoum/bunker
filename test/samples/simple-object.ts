@@ -3,6 +3,8 @@ export default new class {
 	one = 1
 	arrayOfIntegers = [[5, 6], [32, 33], [78, 88]]
 	arrayOfStrings = ["Hercule", "Coco"]
+	undefined = undefined
+	null = null
 	true = true
 	false = false
 	infinity = Infinity
