@@ -14,6 +14,10 @@ type Handler = {
 	[Type.RegExp]: Dispatcher<RegExp>
 	[Type.Array]: Dispatcher<Array<any>>
 	[Type.Object]?: Dispatcher<Object>
+	[Type.ObjectRecord]?: Dispatcher<Object>
+	[Type.Map]?: Dispatcher<Object>
+	[Type.MapRecord]?: Dispatcher<Object>
+	[Type.Set]?: Dispatcher<Object>
 }
 
 export default Handler

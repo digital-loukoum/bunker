@@ -12,13 +12,14 @@ function objectHandler(propertyDispatcher: PropertyDispatcher, value: Record<str
 
 function arrayHandler(
 	dispatchArray: Dispatcher,
-	dispatchElement: Dispatcher,
+	dispatchElement: Dispatcher | null,
 	propertyDispatcher: PropertyDispatcher,
 	value: Array<any>
 ) {
 	dispatchArray(value)
-	for (let element of value)
-		dispatchElement(element)
+	if (dispatchElement)  // if the array is not empty
+		for (let element of value)
+			dispatchElement(element)
 	for (const key in propertyDispatcher)
 		propertyDispatcher[key](value[key as any])
 }
@@ -30,7 +31,7 @@ function arrayHandler(
  */
 export default function createDispatcher(schema: Schema, handler: Handler): Dispatcher {
 	if (typeof schema == 'object') {
-		if (Array.isArray(schema)) {
+		if (schema.constructor == Array) {
 			const typeofArray = schema[0]
 			const properties = schema[1] || {}
 			const propertyDispatcher: PropertyDispatcher = {}
@@ -41,16 +42,28 @@ export default function createDispatcher(schema: Schema, handler: Handler): Disp
 			return arrayHandler.bind(
 				null,
 				handler[Type.Array],
-				createDispatcher(typeofArray, handler),
+				typeofArray ? createDispatcher(typeofArray, handler) : null,
 				propertyDispatcher
 			)
 		}
-		else {
+		// else if (schema.constructor == Set) {
+		// 	return handler[schema] as Dispatcher
+		// }
+		// else if (schema.constructor == Map) {
+		// 	return handler[schema] as Dispatcher
+		// }
+		// else if (schema.constructor == BunkerRecord) {
+		// 	return handler[schema] as Dispatcher
+		// }
+		else {  // regular object
 			const propertyDispatcher: PropertyDispatcher = {}
-			for (let key in schema)
+			for (let key in schema) {
+				// @ts-ignore (compiler does not guess schema type from all previous conditions)
 				propertyDispatcher[key] = createDispatcher(schema[key], handler)
+			}
 			return objectHandler.bind(null, propertyDispatcher)
 		}
 	}
+
 	return handler[schema] as Dispatcher
 }

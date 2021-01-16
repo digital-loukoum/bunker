@@ -11,7 +11,9 @@ enum Type {
 	RegExp,
 	Date,
 	Object,
+	ObjectRecord,
 	Map,
+	MapRecord,
 	Array,
 	Set,
 }
