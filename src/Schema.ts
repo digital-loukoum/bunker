@@ -12,12 +12,12 @@ type Schema =
 export default Schema
 
 export type ObjectSchema = { [key: string]: Schema }
-export type ArraySchema = [ Schema | null, { [key: string]: Schema }? ]  // a null type indicates an empty array
+export type ArraySchema = [ Schema, { [key: string]: Schema }? ]  // a null type indicates an empty array
 
 export class ObjectRecord {
-	type: NullableSchema
+	type: Schema
 	keys: string[]
-	constructor(type: NullableSchema, keys: string[]) {
+	constructor(type: Schema, keys: string[]) {
 		this.keys = keys
 		this.type = type
 	}
@@ -32,9 +32,9 @@ export class ObjectRecord {
 }
 
 export class MapRecord {
-	type: NullableSchema
+	type: Schema
 	keys: string[]
-	constructor(type: NullableSchema, keys: string[]) {
+	constructor(type: Schema, keys: string[]) {
 		this.keys = keys
 		this.type = type
 	}
@@ -47,8 +47,6 @@ export class MapRecord {
 		return schema
 	}
 }
-
-export type NullableSchema = null | Schema
 
 
 /* Type guards */

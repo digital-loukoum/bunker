@@ -1,7 +1,7 @@
 import Type from '../Type'
 import { decode } from '../utf8string'
 import readSchema from './readSchema'
-import createDispatcher from './createDispatcher'
+import createDispatcher from './createReadDispatcher'
 import Schema from '../Schema'
 import { read } from 'fs/promises'
 
@@ -28,12 +28,12 @@ export default function fromBuffer(buffer: Uint8Array, offset = 0): unknown {
 			[Type.Any]: () => _fromBuffer(),
 			[Type.Boolean]: () => view.getUint8(offset++) ? true : false,
 			[Type.Integer]: () => view.getInt32(shift(4)),
+			[Type.PositiveInteger]: () => view.getUint32(shift(4)),
 			[Type.BigInteger]: () => view.getBigInt64(shift(8)),
 			[Type.Number]: () => view.getFloat64(shift(8)),
 			[Type.Date]: () => new Date(Number(view.getBigInt64(shift(8)))),
 			[Type.String]: readString,
 			[Type.RegExp]: () => new RegExp(readString(), readString()),
-			[Type.Array]: () => view.getUint32(shift(4)),
 		})
 	
 		return dispatch()

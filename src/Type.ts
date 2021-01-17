@@ -1,10 +1,11 @@
 enum Type {
-	// Unknown,
+	Unknown,
 	Null,
 	Undefined,
 	Any,
 	Boolean,
 	Integer,
+	PositiveInteger,
 	BigInteger,
 	Number,
 	String,
@@ -12,10 +13,10 @@ enum Type {
 	Date,
 	Object,
 	ObjectRecord,
-	Map,
-	MapRecord,
 	Array,
 	Set,
+	Map,
+	MapRecord,
 }
 
 export default Type

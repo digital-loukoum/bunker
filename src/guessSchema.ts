@@ -1,6 +1,5 @@
 import Type from './Type'
 import Schema, {
-	NullableSchema,
 	ObjectRecord,
 	MapRecord,
 	ObjectSchema,
@@ -26,13 +25,13 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 		if (object instanceof RegExp) return Type.RegExp
 
 		if (Array.isArray(object)) {
-			let type: NullableSchema = null
+			let type: Schema = Type.Unknown
 			const otherProperties: Schema = {}
 
 			for (const key in object) {
 				if (Number.isInteger(+key)) {
 					const valueType = guessSchema(object[key])
-					type = type ? joinSchemas(type, valueType) : valueType
+					type = joinSchemas(type, valueType)
 				}
 				else if (typeof object[key] != 'function') {
 					otherProperties[key] = guessSchema(object[key])
@@ -42,31 +41,31 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 		}
 
 		else if (object instanceof Set) {
-			let type: NullableSchema = null
+			let type: Schema = Type.Unknown
 			for (const value of object) {
 				const valueType = guessSchema(value)
-				type = type ? joinSchemas(type, valueType) : valueType
+				type = joinSchemas(type, valueType)
 			}
 			return new Set([type]) as Schema
 		}
 
 		else if (object instanceof Map) {
 			const mapSchema: Map<string, Schema> = new Map
-			let jointType: NullableSchema = null
+			let jointType: Schema = Type.Unknown
 			const keys: string[] = []
 
 			for (const [key, value] of object.entries()) {
 				keys.push(key)
 				const valueType = guessSchema(value)
 				mapSchema.set(key, valueType)
-				jointType = jointType ? joinSchemas(jointType, valueType) : valueType
+				jointType = joinSchemas(jointType, valueType)
 			}
 			return jointType == Type.Any ? mapSchema : new MapRecord(jointType, keys)
 		}
 		
 		else {  // regular object
 			const schema: Schema = {}
-			let jointType: NullableSchema = null
+			let jointType: Schema = Type.Unknown
 			const keys: string[] = []
 
 			for (const key in object) {
@@ -74,7 +73,7 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 					keys.push(key)
 					const valueType = guessSchema(object[key])
 					schema[key] = guessSchema(object[key])
-					jointType = jointType ? joinSchemas(jointType, valueType) : valueType
+					jointType = joinSchemas(jointType, valueType)
 				}
 			}
 			return jointType == Type.Any ? schema : new ObjectRecord(jointType, keys)
@@ -85,6 +84,8 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 
 // join two schemas into a compatible one
 function joinSchemas(a: Schema, b: Schema): Schema {
+	if (a == Type.Unknown) return b
+	if (b == Type.Unknown) return a
 	if (typeof a == 'number' || typeof b == 'number')
 		return a === b ? a : Type.Any
 	
@@ -102,7 +103,7 @@ function joinSchemas(a: Schema, b: Schema): Schema {
 	
 	/* Join arrays */
 	if (isArray(a) && isArray(b)) {
-		const jointType: NullableSchema = a[0] && b[0] ? joinSchemas(a[0], b[0]) : a[0] || b[0]
+		const jointType: Schema = joinSchemas(a[0], b[0])
 		const jointProperties: Schema = joinSchemas(a[1] || {}, b[1] || {})
 		return [jointType, jointProperties] as Schema
 	}
