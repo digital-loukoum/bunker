@@ -14,7 +14,21 @@ export default new class {
 	nan = NaN
 	regexp = /zabu|coco/gi
 	string = "Hey my friends"
-	int = 765768657
+	int = 123456789
+	setOfIntegers = new Set([5, 10, 15, 20, 25])
+	setOfStrings = new Set(["5", "10", "15", "20", "25"])
+	setOfAny = new Set(['string', 12])
+	setOfObjects = new Set([{x: 12, y: "Hello"}, {x: 121, y:" world"}])
+
+	map = new Map([
+		[1, 'one'],
+		[2, 'two'],
+		[3, 'three'],
+	])
+	mapOfObjects = new Map([
+		["zabu", {x: 12, y: "Hello"}],
+		["coco", {x: 121, y: 12}],
+	])
 
 	arrayWithProperties = Object.assign([5, 9, 232], {
 		name: "Calculus",

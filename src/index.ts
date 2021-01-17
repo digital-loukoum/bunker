@@ -1,9 +1,10 @@
 import Type from './Type'
-import Schema, { guessSchema } from './Schema'
+import Schema from './Schema'
 import toRawData from './write/toRawData'
 import toFile from './write/toFile'
 import toBuffer from './write/toBuffer'
 import fromBuffer from './read/fromBuffer'
+import guessSchema from './guessSchema'
 
 export { Type as BunkerType, Schema, guessSchema }
 
