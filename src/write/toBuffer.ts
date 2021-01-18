@@ -1,13 +1,7 @@
-import toRawData from './toRawData'
-import Schema from '../Schema'
+import toRawData from './toRawData.js'
+import Schema from '../Schema.js'
+import guessSchema from '../guessSchema.js'
 
-export default function toBuffer(value: any, schema: Schema) {
-	const rawData = toRawData(value, schema)
-	const buffer = new Uint8Array(rawData.byteLength)
-	let offset = 0
-	rawData.forEach(array => {
-		buffer.set(array, offset)
-		offset += array.length
-	})
-	return buffer
+export default function toBuffer(value: any, schema: Schema = guessSchema(value)) {
+	return toRawData(value, schema).concatenate()
 }

@@ -110,8 +110,8 @@ function joinSchemas(a: Schema, b: Schema): Schema {
 	/* Join object records */
 	else if (isObjectRecord(a) && isObjectRecord(b)) {
 		const jointType: Schema = a.type && b.type ? joinSchemas(a.type, b.type) : a || b
-		const keys: string[] = [...a.keys]
-		b.keys.forEach(key => keys.includes(key) || keys.push(key))
+		const keys: string[] = a.keys ? [...a.keys] : []
+		b.keys?.forEach(key => keys.includes(key) || keys.push(key))
 		return new ObjectRecord(jointType, keys)
 	}
 	/* Join objects */
@@ -133,8 +133,8 @@ function joinSchemas(a: Schema, b: Schema): Schema {
 	/* Join map records */
 	else if (isMapRecord(a) && isMapRecord(b)) {
 		const jointType: Schema = a.type && b.type ? joinSchemas(a.type, b.type) : a || b
-		const keys: string[] = [...a.keys]
-		b.keys.forEach(key => keys.includes(key) || keys.push(key))
+		const keys: string[] =  a.keys ? [...a.keys] : []
+		b.keys?.forEach(key => keys.includes(key) || keys.push(key))
 		return new MapRecord(jointType, keys)
 	}
 	/* Join maps */

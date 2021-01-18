@@ -9,7 +9,11 @@ import ArrayOfBuffers from '../ArrayOfBuffers'
 import stopToken from '../stopToken'
 import { uint8, int32, uint32, float64, bigInt64 } from '../buffers'
 
-export default function toRawData(value: any, schema: Schema, buffers = new ArrayOfBuffers): ArrayOfBuffers {
+export default function toRawData(
+	value: any,
+	schema: Schema = guessSchema(value),
+	buffers = new ArrayOfBuffers
+): ArrayOfBuffers {
 	writeSchema(schema, buffers)
 
 	const dispatch = createDispatcher(schema, new class extends Writer {

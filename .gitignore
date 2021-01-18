@@ -1,5 +1,5 @@
 node_modules/
-lib/
+dist/
 test/output
 
 /pnpm-lock.yaml

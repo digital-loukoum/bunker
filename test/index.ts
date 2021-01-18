@@ -1,5 +1,5 @@
 import { bunker, debunker, bunkerRawData, bunkerFile } from '../src'
-import { encode, decode } from "@msgpack/msgpack"
+import { encode, decode } from '@msgpack/msgpack'
 import { guessSchema, BunkerType } from '../src'
 
 import simpleObject from './samples/simple-object'

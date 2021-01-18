@@ -4,7 +4,7 @@
 		"lib": [ "es2020", "dom" ],
 		"module": "es2020",
 		"strict": true,
-		"outDir": "lib",
+		"outDir": "dist",
 		"declaration": true
 	},
 	"include": [ "src" ],

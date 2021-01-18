@@ -16,34 +16,37 @@ export type ArraySchema = [ Schema, { [key: string]: Schema }? ]  // a null type
 
 export class ObjectRecord {
 	type: Schema
-	keys: string[]
-	constructor(type: Schema, keys: string[]) {
-		this.keys = keys
+	keys?: string[]
+	constructor(type: Schema, keys?: string[]) {
 		this.type = type
+		if (keys) this.keys = keys
 	}
 	toObject(): { [key: string]: Schema } {  // downgrade the record to an object
 		const schema: { [key: string]: Schema } = {}
 		if (this.type == null)
 			return schema
-		for (const key of this.keys)
-			schema[key] = this.type
+		if (this.keys)
+			for (const key of this.keys)
+				schema[key] = this.type
 		return schema
 	}
 }
 
 export class MapRecord {
 	type: Schema
-	keys: string[]
-	constructor(type: Schema, keys: string[]) {
-		this.keys = keys
+	keys?: string[]
+	constructor(type: Schema, keys?: string[]) {
 		this.type = type
+		if (keys)
+			this.keys = keys
 	}
 	toMap(): Map<string, Schema> {  // downgrade the record to a map
 		const schema = new Map<string, Schema>()
 		if (this.type == null)
 			return schema
-		for (const key of this.keys)
-			schema.set(key, this.type)
+		if (this.keys)
+			for (const key of this.keys)
+				schema.set(key, this.type)
 		return schema
 	}
 }
