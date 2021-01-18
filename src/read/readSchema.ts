@@ -1,6 +1,6 @@
-import { decode } from '../utf8string'
-import Type from '../Type'
-import Schema, { ObjectRecord, MapRecord } from '../Schema'
+import { decode } from '../utf8string.js'
+import Type from '../Type.js'
+import Schema, { ObjectRecord, MapRecord } from '../Schema.js'
 
 export default function readSchema(buffer: Uint8Array, offset = 0): [Schema, number] {
 

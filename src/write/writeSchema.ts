@@ -1,9 +1,9 @@
-import { encode } from '../utf8string'
-import Schema, { isObject, isArray, isObjectRecord, isSet, isMap, isMapRecord } from '../Schema'
-import Type from '../Type'
-import ArrayOfBuffers from '../ArrayOfBuffers'
-import stopToken from '../stopToken'
-import { uint8 } from '../buffers'
+import { encode } from '../utf8string.js'
+import Schema, { isObject, isArray, isObjectRecord, isSet, isMap, isMapRecord } from '../Schema.js'
+import Type from '../Type.js'
+import ArrayOfBuffers from '../ArrayOfBuffers.js'
+import stopToken from '../stopToken.js'
+import { uint8 } from '../buffers.js'
 
 
 export default function writeSchema(schema: Schema, buffers: ArrayOfBuffers) {

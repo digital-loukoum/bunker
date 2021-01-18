@@ -1,5 +1,5 @@
-import Type from './Type'
-import Dispatcher from './Dispatcher'
+import Type from './Type.js'
+import Dispatcher from './Dispatcher.js'
 
 type Handler = {
 	[Type.Null]: Dispatcher

@@ -1,7 +1,7 @@
-import Schema, { isObject, isObjectRecord, isArray, isSet, isMap, isMapRecord} from './Schema'
-import Handler from './Handler'
-import Dispatcher from './Dispatcher'
-import Type from './Type'
+import Schema, { isObject, isObjectRecord, isArray, isSet, isMap, isMapRecord} from './Schema.js'
+import Handler from './Handler.js'
+import Dispatcher from './Dispatcher.js'
+import Type from './Type.js'
 
 type PropertyDispatcher = Record<string, Dispatcher>
 

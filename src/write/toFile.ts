@@ -1,7 +1,7 @@
-import toRawData from './toRawData'
-import Schema from '../Schema'
+import toRawData from './toRawData.js'
+import Schema from '../Schema.js'
 import { open } from 'fs/promises'
-import guessSchema from '../guessSchema'
+import guessSchema from '../guessSchema.js'
 
 export default async function toFile(
 	filePath: string,

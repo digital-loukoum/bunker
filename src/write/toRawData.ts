@@ -1,13 +1,13 @@
-import Type from '../Type'
-import Schema from '../Schema'
-import guessSchema from '../guessSchema'
-import { encode } from '../utf8string'
-import writeSchema from './writeSchema'
-import Writer from './Writer'
-import createDispatcher from '../createDispatcher'
-import ArrayOfBuffers from '../ArrayOfBuffers'
-import stopToken from '../stopToken'
-import { uint8, int32, uint32, float64, bigInt64 } from '../buffers'
+import Type from '../Type.js'
+import Schema from '../Schema.js'
+import guessSchema from '../guessSchema.js'
+import { encode } from '../utf8string.js'
+import writeSchema from './writeSchema.js'
+import Writer from './Writer.js'
+import createDispatcher from '../createDispatcher.js'
+import ArrayOfBuffers from '../ArrayOfBuffers.js'
+import stopToken from '../stopToken.js'
+import { uint8, int32, uint32, float64, bigInt64 } from '../buffers.js'
 
 export default function toRawData(
 	value: any,

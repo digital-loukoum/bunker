@@ -1,9 +1,9 @@
-import Type from '../Type'
-import { decode } from '../utf8string'
-import readSchema from './readSchema'
-import Reader from './Reader'
-import createDispatcher from '../createDispatcher'
-import Schema from '../Schema'
+import Type from '../Type.js'
+import { decode } from '../utf8string.js'
+import readSchema from './readSchema.js'
+import Reader from './Reader.js'
+import createDispatcher from '../createDispatcher.js'
+import Schema from '../Schema.js'
 
 export default function fromBuffer(buffer: Uint8Array, offset = 0): unknown {
 	const view = new DataView(buffer.buffer)

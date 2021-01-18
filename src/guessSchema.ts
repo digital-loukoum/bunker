@@ -1,4 +1,4 @@
-import Type from './Type'
+import Type from './Type.js'
 import Schema, {
 	ObjectRecord,
 	MapRecord,

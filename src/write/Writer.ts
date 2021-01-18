@@ -1,5 +1,5 @@
-import Type from '../Type'
-import Handler from '../Handler'
+import Type from '../Type.js'
+import Handler from '../Handler.js'
 
 type Dispatcher<Type = any> = (value: Type) => any
 type PropertyDispatcher = Record<string, Dispatcher>

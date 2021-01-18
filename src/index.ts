@@ -1,11 +1,11 @@
-import Type from './Type'
-import Schema from './Schema'
-import toRawData from './write/toRawData'
-import toFile from './write/toFile'
-import toBuffer from './write/toBuffer'
-import toSchema from './write/toSchema'
-import guessSchema from './guessSchema'
-import fromSchema from './read/fromSchema'
+import Type from './Type.js'
+import Schema from './Schema.js'
+import toRawData from './write/toRawData.js'
+import toFile from './write/toFile.js'
+import toBuffer from './write/toBuffer.js'
+import toSchema from './write/toSchema.js'
+import guessSchema from './guessSchema.js'
+import fromSchema from './read/fromSchema.js'
 
 export {
 	Type as BunkerType,
