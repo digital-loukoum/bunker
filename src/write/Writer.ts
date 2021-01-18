@@ -1,7 +1,7 @@
 import Type from '../Type'
 import Handler from '../Handler'
 
-export type Dispatcher<Type = any> = (value: Type) => any
+type Dispatcher<Type = any> = (value: Type) => any
 type PropertyDispatcher = Record<string, Dispatcher>
 
 export default abstract class Writer implements Handler {

@@ -3,7 +3,7 @@ import Schema from './Schema'
 import toRawData from './write/toRawData'
 import toFile from './write/toFile'
 import toBuffer from './write/toBuffer'
-import fromBuffer from './read/fromBuffer'
+// import fromBuffer from './read/fromBuffer'
 import guessSchema from './guessSchema'
 
 export { Type as BunkerType, Schema, guessSchema }
@@ -13,7 +13,7 @@ export function bunker(value: any, schema: Schema = guessSchema(value)) {
 }
 
 export function debunker(buffer: Uint8Array) {
-	return fromBuffer(buffer)
+	// return fromBuffer(buffer)
 }
 
 export async function bunkerFile(file: string, value: any, schema: Schema = guessSchema(value)) {

@@ -18,11 +18,12 @@ console.time("To buffer")
 const buffer = bunker(simpleObject, simpleSchema)
 console.timeEnd("To buffer")
 console.log("buffer.length:", buffer.length)
+console.log("buffer:", buffer)
 
-console.time("From buffer")
-const simpleObjectFromBunker = debunker(buffer)
-console.timeEnd("From buffer")
-console.log(simpleObjectFromBunker)
+// console.time("From buffer")
+// const simpleObjectFromBunker = debunker(buffer)
+// console.timeEnd("From buffer")
+// console.log(simpleObjectFromBunker)
 
 
 // console.time("To file")
