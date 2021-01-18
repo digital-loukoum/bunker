@@ -1,7 +1,10 @@
 import Dispatcher from './Dispatcher'
 import Type from '../Type'
 
-type Handler = {
+type PropertyDispatcher = Record<string, Dispatcher>
+
+
+export default abstract class ReaderHandler {
 	[Type.Null]: Dispatcher<null>
 	[Type.Undefined]: Dispatcher<undefined>
 	[Type.Any]: Dispatcher<any>
@@ -13,7 +16,12 @@ type Handler = {
 	[Type.Date]: Dispatcher<Date>
 	[Type.String]: Dispatcher<string>
 	[Type.RegExp]: Dispatcher<RegExp>
-	[Type.Object]?: Dispatcher<Object>
+	[Type.Object](propertyDispatcher: PropertyDispatcher): Record<string, any> {
+		const result: Record<string, any> = {}
+		for (const key in propertyDispatcher)
+			result[key] = propertyDispatcher[key]()
+		return result
+		}
 	[Type.ObjectRecord]?: Dispatcher<Object>
 	[Type.Array]?: Dispatcher<Array<any>>
 	[Type.Set]?: Dispatcher<Set<any>>

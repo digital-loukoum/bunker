@@ -157,6 +157,6 @@ function joinSchemas(a: Schema, b: Schema): Schema {
 // guess the bunker schema of any value
 export default function guessSchema(value: string | number | Object | boolean | bigint): Schema {
 	if (typeof value == 'function')
-		throw `Cannot serialize a function into bunker data`
+		throw `Cannot serialize a function as bunker data`
 	return schemaFromType[typeof value](value)
 }
