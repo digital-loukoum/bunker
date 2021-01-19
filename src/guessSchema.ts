@@ -117,11 +117,21 @@ function joinSchemas(a: Schema, b: Schema): Schema {
 	/* Join objects */
 	else if (isObject(a) && isObject(b)) {
 		const schema: Schema = {}
-		for (const key in a)
+		for (const key in a) {
+			// if (!(key in b)) {
+			// 	console.log(`${key} not in b`)
+			// 	console.log("a:", a)
+			// 	console.log("b:", b)
+			// 	throw "STOP"
+			// }
 			schema[key] = key in b ? joinSchemas((a as ObjectSchema)[key], b[key]) : Type.Any
-		for (const key in b)
-			if (!(key in schema))  // key exists in b but not in a
+		}
+		for (const key in b) {
+			if (!(key in a)) {  // key exists in b but not in a
+				// console.log(`${key} not in a`)
 				schema[key] = Type.Any
+			}
+		}
 		return schema
 	}
 	/* Join sets */

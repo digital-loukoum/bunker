@@ -9,23 +9,25 @@ import {
 	debunker,
 	debunkerSchema
 } from '../src'
+
+import zlib from 'zlib'
 import { encode, decode } from '@msgpack/msgpack'
+import { inflate, deflate } from 'pako'
 
 import simpleObject from './samples/simple-object'
 import hugeObject from './samples/huge-object.json'
 
-
-function bench(object: any) {
+async function bench(object: any) {
 	/* --------- BUNKER --------- */
 	console.time("Guess schema")
 	const schema = guessSchema(object)
 	console.timeEnd("Guess schema")
-	console.log("Schema:", schema)
+	// console.log("Schema:", schema)
 
 	console.time("Bunker")
 	const buffer = bunker(object, schema)
 	console.timeEnd("Bunker")
-	console.log("buffer.length:", buffer.length)
+	console.log("Length:", buffer.length)
 	// console.log("buffer:", buffer)
 	
 	// console.time("Debunker")
@@ -41,10 +43,10 @@ function bench(object: any) {
 	
 	
 	/* --------- MESSAGE PACK --------- */
-	console.time("Encode with @msgpack/msgpack")
-	const encoded = encode(object)
-	console.timeEnd("Encode with @msgpack/msgpack")
-	console.log("Buffer length:", encoded.length)
+	// console.time("Encode with @msgpack/msgpack")
+	// const encoded = encode(object)
+	// console.timeEnd("Encode with @msgpack/msgpack")
+	// console.log("Length:", encoded.length)
 	
 	// console.time("Decode with @msgpack/msgpack")
 	// const decoded = decode(encoded)
@@ -52,10 +54,22 @@ function bench(object: any) {
 	// console.log("Decoded :", decoded)
 
 	/* --------- JSON --------- */
-	console.time("Json")
-	const json = JSON.stringify(object)
-	console.timeEnd("Json")
-	console.log("json.length:", json.length)
+	// console.time("Json")
+	// const json = JSON.stringify(object)
+	// console.timeEnd("Json")
+	// console.log("Length:", json.length)
+
+	/* --------- COMPRESSED JSON --------- */
+	// console.time("Pako + Json")
+	// const compressed = deflate(JSON.stringify(object))
+	// console.timeEnd("Pako + Json")
+	// console.log("Length:", compressed.length)
+
+	/* --------- NODE ZLIB --------- */
+	// console.time("Zlib + Json")
+	// const compressed = deflate(JSON.stringify(object))
+	// console.timeEnd("Pako + Json")
+	// console.log("Length:", compressed.length)
 }
 
 bench(hugeObject)

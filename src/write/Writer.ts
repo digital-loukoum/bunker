@@ -18,7 +18,7 @@ export default abstract class Writer implements Handler {
 	abstract [Type.RegExp]: Dispatcher<RegExp>
 
 	[Type.Object](dispatchProperty: PropertyDispatcher, object: Record<string, any>) {
-		for (const key in object)
+		for (const key in dispatchProperty)
 			dispatchProperty[key](object[key])
 	}
 

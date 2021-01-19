@@ -35,7 +35,7 @@ export default function fromBuffer(buffer: Uint8Array, offset = 0): unknown {
 			[Type.String] = readString;
 			[Type.RegExp] = () => new RegExp(readString(), readString());
 		})
-	
+		
 		return dispatch()
 	} 
 
