@@ -15,14 +15,15 @@ import { encode, decode } from '@msgpack/msgpack'
 import { inflate, deflate } from 'pako'
 
 import simpleObject from './samples/simple-object'
-import hugeObject from './samples/huge-object.json'
+// import hugeObject from './samples/huge-object.json'
+import slicedObject from './samples/sliced-object'
 
 async function bench(object: any) {
 	/* --------- BUNKER --------- */
 	console.time("Guess schema")
 	const schema = guessSchema(object)
 	console.timeEnd("Guess schema")
-	// console.log("Schema:", schema)
+	console.log("Schema:", schema)
 
 	console.time("Bunker")
 	const buffer = bunker(object, schema)
@@ -30,9 +31,9 @@ async function bench(object: any) {
 	console.log("Length:", buffer.length)
 	// console.log("buffer:", buffer)
 	
-	// console.time("Debunker")
-	// const simpleObjectFromBunker = debunker(buffer)
-	// console.timeEnd("Debunker")
+	console.time("Debunker")
+	const simpleObjectFromBunker = debunker(buffer)
+	console.timeEnd("Debunker")
 	// console.log(simpleObjectFromBunker)
 	
 	
@@ -72,4 +73,4 @@ async function bench(object: any) {
 	// console.log("Length:", compressed.length)
 }
 
-bench(hugeObject)
+bench(slicedObject)
