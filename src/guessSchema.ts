@@ -63,20 +63,33 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 			return jointType == Type.Any ? mapSchema : new MapRecord(jointType, keys)
 		}
 		
+		// else {  // regular object
+		// 	const schema: Schema = {}
+		// 	let jointType: Schema = Type.Unknown
+		// 	const keys: string[] = []
+
+		// 	for (const key in object) {
+		// 		if (typeof object[key] != 'function') {
+		// 			keys.push(key)
+		// 			const valueType = guessSchema(object[key])
+		// 			schema[key] = guessSchema(object[key])
+		// 			jointType = joinSchemas(jointType, valueType)
+		// 		}
+		// 	}
+		// 	return jointType == Type.Any ? schema : new ObjectRecord(jointType, keys)
+		// }
+
 		else {  // regular object
 			const schema: Schema = {}
-			let jointType: Schema = Type.Unknown
 			const keys: string[] = []
 
 			for (const key in object) {
 				if (typeof object[key] != 'function') {
 					keys.push(key)
-					const valueType = guessSchema(object[key])
 					schema[key] = guessSchema(object[key])
-					jointType = joinSchemas(jointType, valueType)
 				}
 			}
-			return jointType == Type.Any ? schema : new ObjectRecord(jointType, keys)
+			return schema
 		}
 	},
 }
