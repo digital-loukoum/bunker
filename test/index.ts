@@ -9,7 +9,7 @@ import {
 	debunker,
 	debunkerSchema
 } from '../src'
-
+import { formatSize, formatTime } from './formatters'
 import Table from 'cli-table'
 // import zlib from 'zlib'
 // import { inflate, deflate } from 'pako'
@@ -67,8 +67,8 @@ for (const challenger in results) {
 	const sizeRow = [challenger]
 	for (const sample in results[challenger]) {
 		const { time, size } = results[challenger][sample]
-		timeRow.push(time)
-		sizeRow.push(size)
+		timeRow.push(formatTime(time))
+		sizeRow.push(formatSize(size))
 	}
 	timeTable.push(timeRow)
 	sizeTable.push(sizeRow)
