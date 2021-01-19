@@ -14,7 +14,7 @@ export default function fromBuffer(buffer: Uint8Array, offset = 0): unknown {
 	}
 	const readString = () => {
 		const begin = offset
-		while (buffer[++offset]);
+		while (buffer[offset]) offset++;
 		return decode(buffer, begin, offset++)
 	}
 
