@@ -2,6 +2,8 @@ import {
 	guessSchema,
 
 	bunker,
+	bunker2,
+	bunker3,
 	bunkerRaw,
 	bunkerFile,
 	bunkerSchema,
@@ -30,7 +32,9 @@ const challengers = {
 		(value: any) => Buffer.from(JSON.stringify(value)),
 		// (value: Buffer) => JSON.parse(value.toString())
 	],
-	bunker: [ bunker ],
+	bunker2: [ bunker2 ],
+	// bunker: [ bunker ],
+	// bunker3: [ bunker3 ],
 	notepack: [ notepack.encode ],
 	msgpack: [ msgpack.encode ],
 }
@@ -46,6 +50,7 @@ for (const file of readdirSync('test/samples')) {
 // challengers start the fight
 for (const [challenger, [encode]] of Object.entries(challengers)) {
 	for (const [sample, value] of Object.entries(samples)) {
+		// const schema = guessSchema(value)
 		const start = performance.now()
 		const encoded = encode(value)
 		const time = performance.now() - start

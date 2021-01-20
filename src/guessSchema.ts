@@ -19,19 +19,20 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 	bigint: () => Type.BigInteger,
 	string: () => Type.String,
 	boolean: () => Type.Boolean,
-	object: (object: Record<string, any>) => {
+	object: (object: Record<string, any>, lazy = true) => {
 		if (!object) return Type.Null
-		if (object instanceof Date) return Type.Date
-		if (object instanceof RegExp) return Type.RegExp
+		else if (object instanceof Date) return Type.Date
+		else if (object instanceof RegExp) return Type.RegExp
 
-		if (Array.isArray(object)) {
+		else if (Array.isArray(object)) {
 			let type: Schema = Type.Unknown
 			const otherProperties: Schema = {}
 
 			for (const key in object) {
 				if (Number.isInteger(+key)) {
 					const valueType = guessSchema(object[key])
-					type = joinSchemas(type, valueType)
+					if (!lazy || type == Type.Unknown)
+						type = joinSchemas(type, valueType)
 				}
 				else if (typeof object[key] != 'function') {
 					otherProperties[key] = guessSchema(object[key])
@@ -44,7 +45,8 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 			let type: Schema = Type.Unknown
 			for (const value of object) {
 				const valueType = guessSchema(value)
-				type = joinSchemas(type, valueType)
+				if (!lazy || type == Type.Unknown)
+					type = joinSchemas(type, valueType)
 			}
 			return new Set([type]) as Schema
 		}

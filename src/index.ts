@@ -3,6 +3,7 @@ import Schema from './Schema.js'
 import guessSchema from './guessSchema.js'
 
 import toRawData from './write/toRawData.js'
+import toBuffer2 from './write/toBuffer2.js'
 import toFile from './write/toFile.js'
 import toBuffer from './write/toBuffer.js'
 import toSchema from './write/toSchema.js'
@@ -17,6 +18,7 @@ export {
 	
 	toBuffer as bunker,
 	toRawData as bunkerRaw,
+	toBuffer2 as bunker2,
 	toFile as bunkerFile,
 	toSchema as bunkerSchema,
 
