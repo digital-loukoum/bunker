@@ -2,9 +2,6 @@ import {
 	guessSchema,
 
 	bunker,
-	bunker2,
-	bunker3,
-	bunkerRaw,
 	bunkerFile,
 	bunkerSchema,
 	
@@ -32,9 +29,7 @@ const challengers = {
 		(value: any) => Buffer.from(JSON.stringify(value)),
 		// (value: Buffer) => JSON.parse(value.toString())
 	],
-	bunker2: [ bunker2 ],
-	// bunker: [ bunker ],
-	// bunker3: [ bunker3 ],
+	bunker: [ bunker ],
 	notepack: [ notepack.encode ],
 	msgpack: [ msgpack.encode ],
 }

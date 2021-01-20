@@ -1,7 +1,9 @@
-import toRawData from './toRawData.js'
-import Schema from '../Schema.js'
+import Type from '../Type.js'
 import guessSchema from '../guessSchema.js'
+import BufferWriter from './BufferWriter.js'
 
-export default function toBuffer(value: any, schema: Schema = guessSchema(value)) {
-	return toRawData(value, schema).concatenate()
+export default function toBuffer(value: any, schema = guessSchema(value)): Uint8Array {
+	const writer = new BufferWriter
+	writer[Type.Any](value, schema)
+	return writer.data
 }

@@ -13,8 +13,8 @@ type PropertyDispatcher = Record<string, Dispatcher>
 export default function createDispatcher(schema: Schema, handler: Handler): Dispatcher {
 	if (typeof schema == 'number' && schema != Type.Unknown) {
 		if (handler[schema] == undefined)
-			console.log("Unedefined handler for schema :", schema)
-		return handler[schema] as Dispatcher
+			console.log("Undefined handler for schema :", schema)
+		return handler[schema]
 	}
 	
 	else if (isObject(schema)) {

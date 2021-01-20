@@ -19,7 +19,7 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 	bigint: () => Type.BigInteger,
 	string: () => Type.String,
 	boolean: () => Type.Boolean,
-	object: (object: Record<string, any>, lazy = true) => {
+	object: (object: Record<string, any>, lazy = false) => {
 		if (!object) return Type.Null
 		else if (object instanceof Date) return Type.Date
 		else if (object instanceof RegExp) return Type.RegExp

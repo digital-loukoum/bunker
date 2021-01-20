@@ -1,9 +1,8 @@
-import Schema from '../Schema.js'
-import writeSchema from './writeSchema.js'
-import ArrayOfBuffers from '../ArrayOfBuffers.js'
+import guessSchema from '../guessSchema.js'
+import BufferWriter from './BufferWriter.js'
 
-export default function toSchema(schema: Schema) {
-	const buffers = new ArrayOfBuffers
-	writeSchema(schema, buffers)
-	return buffers.concatenate()
+export default function toSchema(value: any, schema = guessSchema(value)): Uint8Array {
+	const writer = new BufferWriter
+	writer.writeSchema(schema)
+	return writer.data
 }
