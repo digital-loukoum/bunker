@@ -6,7 +6,6 @@ type PropertyDispatcher = Record<string, Dispatcher>
 
 export default abstract class Reader implements Handler {
 	abstract [Type.Null]: Dispatcher<null>
-	abstract [Type.Undefined]: Dispatcher<undefined>
 	abstract [Type.Any]: Dispatcher<any>
 	abstract [Type.Boolean]: Dispatcher<boolean>
 	abstract [Type.Number]: Dispatcher<number>

@@ -24,7 +24,6 @@ export default function fromBuffer(buffer: Uint8Array, offset = 0): unknown {
 	
 		const dispatch = createDispatcher(schema, new class extends Reader {
 			[Type.Null] = () => null;
-			[Type.Undefined] = () => undefined;
 			[Type.Any] = read;
 			[Type.Boolean] = () => view.getUint8(offset++) ? true : false;
 			[Type.Integer] = () => view.getInt32(shift(4));

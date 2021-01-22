@@ -34,8 +34,9 @@ export default class BufferWriter extends Writer {
 		this.buffer = newBytes
 	}
 
-	[Type.Null] = () => {}
-	[Type.Undefined] = () => {}
+	[Type.Null] = ((value: null | undefined) => {
+		this.writeChar(value === undefined ? 1 : 0)
+	}).bind(this);
 	
 	[Type.Any] = ((value: any, schema = guessSchema(value)) => {
 		this.writeSchema(schema)

@@ -3,7 +3,6 @@ import Dispatcher from './Dispatcher.js'
 
 type Handler = {
 	[Type.Null]: Dispatcher
-	[Type.Undefined]: Dispatcher
 	[Type.Any]: Dispatcher
 	[Type.Boolean]: Dispatcher
 	[Type.Number]: Dispatcher

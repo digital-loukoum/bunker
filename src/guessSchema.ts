@@ -2,19 +2,26 @@ import Type from './Type.js'
 import Schema, {
 	ObjectRecord,
 	MapRecord,
-	ObjectSchema,
 	isArray,
 	isMap,
 	isMapRecord,
 	isObject,
 	isObjectRecord,
 	isSet,
+	isNullable,
+	thenIsArray,
+	thenIsMap,
+	thenIsMapRecord,
+	thenIsObject,
+	thenIsObjectRecord,
+	thenIsSet,
+	Nullable,
 } from './Schema'
 
 
 // return a bunker schema from the result of a `typeof`
 const schemaFromType: Record<string, (value: any) => Schema> = {
-	undefined: () => Type.Undefined,
+	undefined: () => Type.Null,
 	number: (value: number) => Number.isInteger(value) ? Type.Integer : Type.Number,
 	bigint: () => Type.BigInteger,
 	string: () => Type.String,
@@ -27,18 +34,21 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 		else if (Array.isArray(object)) {
 			let type: Schema = Type.Unknown
 			const otherProperties: Schema = {}
+			let hasOtherProperties = false
 
 			for (const key in object) {
 				if (Number.isInteger(+key)) {
 					const valueType = guessSchema(object[key])
-					if (!lazy || type == Type.Unknown)
+					if (!lazy || type == Type.Unknown) {
 						type = joinSchemas(type, valueType)
+					}
 				}
 				else if (typeof object[key] != 'function') {
+					hasOtherProperties = true
 					otherProperties[key] = guessSchema(object[key])
 				}
 			}
-			return [type, otherProperties] as Schema
+			return hasOtherProperties ? [type, otherProperties] : [type] as Schema
 		}
 
 		else if (object instanceof Set) {
@@ -64,22 +74,6 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 			}
 			return jointType == Type.Any ? mapSchema : new MapRecord(jointType, keys)
 		}
-		
-		// else {  // regular object
-		// 	const schema: Schema = {}
-		// 	let jointType: Schema = Type.Unknown
-		// 	const keys: string[] = []
-
-		// 	for (const key in object) {
-		// 		if (typeof object[key] != 'function') {
-		// 			keys.push(key)
-		// 			const valueType = guessSchema(object[key])
-		// 			schema[key] = guessSchema(object[key])
-		// 			jointType = joinSchemas(jointType, valueType)
-		// 		}
-		// 	}
-		// 	return jointType == Type.Any ? schema : new ObjectRecord(jointType, keys)
-		// }
 
 		else {  // regular object
 			const schema: Schema = {}
@@ -99,82 +93,95 @@ const schemaFromType: Record<string, (value: any) => Schema> = {
 
 // join two schemas into a compatible one
 function joinSchemas(a: Schema, b: Schema): Schema {
-	if (a == Type.Unknown) return b
-	if (b == Type.Unknown) return a
-	if (typeof a == 'number' || typeof b == 'number')
-		return a === b ? a : Type.Any
-	
-	if (isMap(a) && isMapRecord(b))
-		b = b.toMap()
-	else if (isMap(b) && isMapRecord(a))
-		a = a.toMap()
-	else if (isObject(a) && isObjectRecord(b))
-		b = b.toObject()
-	else if (isObject(b) && isObjectRecord(a))
-		a = a.toObject()
-	
-	if (a.constructor != b.constructor)
-		return Type.Any
-	
-	/* Join arrays */
-	if (isArray(a) && isArray(b)) {
-		const jointType: Schema = joinSchemas(a[0], b[0])
-		const jointProperties: Schema = joinSchemas(a[1] || {}, b[1] || {})
-		return [jointType, jointProperties] as Schema
+	if (a == Type.Null) return Nullable(b)
+	if (b == Type.Null) return Nullable(a)
+	let joint!: Schema
+	let nullable = false
+	if (isNullable(a)) {
+		nullable = true
+		a = a.type
 	}
-	/* Join object records */
-	else if (isObjectRecord(a) && isObjectRecord(b)) {
-		const jointType: Schema = a.type && b.type ? joinSchemas(a.type, b.type) : a || b
-		const keys: string[] = a.keys ? [...a.keys] : []
-		b.keys?.forEach(key => keys.includes(key) || keys.push(key))
-		return new ObjectRecord(jointType, keys)
-	}
-	/* Join objects */
-	else if (isObject(a) && isObject(b)) {
-		const schema: Schema = {}
-		for (const key in a) {
-			// if (!(key in b)) {
-			// 	console.log(`${key} not in b`)
-			// 	console.log("a:", a)
-			// 	console.log("b:", b)
-			// 	throw "STOP"
-			// }
-			schema[key] = key in b ? joinSchemas((a as ObjectSchema)[key], b[key]) : Type.Any
-		}
-		for (const key in b) {
-			if (!(key in a)) {  // key exists in b but not in a
-				// console.log(`${key} not in a`)
-				schema[key] = Type.Any
-			}
-		}
-		return schema
-	}
-	/* Join sets */
-	else if (isSet(a) && isSet(b)) {
-		const typeA = a.values().next().value
-		const typeB = b.values().next().value
-		return new Set([joinSchemas(typeA, typeB)])
-	}
-	/* Join map records */
-	else if (isMapRecord(a) && isMapRecord(b)) {
-		const jointType: Schema = a.type && b.type ? joinSchemas(a.type, b.type) : a || b
-		const keys: string[] =  a.keys ? [...a.keys] : []
-		b.keys?.forEach(key => keys.includes(key) || keys.push(key))
-		return new MapRecord(jointType, keys)
-	}
-	/* Join maps */
-	else if (isMap(a) && isMap(b)) {
-		const schema: Schema = new Map
-		for (const [key, value] of a.entries()) {
-			schema.set(key, b.has(key) ? joinSchemas(value, b.get(key) as Schema) : Type.Any)
-		}
-		for (const key of b.keys())
-			if (!schema.has(key))  // key exists in b but not in a
-				schema.set(key, Type.Any)
-		return schema
+	if (isNullable(b)) {
+		nullable = true
+		b = b.type
 	}
 
-	else return Type.Any  // cannot happen but satisfy the TS compiler
+	if (a == Type.Unknown) joint = b
+	else if (b == Type.Unknown) joint = a
+	else if (typeof a == 'number' || typeof b == 'number') {
+		joint = a === b ? a : Type.Any
+	}
+	else {
+		// we downgrade records to regular data
+		if (isMap(a) && isMapRecord(b))             b = b.toMap()
+		else if (isMap(b) && isMapRecord(a))        a = a.toMap()
+		else if (isObject(a) && isObjectRecord(b))  b = b.toObject()
+		else if (isObject(b) && isObjectRecord(a))  a = a.toObject()
+		
+		if (a.constructor != b.constructor) {
+			joint = Type.Any
+		}
+		/* Join arrays */
+		else if (isArray(a) && thenIsArray(b)) {
+			const jointType: Schema = joinSchemas(a[0], b[0])
+			if (!a[1] && !b[1]) {
+				joint = [jointType]
+			}
+			else {
+				const jointProperties: Schema = joinSchemas(a[1] || {}, b[1] || {})
+				joint = [jointType, jointProperties] as Schema
+			}
+		}
+		/* Join object records */
+		else if (isObjectRecord(a) && thenIsObjectRecord(b)) {
+			const jointType: Schema = a.type && b.type ? joinSchemas(a.type, b.type) : a || b
+			const keys: string[] = a.keys ? [...a.keys] : []
+			b.keys?.forEach(key => keys.includes(key) || keys.push(key))
+			joint = new ObjectRecord(jointType, keys)
+		}
+		/* Join objects */
+		else if (isObject(a) && thenIsObject(b)) {
+			const schema: Schema = {}
+			for (const key in a) {
+				schema[key] = key in b ? joinSchemas(a[key], b[key]) : Nullable(a[key])
+			}
+			for (const key in b) {
+				if (!(key in a)) {  // key exists in b but not in a
+					schema[key] = Nullable(b[key])
+				}
+			}
+			joint = schema
+		}
+		/* Join sets */
+		else if (isSet(a) && thenIsSet(b)) {
+			const typeA = a.values().next().value
+			const typeB = b.values().next().value
+			joint = new Set([joinSchemas(typeA, typeB)])
+		}
+		/* Join map records */
+		else if (isMapRecord(a) && thenIsMapRecord(b)) {
+			const jointType: Schema = a.type && b.type ? joinSchemas(a.type, b.type) : a || b
+			const keys: string[] =  a.keys ? [...a.keys] : []
+			b.keys?.forEach(key => keys.includes(key) || keys.push(key))
+			joint = new MapRecord(jointType, keys)
+		}
+		/* Join maps */
+		else if (isMap(a) && thenIsMap(b)) {
+			const schema: Schema = new Map
+			for (const [key, value] of a.entries()) {
+				if (b.has(key))
+					schema.set(key, joinSchemas(value, b.get(key) as Schema))
+				else
+					schema.set(key, Nullable(value))
+			}
+			for (const [key, value] of b.entries())
+				if (!schema.has(key))  // key exists in b but not in a
+					schema.set(key, Nullable(value))
+			joint = schema
+		}
+	}
+	
+	return nullable && joint != Type.Any ? Nullable(joint) : joint
 }
 
 
