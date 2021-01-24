@@ -7,9 +7,9 @@ import { basename } from 'path'
 const samples = {}
 
 // we load the samples from the samples directory
-for (const file of readdirSync('benchmark/samples')) {
+for (const file of readdirSync('samples')) {
 	if (!file.endsWith('.json')) continue
-	const content = readFileSync(`benchmark/samples/${file}`, 'utf8')
+	const content = readFileSync(`samples/${file}`, 'utf8')
 	samples[basename(file)] = JSON.parse(content)
 }
 

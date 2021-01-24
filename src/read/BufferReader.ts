@@ -5,7 +5,7 @@ import Reader from './Reader'
 import Schema, { MapRecord, Nullable, ObjectRecord } from '../Schema'
 
 export default class BufferReader extends Reader {
-	private view = new DataView(this.buffer)
+	private view = new DataView(this.buffer.buffer)
 
 	constructor(
 		private buffer: Uint8Array,
@@ -32,28 +32,49 @@ export default class BufferReader extends Reader {
 			sign = -1
 			integer %= 128
 		}
-		let byte: number
-		do {
-			byte = this.readChar()
-			integer = (integer << 7) + (byte % 128)
-		} while (byte & 128)
+		if (integer & 64) {
+			let base = 64
+			let byte: number
+			integer %= 64
+			do {
+				byte = this.readChar()
+				integer += base * (byte % 128)
+				base *= 128
+			} while (byte & 128)
+		}
 		return sign * integer
 	};
 
 	[Type.PositiveInteger] = () => {
-		let integer: number = 0
+		let base = 1
 		let byte: number
+		let integer = 0
 		do {
 			byte = this.readChar()
-			integer = (integer << 7) + (byte % 128)
+			integer += base * (byte % 128)
+			base *= 128
 		} while (byte & 128)
 		return integer
 	};
 
 	[Type.BigInteger] = () => {
-		const bigint = this.view.getBigInt64(this.cursor)
-		this.cursor += 8
-		return bigint
+		let sign = 1n
+		let bigint = BigInt(this.readChar())
+		if (bigint & 128n) {
+			sign = -1n
+			bigint %= 128n
+		}
+		if (bigint & 64n) {
+			let base = 64n
+			let byte: number
+			bigint %= 64n
+			do {
+				byte = this.readChar()
+				bigint += base * BigInt(byte % 128)
+				base *= 128n
+			} while (byte & 128)
+		}
+		return sign * bigint
 	};
 
 	[Type.Date] = () => {

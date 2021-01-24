@@ -61,25 +61,35 @@ export default class BufferWriter extends Writer {
 			sign = 128
 			value = -value
 		}
-		const nextValue = value >>> 6
-		console.log("nextValue", nextValue)
+		const nextValue = Math.floor(value / 64)
 		this.writeChar(sign + (nextValue ? 64: 0) + (value % 64))
 		if (nextValue) this[Type.PositiveInteger](nextValue)
 	};
 
 	[Type.PositiveInteger] = (value: number) => {
 		do {
-			const nextValue = value >>> 7
-			console.log("nextValue", nextValue)
+			const nextValue = Math.floor(value / 128)
 			this.writeChar(value % 128 + (nextValue ? 128 : 0))
 			value = nextValue
 		} while (value)
 	};
 
 	[Type.BigInteger] = (value: bigint) => {
-		this.incrementSizeBy(8)
-		this.view.setBigInt64(this.size, value)
-		this.size += 8
+		let sign = 0
+		if (value < 0n) {
+			sign = 128
+			value = -value
+		}
+		let nextValue = value / 64n
+		this.writeChar(sign + (nextValue ? 64 : 0) + Number(value % 64n))
+		if (nextValue) {
+			value = nextValue
+			do {
+				nextValue = value / 128n
+				this.writeChar((nextValue ? 128 : 0) + Number(value % 128n))
+				value = nextValue
+			} while (value)
+		}
 	};
 
 	[Type.Date] = (value: Date) => {
