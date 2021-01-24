@@ -49,14 +49,17 @@ export class MapRecord {
 	}
 }
 
-class _Nullable {
+class Nullable {
 	constructor(public type: Schema) {}
 }
-export const Nullable = (type: Schema) =>
-	type == Type.Any || type == Type.Null || isNullable(type) ? type : new _Nullable(type)
-
+const _Nullable = (type: Schema) =>
+	type == Type.Any || type == Type.Null || isNullable(type) ? type : new Nullable(type)
+export { _Nullable as Nullable }
 
 /* Type guards */
+export const isPrimitive = (schema: Schema): schema is Type =>
+	typeof schema == 'number'
+
 export const isObject = (schema: Schema): schema is ObjectSchema =>
 	schema.constructor == Object
 
@@ -75,8 +78,8 @@ export const isMap = (schema: Schema): schema is Map<string, Schema> =>
 export const isMapRecord = (schema: Schema): schema is MapRecord =>
 	schema.constructor == MapRecord
 
-export const isNullable = (schema: Schema): schema is _Nullable =>
-	schema.constructor == _Nullable
+export const isNullable = (schema: Schema): schema is Nullable =>
+	schema.constructor == Nullable
 
 export const thenIsObject = (_: Schema): _ is ObjectSchema => true
 export const thenIsObjectRecord = (_: Schema): _ is ObjectRecord => true
@@ -84,4 +87,4 @@ export const thenIsArray = (_: Schema): _ is ArraySchema => true
 export const thenIsSet = (_: Schema): _ is Set<Schema> => true
 export const thenIsMap = (_: Schema): _ is Map<string, Schema> => true
 export const thenIsMapRecord = (_: Schema): _ is MapRecord => true
-export const thenIsNullable = (_: Schema): _ is _Nullable => true
+export const thenIsNullable = (_: Schema): _ is Nullable => true

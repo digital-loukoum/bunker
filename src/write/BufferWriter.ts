@@ -47,6 +47,8 @@ export default class BufferWriter extends Writer {
 		this.writeChar(value ? 1 : 0)
 	}).bind(this);
 
+	[Type.Character] = this.writeChar.bind(this);
+
 	[Type.Number] = ((value: number) => {
 		this.incrementSizeBy(8)
 		this.view.setFloat64(this.size, value)
@@ -54,15 +56,22 @@ export default class BufferWriter extends Writer {
 	}).bind(this);
 
 	[Type.Integer] = ((value: number) => {
-		this.incrementSizeBy(4)
-		this.view.setInt32(this.size, value)
-		this.size += 4
+		let sign = 0
+		if (value < 0 ||( value == 0 && Object.is(value, -0))) {
+			sign = 255
+			value = -value
+		}
+		const nextValue = value >> 6
+		this.writeChar(sign + (nextValue ? 0 : 255) + (value % 64))
+		if (nextValue) this[Type.PositiveInteger](nextValue)
 	}).bind(this);
 
 	[Type.PositiveInteger] = ((value: number) => {
-		this.incrementSizeBy(4)
-		this.view.setUint32(this.size, value)
-		this.size += 4
+		do {
+			const nextValue = value >> 7
+			this.writeChar(value % 128 + (nextValue ? 0 : 255))
+			value = nextValue
+		} while (value)
 	}).bind(this);
 
 	[Type.BigInteger] = ((value: bigint) => {
@@ -102,7 +111,7 @@ export default class BufferWriter extends Writer {
 	}
 
 	writeSchema(schema: Schema) {
-		if (typeof schema == 'number') {
+		if (isPrimitive(schema)) {
 			this.writeChar(schema)
 		}
 		

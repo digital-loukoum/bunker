@@ -8,6 +8,7 @@ export default abstract class Writer implements Handler {
 	abstract [Type.Null]: Dispatcher<null>
 	abstract [Type.Any]: Dispatcher<any>
 	abstract [Type.Boolean]: Dispatcher<boolean>
+	abstract [Type.Character]: Dispatcher<number>
 	abstract [Type.Number]: Dispatcher<number>
 	abstract [Type.Integer]: Dispatcher<number>
 	abstract [Type.PositiveInteger]: Dispatcher<number>
@@ -16,6 +17,17 @@ export default abstract class Writer implements Handler {
 	abstract [Type.String]: Dispatcher<string>
 	abstract [Type.RegExp]: Dispatcher<RegExp>
 
+	[Type.Unknown]() {}
+
+	[Type.Nullable](dispatch: Dispatcher, nullable: any) {
+		if (nullable == null)
+			this[Type.Character](nullable === null ? 0 : 1);
+		else {
+			this[Type.Character](2);
+			dispatch(nullable);
+		}
+	}
+	
 	[Type.Object](dispatchProperty: PropertyDispatcher, object: Record<string, any>) {
 		for (const key in dispatchProperty)
 			dispatchProperty[key](object[key])

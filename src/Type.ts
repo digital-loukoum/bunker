@@ -1,9 +1,9 @@
 enum Type {
 	Unknown,
 	Null,
-	Undefined,
 	Any,
 	Boolean,
+	Character,
 	Integer,
 	PositiveInteger,
 	BigInteger,
@@ -11,6 +11,7 @@ enum Type {
 	String,
 	RegExp,
 	Date,
+	Nullable,
 	Object,
 	ObjectRecord,
 	Array,

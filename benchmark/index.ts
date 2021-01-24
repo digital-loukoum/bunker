@@ -14,15 +14,10 @@ import Table from 'cli-table'
 // import { inflate, deflate } from 'pako'
 import * as msgpack from '@msgpack/msgpack'
 import notepack from 'notepack.io'
-import {
-	readdirSync,
-	readFileSync,
-} from 'fs'
-import { basename } from 'path'
 import { performance } from 'perf_hooks'
 
+import samples from '../samples'
 
-const samples = {}
 const results = {}
 const challengers = {
 	json: [
@@ -34,13 +29,6 @@ const challengers = {
 	msgpack: [ msgpack.encode ],
 }
 
-
-// we load the samples from the samples directory
-for (const file of readdirSync('samples')) {
-	if (!file.endsWith('.json')) continue
-	const content = readFileSync(`samples/${file}`, 'utf8')
-	samples[basename(file)] = JSON.parse(content)
-}
 
 // challengers start the fight
 for (const [challenger, [encode]] of Object.entries(challengers)) {
