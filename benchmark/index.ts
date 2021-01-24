@@ -35,7 +35,7 @@ for (const [challenger, [encode]] of Object.entries(challengers)) {
 	for (const [sample, value] of Object.entries(samples)) {
 		// const schema = guessSchema(value)
 		const start = performance.now()
-		const encoded = encode(value)
+		const encoded = encode(value, 'lazy')
 		const time = performance.now() - start
 		if (!results[challenger]) results[challenger] = {}
 		results[challenger][sample] = { time, size: encoded.length }
