@@ -5,7 +5,7 @@ export type Dispatcher<Type = any> = (value: Type) => any
 type PropertyDispatcher = Record<string, Dispatcher>
 
 export default abstract class Writer implements Handler {
-	abstract [Type.Null]: Dispatcher<null>
+	abstract [Type.Null]: Dispatcher<null | undefined>
 	abstract [Type.Any]: Dispatcher<any>
 	abstract [Type.Boolean]: Dispatcher<boolean>
 	abstract [Type.Character]: Dispatcher<number>

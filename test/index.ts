@@ -1,4 +1,4 @@
-import { start, stage, test, same } from 'fartest'
+import start from 'fartest'
 import {
 	bunker,
 	debunker,
@@ -38,12 +38,16 @@ const schemaShouldBe = {
 	nested: { name: 9, strength: 5 }
  }
 
-start(async function() {
+start(async function({stage, same}) {
 	stage('Schema')
 	const schema = guessSchema(sample) as any
 	for (const key in schema) {
 		same(schema[key], schemaShouldBe[key], `Bad schema for '${key}'`)
 	}
+
+	stage('bunker')
+	const buffer = bunker(5)
+	console.log(buffer)
 })
 
 

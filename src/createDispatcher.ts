@@ -1,4 +1,4 @@
-import Schema, { isObject, isObjectRecord, isArray, isSet, isMap, isMapRecord, isPrimitive } from './Schema.js'
+import Schema, { isObject, isObjectRecord, isArray, isSet, isMap, isMapRecord, isPrimitive, isNullable } from './Schema.js'
 import Handler from './Handler.js'
 import Dispatcher from './Dispatcher.js'
 import Type from './Type.js'
@@ -11,14 +11,14 @@ type PropertyDispatcher = Record<string, Dispatcher>
  * the right function from the handler.
  */
 export default function createDispatcher(schema: Schema, handler: Handler): Dispatcher {
-	if (schema == Type.Nullable) {
-		return handler[Type.Nullable].bind(handler, createDispatcher(schema.type, handler))
-	}
-
-	else if (isPrimitive(schema)) {
+	if (isPrimitive(schema)) {
 		return handler[schema]
 	}
 	
+	else if (isNullable(schema)) {
+		return handler[Type.Nullable].bind(handler, createDispatcher(schema.type, handler))
+	}
+
 	else if (isObject(schema)) {
 		const propertyDispatcher: PropertyDispatcher = {}
 		for (const key in schema)

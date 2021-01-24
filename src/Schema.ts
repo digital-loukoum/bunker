@@ -8,7 +8,7 @@ type Schema =
 	| ObjectRecord
 	| MapRecord
 	| Set<Schema>
-	| _Nullable
+	| Nullable
 
 export default Schema
 

@@ -1,4 +1,4 @@
-import Schema, { isObject, isArray, isObjectRecord, isSet, isMap, isMapRecord } from '../Schema.js'
+import Schema, { isObject, isArray, isObjectRecord, isSet, isMap, isMapRecord, isPrimitive, isNullable } from '../Schema.js'
 import { encode } from '../utf8string'
 import Type from '../Type'
 import Writer from './Writer'
@@ -34,68 +34,66 @@ export default class BufferWriter extends Writer {
 		this.buffer = newBytes
 	}
 
-	[Type.Null] = ((value: null | undefined) => {
+	[Type.Null] = (value: null | undefined) => {
 		this.writeChar(value === undefined ? 1 : 0)
-	}).bind(this);
+	};
 	
-	[Type.Any] = ((value: any, schema = guessSchema(value)) => {
+	[Type.Any] = (value: any, schema = guessSchema(value)) => {
 		this.writeSchema(schema)
 		createDispatcher(schema, this)(value)
-	}).bind(this);
+	};
 
-	[Type.Boolean] = ((value: boolean) => {
+	[Type.Boolean] = (value: boolean) => {
 		this.writeChar(value ? 1 : 0)
-	}).bind(this);
+	};
 
-	[Type.Character] = this.writeChar.bind(this);
+	[Type.Character] = this.writeChar;
 
-	[Type.Number] = ((value: number) => {
+	[Type.Number] = (value: number) => {
 		this.incrementSizeBy(8)
 		this.view.setFloat64(this.size, value)
 		this.size += 8
-	}).bind(this);
+	};
 
-	[Type.Integer] = ((value: number) => {
+	[Type.Integer] = (value: number) => {
 		let sign = 0
 		if (value < 0 ||( value == 0 && Object.is(value, -0))) {
-			sign = 255
+			sign = 128
 			value = -value
 		}
-		const nextValue = value >> 6
-		this.writeChar(sign + (nextValue ? 0 : 255) + (value % 64))
+		const nextValue = value >>> 6
+		console.log("nextValue", nextValue)
+		this.writeChar(sign + (nextValue ? 64: 0) + (value % 64))
 		if (nextValue) this[Type.PositiveInteger](nextValue)
-	}).bind(this);
+	};
 
-	[Type.PositiveInteger] = ((value: number) => {
+	[Type.PositiveInteger] = (value: number) => {
 		do {
-			const nextValue = value >> 7
-			this.writeChar(value % 128 + (nextValue ? 0 : 255))
+			const nextValue = value >>> 7
+			console.log("nextValue", nextValue)
+			this.writeChar(value % 128 + (nextValue ? 128 : 0))
 			value = nextValue
 		} while (value)
-	}).bind(this);
+	};
 
-	[Type.BigInteger] = ((value: bigint) => {
+	[Type.BigInteger] = (value: bigint) => {
 		this.incrementSizeBy(8)
-		this.view.setFloat64(this.size, Number(value))
+		this.view.setBigInt64(this.size, value)
 		this.size += 8
-	}).bind(this);
+	};
 
-	[Type.Date] = ((value: Date) => {
+	[Type.Date] = (value: Date) => {
 		this.incrementSizeBy(8)
 		this.view.setFloat64(this.size, value.getTime())
 		this.size += 8
-	}).bind(this);
+	};
 
-	[Type.String] = ((value: string) => {
-		this.writeString(value)
-	}).bind(this);
+	[Type.String] = this.writeString.bind(this);
 
-	[Type.RegExp] = ((value: RegExp) => {
+	[Type.RegExp] = (value: RegExp) => {
 		this.writeString(value.source)
-		this.writeChar(0)
 		this.writeString(value.flags)
-		this.writeChar(0)
-	}).bind(this);
+	};
 
 	writeChar(value: number) {
 		this.incrementSizeBy(1)
@@ -105,21 +103,26 @@ export default class BufferWriter extends Writer {
 
 	writeString(value: string) {
 		const encoded = encode(value)
-		this.incrementSizeBy(encoded.byteLength)
+		this.incrementSizeBy(encoded.byteLength + 1)
 		this.buffer.set(encoded, this.size)
 		this.size += encoded.byteLength
+		this.view.setUint8(this.size++, 0)
 	}
 
 	writeSchema(schema: Schema) {
 		if (isPrimitive(schema)) {
 			this.writeChar(schema)
 		}
+
+		else if (isNullable(schema)) {
+			this.writeChar(Type.Nullable)
+			this.writeSchema(schema.type)
+		}
 		
 		else if (isObject(schema)) {
 			this.writeChar(Type.Object)
 			for (const key in schema) {
 				this.writeString(key)
-				this.writeChar(0)
 				this.writeSchema(schema[key])
 			}
 			this.writeChar(0)  // end of object
@@ -145,7 +148,6 @@ export default class BufferWriter extends Writer {
 			this.writeChar(Type.Map)
 			for (const [key, value] of schema.entries()) {
 				this.writeString(key)
-				this.writeChar(0)
 				this.writeSchema(value)
 			}
 			this.writeChar(0)  // end of object

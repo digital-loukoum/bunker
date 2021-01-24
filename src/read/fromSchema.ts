@@ -1,5 +1,5 @@
-import readSchema from './readSchema.js'
+import BufferReader from './BufferReader'
 
-export default function fromSchema(buffer: Uint8Array, offset = 0) {
-	return readSchema(buffer, offset)[0]
+export default function fromBuffer(buffer: Uint8Array, offset = 0): unknown {
+	return new BufferReader(buffer, offset).readSchema()
 }

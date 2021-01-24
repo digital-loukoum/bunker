@@ -5,9 +5,10 @@ type Dispatcher<Type = any> = () => Type
 type PropertyDispatcher = Record<string, Dispatcher>
 
 export default abstract class Reader implements Handler {
-	abstract [Type.Null]: Dispatcher<null>
+	abstract [Type.Null]: Dispatcher<null | undefined>
 	abstract [Type.Any]: Dispatcher<any>
 	abstract [Type.Boolean]: Dispatcher<boolean>
+	abstract [Type.Character]: Dispatcher<number>
 	abstract [Type.Number]: Dispatcher<number>
 	abstract [Type.Integer]: Dispatcher<number>
 	abstract [Type.PositiveInteger]: Dispatcher<number>
@@ -16,6 +17,16 @@ export default abstract class Reader implements Handler {
 	abstract [Type.String]: Dispatcher<string>
 	abstract [Type.RegExp]: Dispatcher<RegExp>
 
+	[Type.Unknown]() {}
+
+	[Type.Nullable](dispatch: Dispatcher) {
+		switch (this[Type.Character]()) {
+			case 0: return null
+			case 1: return undefined
+			default: return dispatch()
+		}
+	}
+	
 	[Type.Object](dispatchProperty: PropertyDispatcher) {
 		const object: Record<string, any> = {}
 		for (const key in dispatchProperty)
