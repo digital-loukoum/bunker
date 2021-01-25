@@ -6,22 +6,27 @@ import guessSchema from '../guessSchema'
 import createDispatcher from '../createDispatcher'
 
 export default class BufferWriter extends Writer {
-	private size = 0
-	private capacity = 64
-	private buffer = new Uint8Array(this.capacity)
-	private view = new DataView(this.buffer.buffer)
+	protected size = 0
+
+	constructor(
+		protected capacity = 64,
+		protected buffer = new Uint8Array(capacity),
+		protected view = new DataView(buffer.buffer),
+	) {
+		super()
+	}
 
 	get data() {
 		return new Uint8Array(this.buffer.buffer, 0, this.size)
 	}
 
-	private incrementSizeBy(value: number) {
+	protected incrementSizeBy(value: number) {
 		const requiredSize = this.size + value
 		if (this.capacity < requiredSize)
 			this.resizeBuffer(requiredSize)
 	}
   
-	private resizeBuffer(newSize: number) {
+	protected resizeBuffer(newSize: number) {
 		if (this.capacity == 64)
 			this.capacity = 4096
 		while (this.capacity < newSize)

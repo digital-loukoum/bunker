@@ -4,6 +4,11 @@ import {
 	debunker,
 	guessSchema
 } from '../src'
+import {
+	bunkerFile,
+	bunkerFile2,
+	debunkerFile,
+} from '../src/node'
 import { ObjectRecord, Nullable } from '../src/Schema'
 import Type from '../src/Type'
 
@@ -38,9 +43,29 @@ const schemaShouldBe = {
 	mapAsObject: new Map([['name', 9], ['strength', 5 ]]),
 	arrayWithProperties: [ 5, { name: 9, working: 3 } ],
 	nested: { name: 9, strength: 5 }
- }
+}
 
-start(async function({stage, same}) {
+
+start("Bunker node API", async function({stage, same}) {
+	stage("Write file using standard buffer")
+	for (const [name, value] of Object.entries(samples)) {
+		const filename = `test/output/${name}`
+		await bunkerFile(filename, value)
+		const result = await debunkerFile(filename)
+		same(value, result, name)
+	}
+
+	stage("Write file using double-buffering")
+	for (const [name, value] of Object.entries(samples)) {
+		const filename = `test/output/(doubleBuffering) ${name}`
+		await bunkerFile2(filename, value)
+		const result = await debunkerFile(filename)
+		same(value, result, name)
+	}
+})
+
+
+start("Bunker", async function({stage, same}) {
 	stage('Schema')
 	const schema = guessSchema(sample) as any
 	for (const key in schema) {
@@ -158,5 +183,4 @@ start(async function({stage, same}) {
 		same(value, result, name)
 	}
 })
-
 
