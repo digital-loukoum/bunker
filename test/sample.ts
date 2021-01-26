@@ -1,7 +1,10 @@
+const o = { foo: "foo", bar: "bar" }
+
 export default new class {
 	zero = 0
 	negativeZero = -0
 	one = 1
+	references = { o, alias: o }
 	arrayOfIntegers = [1, 2, 3, 4, 5]
 	arrayOfNullableIntegers = [1, null, 3, undefined, 5, null, null]
 	arrayOfArrayOfIntegers = [[5, 6], [32, 33], [78, 88]]

@@ -1,9 +1,9 @@
 enum ByteIndicator {
-	object = -2,
-	reference = -1,
 	null = 0,
 	undefined,
 	defined,
+	reference,
+	object,
 }
 
 export default ByteIndicator

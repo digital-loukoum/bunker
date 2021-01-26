@@ -31,7 +31,6 @@ export default abstract class Writer implements Handler {
 			this[Type.PositiveInteger](index)
 			return true
 		}
-		this.references.push(object)
 		this[Type.Character](ByteIndicator.object)
 		return false
 	}
@@ -51,6 +50,7 @@ export default abstract class Writer implements Handler {
 		if (this.dispatchReference(object)) return
 		for (const key in dispatchProperty)
 			dispatchProperty[key](object[key])
+		this.references.push(object)
 	}
 	
 	[Type.ObjectRecord](dispatchElement: Dispatcher, object: Record<string, any>) {
@@ -60,6 +60,7 @@ export default abstract class Writer implements Handler {
 			this[Type.String](key)  // we write the key
 			dispatchElement(object[key])  // we write the value
 		}
+		this.references.push(object)
 	}
 	
 	[Type.Array](dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher, array: Array<any>) {
@@ -69,6 +70,7 @@ export default abstract class Writer implements Handler {
 			dispatchElement(element)
 		for (const key in dispatchProperty)
 			dispatchProperty[key](array[key as any])
+		this.references.push(array)
 	}
 	
 	[Type.Set](dispatchElement: Dispatcher, set: Set<any>) {
@@ -76,12 +78,14 @@ export default abstract class Writer implements Handler {
 		this[Type.PositiveInteger](set.size)
 		for (const element of set.values())
 			dispatchElement(element)
+		this.references.push(set)
 	}
 	
 	[Type.Map](dispatchProperty: PropertyDispatcher, map: Map<string | number, any>) {
 		if (this.dispatchReference(map)) return
 		for (const key in dispatchProperty)
 			dispatchProperty[key](map.get(key))
+		this.references.push(map)
 	}
 	
 	[Type.MapRecord](dispatchElement: Dispatcher, map: Map<string, any>) {
@@ -91,6 +95,7 @@ export default abstract class Writer implements Handler {
 			this[Type.String](key)
 			dispatchElement(value)
 		}
+		this.references.push(map)
 	}
 
 	writeSchema(schema: Schema) {

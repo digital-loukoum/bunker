@@ -27,7 +27,8 @@ export default abstract class Reader implements Handler {
 	 */
 	protected isReference(): boolean {
 		if (this[Type.Character]() == ByteIndicator.reference) {
-			this.reference = this.references[this[Type.PositiveInteger]()]
+			const index = this[Type.PositiveInteger]()
+			this.reference = this.references[index]
 			return true
 		}
 		return false
