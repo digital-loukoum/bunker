@@ -1,10 +1,13 @@
 import Type from '../Type.js'
 import Handler from '../Handler.js'
+import ByteIndicator from '../ByteIndicator.js'
 
 type Dispatcher<Type = any> = () => Type
 type PropertyDispatcher = Record<string, Dispatcher>
 
 export default abstract class Reader implements Handler {
+	private references: Object[] = []  // list of all objects that have been read. The index is the reference
+	private reference!: Object  // the last reference object
 	abstract [Type.Null]: Dispatcher<null | undefined>
 	abstract [Type.Any]: Dispatcher<any>
 	abstract [Type.Boolean]: Dispatcher<boolean>
@@ -17,65 +20,89 @@ export default abstract class Reader implements Handler {
 	abstract [Type.String]: Dispatcher<string>
 	abstract [Type.RegExp]: Dispatcher<RegExp>
 
+	/**
+	 * Return if the next object to dispatch is a reference or not
+	 * If it is a reference, store the object in this.reference
+	 * this.indicator will store the indicator byte - which can be a length for an array, set or record
+	 */
+	protected isReference(): boolean {
+		if (this[Type.Character]() == ByteIndicator.reference) {
+			this.reference = this.references[this[Type.PositiveInteger]()]
+			return true
+		}
+		return false
+	}
+
+	protected addReference(object: Object) {
+		this.references.push(object)
+		return object
+	}
+
 	[Type.Unknown]() {}
 
 	[Type.Nullable](dispatch: Dispatcher) {
 		switch (this[Type.Character]()) {
-			case 0: return null
-			case 1: return undefined
+			case ByteIndicator.null: return null
+			case ByteIndicator.undefined: return undefined
 			default: return dispatch()
 		}
 	}
 	
 	[Type.Object](dispatchProperty: PropertyDispatcher) {
+		if (this.isReference()) return this.reference
 		const object: Record<string, any> = {}
 		for (const key in dispatchProperty)
 			object[key] = dispatchProperty[key]()
-		return object
+		return this.addReference(object)
 	}
 
 	[Type.ObjectRecord](dispatchElement: Dispatcher) {
-		const object: Record<string, any> = {}
+		if (this.isReference()) return this.reference
 		const length = this[Type.PositiveInteger]()
+		const object: Record<string, any> = {}
 		for (let i = 0; i < length; i++) {
 			const key = this[Type.String]()
 			object[key] = dispatchElement()
 		}
-		return object
+		return this.addReference(object)
 	}
 
 	[Type.Array](dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher) {
-		const array: any = []
-		array.length = this[Type.PositiveInteger]()
-		for (let i = 0; i < array.length; i++)
+		if (this.isReference()) return this.reference
+		const length = this[Type.PositiveInteger]()
+		const array: any = Array(length)
+		for (let i = 0; i < length; i++)
 			array[i] = dispatchElement()
 		for (const key in dispatchProperty)
 			array[key] = dispatchProperty[key]()
-		return array
+		return this.addReference(array)
 	}
 	
 	[Type.Set](dispatchElement: Dispatcher) {
-		const set = new Set
+		if (this.isReference()) return this.reference
 		const length = this[Type.PositiveInteger]()
+		const set = new Set
 		for (let i = 0; i < length; i++)
 			set.add(dispatchElement())
-		return set
+		return this.addReference(set)
 	}
 	
 	[Type.Map](dispatchProperty: PropertyDispatcher) {
+		if (this.isReference()) return this.reference
 		const map = new Map<string, any>()
 		for (const key in dispatchProperty)
 			map.set(key, dispatchProperty[key]())
-		return map
+		return this.addReference(map)
 	}
 	
 	[Type.MapRecord](dispatchElement: Dispatcher) {
+		if (this.isReference()) return this.reference
 		const map: Map<string, any> = new Map
 		const length = this[Type.PositiveInteger]()
 		for (let i = 0; i < length; i++) {
 			const key = this[Type.String]()
 			map.set(key, dispatchElement())
 		}
-		return map
+		return this.addReference(map)
 	}
 }

@@ -1,10 +1,7 @@
 import {
 	guessSchema,
-
 	bunker,
-	bunkerFile,
 	bunkerSchema,
-	
 	debunker,
 	debunkerSchema
 } from '../src'
@@ -15,9 +12,53 @@ import Table from 'cli-table'
 import * as msgpack from '@msgpack/msgpack'
 import notepack from 'notepack.io'
 import { performance } from 'perf_hooks'
+import Schema from '../src/Schema'
 
 import samples from '../samples'
 
+
+const challengers = {
+	'json': (value: any) => Buffer.from(JSON.stringify(value)),
+	'bunker': (value: any) => bunker(value),
+	'bunker (lazy guessing)': (value: any) => bunker(value, 'lazy'),
+	'bunker (with schema)': (value: any, schema: Schema) => bunker(value, schema),
+	'notepack': (value: any) => notepack.encode(value),
+	'msgpack': (value: any) => notepack.encode(value),
+}
+
+const inputs = []
+for (const [sample, value] of Object.entries(samples)) {
+	const name = sample.replace(/\.[^/.]+$/, "")
+	inputs.push([name, [value, guessSchema(value)]])
+}
+
+const results = {}
+for (const [trial, input] of inputs) {
+	for (const [challenger, fn] of Object.entries(challengers)) {
+		const start = performance.now()
+		let operations = 0
+		let time = start
+		do {
+			fn.apply(input)
+			operations++
+			time = performance.now()
+		} while (time < start + 500 && operations < 10)
+		const operationsPerSecond = operations / (time - start) * 1000
+		if (!results[trial]) results[trial] = {}
+		results[trial][challenger] = operationsPerSecond
+	}
+
+}
+
+
+
+
+// for (const [sample, value] of Object.entries(samples)) {
+// 	const name = sample.replace(/\.[^/.]+$/, "")
+// 	suite.addInput(name, [value, guessSchema(value)])
+// }
+
+/*
 const results = {}
 const challengers = {
 	json: [
@@ -41,6 +82,8 @@ for (const [challenger, [encode]] of Object.entries(challengers)) {
 		results[challenger][sample] = { time, size: encoded.length }
 	}
 }
+*/
+
 
 // now let's display results
 const sampleNames = Object.keys(samples).map(sample => sample.replace(/\.[^/.]+$/, ""))
@@ -64,4 +107,3 @@ for (const challenger in results) {
 
 console.log(timeTable.toString())
 console.log(sizeTable.toString())
-

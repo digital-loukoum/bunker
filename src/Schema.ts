@@ -16,10 +16,11 @@ export type ObjectSchema = { [key: string]: Schema }
 export type ArraySchema = [ Schema, { [key: string]: Schema }? ]  // a null type indicates an empty array
 
 export class ObjectRecord {
-	constructor(
-		public type: Schema,
-		public keys?: string[],
-	) {}
+	keys?: string[]
+
+	constructor(public type: Schema, keys?: string[]) {
+		if (keys) this.keys = keys
+	}
 
 	toObject(): { [key: string]: Schema } {  // downgrade the record to an object
 		const schema: { [key: string]: Schema } = {}
@@ -33,10 +34,11 @@ export class ObjectRecord {
 }
 
 export class MapRecord {
-	constructor(
-		public type: Schema,
-		public keys?: string[],
-	) {}
+	keys?: string[]
+
+	constructor(public type: Schema, keys?: string[]) {
+		if (keys) this.keys = keys
+	}
 
 	toMap(): Map<string, Schema> {  // downgrade the record to a map
 		const schema = new Map<string, Schema>()

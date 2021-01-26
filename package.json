@@ -26,6 +26,7 @@
     "@digitak/esrun": "^1.0.6",
     "@msgpack/msgpack": "^2.3.0",
     "@types/node": "^14.14.19",
+    "benchtable": "^0.1.0",
     "chalk": "^4.1.0",
     "cli-table": "^0.3.4",
     "fartest": "^2.0.2",

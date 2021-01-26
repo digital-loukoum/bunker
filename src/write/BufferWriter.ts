@@ -1,4 +1,3 @@
-import Schema, { isObject, isArray, isObjectRecord, isSet, isMap, isMapRecord, isPrimitive, isNullable } from '../Schema.js'
 import { encode } from '../utf8string'
 import Type from '../Type'
 import Writer from './Writer'
@@ -52,7 +51,7 @@ export default class BufferWriter extends Writer {
 		this.writeChar(value ? 1 : 0)
 	};
 
-	[Type.Character] = this.writeChar;
+	[Type.Character] = this.writeChar.bind(this);
 
 	[Type.Number] = (value: number) => {
 		this.incrementSizeBy(8)
@@ -122,55 +121,5 @@ export default class BufferWriter extends Writer {
 		this.buffer.set(encoded, this.size)
 		this.size += encoded.byteLength
 		this.view.setUint8(this.size++, 0)
-	}
-
-	writeSchema(schema: Schema) {
-		if (isPrimitive(schema)) {
-			this.writeChar(schema)
-		}
-
-		else if (isNullable(schema)) {
-			this.writeChar(Type.Nullable)
-			this.writeSchema(schema.type)
-		}
-		
-		else if (isObject(schema)) {
-			this.writeChar(Type.Object)
-			for (const key in schema) {
-				this.writeString(key)
-				this.writeSchema(schema[key])
-			}
-			this.writeChar(0)  // end of object
-		}
-	
-		else if (isObjectRecord(schema)) {
-			this.writeChar(Type.ObjectRecord)
-			this.writeSchema(schema.type)
-		}
-	
-		else if (isArray(schema)) {
-			this.writeChar(Type.Array)
-			this.writeSchema(schema[0])
-			this.writeSchema(schema[1] || {})
-		}
-	
-		else if (isSet(schema)) {
-			this.writeChar(Type.Set)
-			this.writeSchema(schema.values().next().value)
-		}
-	
-		else if (isMap(schema)) {
-			this.writeChar(Type.Map)
-			for (const [key, value] of schema.entries()) {
-				this.writeString(key)
-				this.writeSchema(value)
-			}
-			this.writeChar(0)  // end of object
-		} 
-	
-		else if (isMapRecord(schema)) {
-			this.writeChar(Type.MapRecord)
-			this.writeSchema(schema.type)
-		}
 	}
 }

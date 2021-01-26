@@ -91,12 +91,6 @@ start("Bunker", async function({stage, same}) {
 	})) {
 		const buffer = bunker(value)
 		const result = debunker(buffer)
-		// if (value != result) {
-		// 	console.log(`[--- ${name} ---]`)
-		// 	console.log("Input:", value)
-		// 	console.log("Buffer:", buffer)
-		// 	console.log("Output:", result)
-		// }
 		same(value, result, name)
 	}
 
@@ -125,10 +119,7 @@ start("Bunker", async function({stage, same}) {
 
 	stage('Arrays')
 	for (const [name, value] of Object.entries({
-		"Array of numbers": [1, 2, 3, 4, 5, 6],
-		"Array of strings": ["banana", "orange", "apple"],
-		"Array of mixed type": ["banana", 12, "apple"],
-		"Array of nullable": ["banana", null, "apple", null, undefined],
+		"Array of objects": [{ x: 1, y: 2}, { x: 10, y: 20}],
 	})) {
 		const buffer = bunker(value)
 		const result = debunker(buffer)
@@ -159,7 +150,7 @@ start("Bunker", async function({stage, same}) {
 	stage('Records')
 	{
 		const value = {x: 1, y: 2, z: 3}
-		const buffer = bunker(value, new ObjectRecord(Type.Number))
+		const buffer = bunker(value, new ObjectRecord(Type.Integer))
 		const result = debunker(buffer)
 		same(value, result, "Record of numbers")
 	}
@@ -176,11 +167,27 @@ start("Bunker", async function({stage, same}) {
 		same(value, result, "Record of nullable strings")
 	}
 
-	stage('Samples')
-	for (const [name, value] of Object.entries(samples)) {
-		const buffer = bunker(value)
-		const result = debunker(buffer)
-		same(value, result, name)
+	stage('References')
+	{
+		const o = { x: 12, y: 11 }
+		const a = [1, 2, 3, 4]
+		for (const [name, value] of Object.entries({
+			"Reference in object": {a: o, b: o},
+			"Reference in array": [o, {x: 13}, o],
+			"Reference in set": new Set([o, o, o, {x: 14}, o])
+		})) {
+			const buffer = bunker(value)
+			const result = debunker(buffer)
+			same(value, result, name)
+		}
 	}
+
+
+	// stage('Samples')
+	// for (const [name, value] of Object.entries(samples)) {
+	// 	const buffer = bunker(value)
+	// 	const result = debunker(buffer)
+	// 	same(value, result, name)
+	// }
 })
 
