@@ -183,8 +183,8 @@ start("Bunker", async function({stage, same}) {
 		// const a = [1, 2, 3, 4]
 		for (const [name, value] of Object.entries({
 			"Reference in object": {a: o, b: o},
-			// "Reference in array": [o, {x: 13}, o],
-			// "Reference in set": new Set([o, o, o, {x: 14}, o])
+			"Reference in array": [o, {x: 13}, o],
+			"Reference in set": new Set([o, o, o, {x: 14}, o])
 		})) {
 			const buffer = bunker(value)
 			const result = debunker(buffer)
@@ -193,11 +193,11 @@ start("Bunker", async function({stage, same}) {
 	}
 
 
-	// stage('Samples')
-	// for (const [name, value] of Object.entries(samples)) {
-	// 	const buffer = bunker(value)
-	// 	const result = debunker(buffer)
-	// 	same(value, result, name)
-	// }
+	stage('Samples')
+	for (const [name, value] of Object.entries(samples)) {
+		const buffer = bunker(value)
+		const result = debunker(buffer)
+		same(value, result, name)
+	}
 })
 
