@@ -1,7 +1,7 @@
 import Type from '../Type.js'
 import Handler from '../Handler.js'
 import ByteIndicator from '../ByteIndicator.js'
-import Schema, { nullable, arrayOf, setOf, mapOf, recordOf, SchemaObject } from '../Schema.js'
+import Schema, { nullable, arrayOf, setOf, mapOf, recordOf, SchemaObject, referenceTo } from '../Schema.js'
 
 type Dispatcher<Type = any> = () => Type
 type PropertyDispatcher = Record<string, Dispatcher>
@@ -55,7 +55,7 @@ export default abstract class Reader extends Handler {
 	}
 	
 	[Type.Object] = (dispatchProperty: PropertyDispatcher) => {
-		console.log("Object")
+		console.log("Read object")
 		if (this.isReference()) return this.reference
 		const object: Record<string, any> = {}
 		for (const key in dispatchProperty)
@@ -117,21 +117,49 @@ export default abstract class Reader extends Handler {
 		const indicator = this[Type.Character]()
 
 		switch (indicator) {
+			case Type.Nullable:
+				return nullable(this.readSchema())
+			
 			case ByteIndicator.reference: {
 				const reference = this[Type.PositiveInteger]()
 				console.log("Read schema reference!", reference, this.schemaReferences[reference])
-				return this.schemaReferences[reference]
+				return referenceTo(this.schemaReferences[reference])
 			}
 
-			case ByteIndicator.array: return arrayOf(this.readSchema(), this.readSchema() as SchemaObject)
-			case ByteIndicator.nullable: return nullable(this.readSchema())
-			case ByteIndicator.record: return recordOf(this.readSchema())
-			case ByteIndicator.set: return setOf(this.readSchema())
-			case ByteIndicator.map: return mapOf(this.readSchema())
+			case Type.Array: {
+				const schema = arrayOf()
+				this.schemaReferences.push(schema)
+				schema.type = this.readSchema()
+				schema.properties = this.readSchema() as SchemaObject
+				return schema
+			}
 
-			case ByteIndicator.object: {
+			case Type.Record: {
+				const schema = recordOf()
+				this.schemaReferences.push(schema)
+				schema.type = this.readSchema()
+				return schema
+
+			}
+
+			case Type.Set: {
+				const schema = setOf()
+				this.schemaReferences.push(schema)
+				schema.type = this.readSchema()
+				return schema
+			}
+
+			case Type.Map: {
+				const schema = mapOf()
+				this.schemaReferences.push(schema)
+				schema.type = this.readSchema()
+				return schema
+			}
+
+			case Type.Object: {
 				console.log("Read schema object!")
 				const schema: Schema = {}
+				this.schemaReferences.push(schema)
 				while (!this.expectCharacter(ByteIndicator.stop)) {
 					const key = this[Type.String]()
 					console.log("key", key)

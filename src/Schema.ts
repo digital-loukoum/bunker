@@ -52,7 +52,7 @@ export class RecordOf {
 		return schema
 	}
 }
-export const recordOf = (type: Schema, keys?: string[]) => new RecordOf(type, keys)
+export const recordOf = (type: Schema = Type.Any, keys?: string[]) => new RecordOf(type, keys)
 
 // Nullable
 export class Nullable {
@@ -68,7 +68,7 @@ export class ArrayOf {
 		if (properties) this.properties = properties
 	}
 }
-export const arrayOf = (type: Schema, properties?: SchemaObject) => new ArrayOf(type, properties)
+export const arrayOf = (type: Schema = Type.Any, properties?: SchemaObject) => new ArrayOf(type, properties)
 
 // Set
 export class SetOf {
@@ -77,7 +77,7 @@ export class SetOf {
 		if (properties) this.properties = properties
 	}
 }
-export const setOf = (type: Schema, properties?: SchemaObject) => new SetOf(type, properties)
+export const setOf = (type: Schema = Type.Any, properties?: SchemaObject) => new SetOf(type, properties)
 
 // Map
 export class MapOf {
@@ -88,7 +88,7 @@ export class MapOf {
 		if (keys) this.keys = keys
 	}
 }
-export const mapOf = (type: Schema, properties?: SchemaObject, keys?: string[]) => new MapOf(type, properties, keys)
+export const mapOf = (type: Schema = Type.Any, properties?: SchemaObject, keys?: string[]) => new MapOf(type, properties, keys)
 
 
 /* --- Type guards --- */

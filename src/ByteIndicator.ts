@@ -1,14 +1,11 @@
+import Type from './Type.js'
+
 enum ByteIndicator {
 	null = 0,
 	undefined,
 	defined,
 	object,
-	reference,
-	nullable,
-	record,
-	array,
-	set,
-	map,
+	reference = Object.keys(Type).length + 1,
 	stop = 255,
 }
 

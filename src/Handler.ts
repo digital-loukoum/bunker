@@ -31,7 +31,6 @@ export default abstract class Handler {
 	abstract [Type.Array]: Dispatcher
 	abstract [Type.Set]: Dispatcher
 	abstract [Type.Map]: Dispatcher
-	abstract [Type.MapRecord]: Dispatcher
 
 	decode(data: Uint8Array, begin: number, end: number) {
 		return decode(data, begin, end)
@@ -81,7 +80,7 @@ export default abstract class Handler {
 		}
 	
 		else if (schema.constructor == MapOf) {
-			dispatcher = this[Type.MapRecord].bind(this, this.createDispatcher(schema.type))
+			dispatcher = this[Type.Map].bind(this, this.createDispatcher(schema.type))
 		}
 
 		console.log("Add dispatcher reference", reference)

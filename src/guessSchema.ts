@@ -27,7 +27,7 @@ const schemaFromType: Record<string, (value: any, cache: Map<Object, Schema>) =>
 		let schema: Schema
 
 		if (Array.isArray(object)) {
-			schema = arrayOf(Type.Any)
+			schema = arrayOf()
 			cache.set(object, schema)
 			let type: Schema = Type.Unknown
 			const otherProperties: Schema = {}

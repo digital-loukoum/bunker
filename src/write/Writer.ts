@@ -98,14 +98,14 @@ export default abstract class Writer extends Handler {
 		this.references.push(set)
 	}
 	
-	[Type.Map] = (dispatchProperty: PropertyDispatcher, map: Map<string | number, any>) => {
-		if (this.dispatchReference(map)) return
-		for (const key in dispatchProperty)
-			dispatchProperty[key](map.get(key))
-		this.references.push(map)
-	}
+	// [Type.Map] = (dispatchProperty: PropertyDispatcher, map: Map<string | number, any>) => {
+	// 	if (this.dispatchReference(map)) return
+	// 	for (const key in dispatchProperty)
+	// 		dispatchProperty[key](map.get(key))
+	// 	this.references.push(map)
+	// }
 	
-	[Type.MapRecord] = (dispatchElement: Dispatcher, map: Map<string, any>) => {
+	[Type.Map] = (dispatchElement: Dispatcher, map: Map<string, any>) => {
 		if (this.dispatchReference(map)) return
 		this[Type.PositiveInteger](map.size)
 		for (const [key, value] of map.entries()) {
@@ -124,31 +124,31 @@ export default abstract class Writer extends Handler {
 			this[Type.PositiveInteger](this.schemaReferences.indexOf(schema.link))
 		}
 		else if (schema.constructor == Nullable) {
-			this[Type.Character](ByteIndicator.nullable)
+			this[Type.Character](Type.Nullable)
 			this.writeSchema(schema.type)
 		}
 		else {
 			this.schemaReferences.push(schema)
 
 			if (schema.constructor == RecordOf) {
-				this[Type.Character](ByteIndicator.record)
+				this[Type.Character](Type.Record)
 				this.writeSchema(schema.type)
 			}
 			else if (schema.constructor == ArrayOf) {
-				this[Type.Character](ByteIndicator.array)
+				this[Type.Character](Type.Array)
 				this.writeSchema(schema.type)
 				this.writeSchema(schema.properties || {})
 			}
 			else if (schema.constructor == SetOf) {
-				this[Type.Character](ByteIndicator.set)
+				this[Type.Character](Type.Set)
 				this.writeSchema(schema.type)
 			}
 			else if (schema.constructor == MapOf) {
-				this[Type.Character](ByteIndicator.map)
+				this[Type.Character](Type.Map)
 				this.writeSchema(schema.type)
 			}
 			else if (thenIsObject(schema)) {  // regular object
-				this[Type.Character](ByteIndicator.object)
+				this[Type.Character](Type.Object)
 				for (const key in schema) {
 					this[Type.String](key)
 					this.writeSchema(schema[key])
