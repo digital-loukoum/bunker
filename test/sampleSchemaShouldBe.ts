@@ -11,21 +11,21 @@ import {
 	nil,
 	number,
 	regExp,
+	referenceTo,
 } from '../src/Schema'
+
+const o = {
+	foo: string,
+	bar: string
+}
 
 export default {
 	zero: integer,
 	negativeZero: integer,
 	one: integer,
 	references: {
-		o: {
-			foo: string,
-			bar: string
-		},
-		alias: {
-			foo: string,
-			bar: string
-		}
+		o,
+		alias: referenceTo(o),
 	},
 	arrayOfIntegers: arrayOf(integer),
 	arrayOfNullableIntegers: arrayOf(nullable(integer)),
