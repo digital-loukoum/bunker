@@ -26,6 +26,7 @@ export default abstract class Handler {
 	abstract [Type.String]: Dispatcher
 	abstract [Type.RegExp]: Dispatcher
 	abstract [Type.Nullable]: Dispatcher
+	abstract [Type.Reference]: Dispatcher
 	abstract [Type.Object]: Dispatcher
 	abstract [Type.Record]: Dispatcher
 	abstract [Type.Array]: Dispatcher
@@ -40,9 +41,9 @@ export default abstract class Handler {
 		return encode(string)
 	}
 
-	private dispatchSchemaReference(reference: number, value: any) {
-		this.dispatchers[reference](value)
-	}
+	// private dispatchSchemaReference(reference: number, value: any) {
+	// 	return this.dispatchers[reference](value)
+	// }
 
 	createDispatcher(schema: Schema): Dispatcher {
 		if (isPrimitive(schema)) return this[schema]
@@ -50,13 +51,14 @@ export default abstract class Handler {
 		if (schema.constructor == ReferenceTo) {
 			const reference = this.schemaReferences.indexOf(schema.link)
 			console.log("Dispatcher reference", reference)
-			return this.dispatchSchemaReference.bind(this, reference)
+			return (value?: any) => this.dispatchers[reference](value)
 		}
 
 		const reference = this.dispatchers.length++
 		let dispatcher!: Dispatcher
 
 		if (isObject(schema)) {
+			console.log("Create object dispatcher...")
 			const propertyDispatcher: PropertyDispatcher = {}
 			for (const key in schema)
 				propertyDispatcher[key] = this.createDispatcher(schema[key])

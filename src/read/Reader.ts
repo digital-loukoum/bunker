@@ -26,15 +26,6 @@ export default abstract class Reader extends Handler {
 	 * If it is a reference, store the object in this.reference
 	 * this.indicator will store the indicator byte - which can be a length for an array, set or record
 	 */
-	protected isReference(): boolean {
-		if (this[Type.Character]() == ByteIndicator.reference) {
-			const index = this[Type.PositiveInteger]()
-			this.reference = this.references[index]
-			return true
-		}
-		return false
-	}
-
 	protected addReference(object: Object) {
 		this.references.push(object)
 		return object
@@ -42,8 +33,10 @@ export default abstract class Reader extends Handler {
 
 	[Type.Any] = () => {
 		const schema = this.readSchema()
-		console.log("Read schema:", schema)
-		this.createDispatcher(schema)()
+		console.log("[Read] Schema read:", schema)
+		const dispatch = this.createDispatcher(schema)
+		console.log("[Read] Dispatcher created")
+		return dispatch()
 	}
 
 	[Type.Nullable] = (dispatch: Dispatcher) => {
@@ -53,64 +46,71 @@ export default abstract class Reader extends Handler {
 			default: return dispatch()
 		}
 	}
+
+	[Type.Reference] = () => {
+		if (this[Type.Character]() == Type.Reference) {
+			const reference = this[Type.PositiveInteger]()
+			this.reference = this.references[reference]
+			console.log("Read reference!", reference, "of", this.references)
+			return true
+		}
+		return false
+	}
 	
 	[Type.Object] = (dispatchProperty: PropertyDispatcher) => {
+		if (this[Type.Reference]()) return this.reference
 		console.log("Read object")
-		if (this.isReference()) return this.reference
 		const object: Record<string, any> = {}
+		this.references.push(object)
 		for (const key in dispatchProperty)
 			object[key] = dispatchProperty[key]()
-		return this.addReference(object)
+		return object
 	}
 
 	[Type.Record] = (dispatchElement: Dispatcher) => {
-		if (this.isReference()) return this.reference
+		if (this[Type.Reference]()) return this.reference
 		const length = this[Type.PositiveInteger]()
 		const object: Record<string, any> = {}
+		this.references.push(object)
 		for (let i = 0; i < length; i++) {
 			const key = this[Type.String]()
 			object[key] = dispatchElement()
 		}
-		return this.addReference(object)
+		return object
 	}
 
 	[Type.Array] = (dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher) => {
-		if (this.isReference()) return this.reference
+		if (this[Type.Reference]()) return this.reference
 		const length = this[Type.PositiveInteger]()
 		const array: any = Array(length)
+		this.references.push(array)
 		for (let i = 0; i < length; i++)
 			array[i] = dispatchElement()
 		for (const key in dispatchProperty)
 			array[key] = dispatchProperty[key]()
-		return this.addReference(array)
+		return array
 	}
 	
 	[Type.Set] = (dispatchElement: Dispatcher) => {
-		if (this.isReference()) return this.reference
+		if (this[Type.Reference]()) return this.reference
 		const length = this[Type.PositiveInteger]()
 		const set = new Set
+		this.references.push(set)
 		for (let i = 0; i < length; i++)
 			set.add(dispatchElement())
-		return this.addReference(set)
+		return set
 	}
 	
-	// [Type.Map] = (dispatchProperty: PropertyDispatcher) => {
-	// 	if (this.isReference()) return this.reference
-	// 	const map = new Map<string, any>()
-	// 	for (const key in dispatchProperty)
-	// 		map.set(key, dispatchProperty[key]())
-	// 	return this.addReference(map)
-	// }
-	
 	[Type.Map] = (dispatchElement: Dispatcher) => {
-		if (this.isReference()) return this.reference
-		const map: Map<string, any> = new Map
+		if (this[Type.Reference]()) return this.reference
 		const length = this[Type.PositiveInteger]()
+		const map: Map<string, any> = new Map
+		this.references.push(map)
 		for (let i = 0; i < length; i++) {
 			const key = this[Type.String]()
 			map.set(key, dispatchElement())
 		}
-		return this.addReference(map)
+		return map
 	}
 
 	readSchema(): Schema {
@@ -120,7 +120,7 @@ export default abstract class Reader extends Handler {
 			case Type.Nullable:
 				return nullable(this.readSchema())
 			
-			case ByteIndicator.reference: {
+			case Type.Reference: {
 				const reference = this[Type.PositiveInteger]()
 				console.log("Read schema reference!", reference, this.schemaReferences[reference])
 				return referenceTo(this.schemaReferences[reference])

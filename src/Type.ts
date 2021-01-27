@@ -12,6 +12,7 @@ enum Type {
 	RegExp,
 	Date,
 	Nullable,
+	Reference,
 	Object,
 	Record,
 	Array,

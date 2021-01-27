@@ -32,10 +32,10 @@ export default abstract class Writer extends Handler {
 	 * If the given object is a reference, write the reference index and return false.
 	 * Otherwise, apply the fallback indicator and return true.
 	 */
-	protected dispatchReference(object: Object): boolean {
+	[Type.Reference] = (object: Object): boolean => {
 		const index = this.references.indexOf(object)
 		if (~index) {
-			this[Type.Character](ByteIndicator.reference)
+			this[Type.Character](Type.Reference)
 			this[Type.PositiveInteger](index)
 			return true
 		}
@@ -64,14 +64,14 @@ export default abstract class Writer extends Handler {
 	
 	[Type.Object] = (dispatchProperty: PropertyDispatcher, object: Record<string, any>) => {
 		console.log("Write object!", object)
-		if (this.dispatchReference(object)) return
+		if (this[Type.Reference](object)) return
 		this.references.push(object)
 		for (const key in dispatchProperty)
 			dispatchProperty[key](object[key])
 	}
 	
 	[Type.Record] = (dispatchElement: Dispatcher, object: Record<string, any>) => {
-		if (this.dispatchReference(object)) return
+		if (this[Type.Reference](object)) return
 		this[Type.PositiveInteger](Object.keys(object).length)
 		for (const key in object) {
 			this[Type.String](key)  // we write the key
@@ -81,7 +81,7 @@ export default abstract class Writer extends Handler {
 	}
 	
 	[Type.Array] = (dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher, array: Array<any>) => {
-		if (this.dispatchReference(array)) return
+		if (this[Type.Reference](array)) return
 		this[Type.PositiveInteger](array.length)
 		for (const element of array)
 			dispatchElement(element)
@@ -91,22 +91,15 @@ export default abstract class Writer extends Handler {
 	}
 	
 	[Type.Set] = (dispatchElement: Dispatcher, set: Set<any>) => {
-		if (this.dispatchReference(set)) return
+		if (this[Type.Reference](set)) return
 		this[Type.PositiveInteger](set.size)
 		for (const element of set.values())
 			dispatchElement(element)
 		this.references.push(set)
 	}
 	
-	// [Type.Map] = (dispatchProperty: PropertyDispatcher, map: Map<string | number, any>) => {
-	// 	if (this.dispatchReference(map)) return
-	// 	for (const key in dispatchProperty)
-	// 		dispatchProperty[key](map.get(key))
-	// 	this.references.push(map)
-	// }
-	
 	[Type.Map] = (dispatchElement: Dispatcher, map: Map<string, any>) => {
-		if (this.dispatchReference(map)) return
+		if (this[Type.Reference](map)) return
 		this[Type.PositiveInteger](map.size)
 		for (const [key, value] of map.entries()) {
 			this[Type.String](key)
@@ -120,7 +113,7 @@ export default abstract class Writer extends Handler {
 			this[Type.Character](schema)
 		}
 		else if (schema.constructor == ReferenceTo) {
-			this[Type.Character](ByteIndicator.reference)
+			this[Type.Character](Type.Reference)
 			this[Type.PositiveInteger](this.schemaReferences.indexOf(schema.link))
 		}
 		else if (schema.constructor == Nullable) {
