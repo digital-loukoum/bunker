@@ -8,9 +8,8 @@ type Schema =
 	| RecordOf
 	| SetOf
 	| Nullable
-
+	| ReferenceTo
 export default Schema
-
 
 /* --- Primitives --- */
 export const integer = Type.Integer
@@ -30,6 +29,12 @@ export const nil = Type.Null
 /* --- Constructible types --- */
 // Object
 export type SchemaObject = { [key: string]: Schema }
+
+// Reference
+export class ReferenceTo {
+	constructor(public link: Schema) {}
+}
+export const referenceTo = (link: Schema) => new ReferenceTo(link)
 
 // Record
 export class RecordOf {

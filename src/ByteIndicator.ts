@@ -2,8 +2,14 @@ enum ByteIndicator {
 	null = 0,
 	undefined,
 	defined,
-	reference,
 	object,
+	reference,
+	nullable,
+	record,
+	array,
+	set,
+	map,
+	stop = 255,
 }
 
 export default ByteIndicator

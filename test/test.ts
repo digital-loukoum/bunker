@@ -35,11 +35,11 @@ import samples from '../samples'
 
 
 start("Bunker", async function({stage, same}) {
-	// stage('Schema')
-	// const schema = guessSchema(sample) as any
-	// for (const key in schema) {
-	// 	same(schema[key], sampleSchemaShouldBe[key], `Bad schema for '${key}'`)
-	// }
+	stage('Schema')
+	const schema = guessSchema(sample) as any
+	for (const key in schema) {
+		same(schema[key], sampleSchemaShouldBe[key], `Bad schema for '${key}'`)
+	}
 
 	// stage('Numbers')
 	// for (const [name, value] of Object.entries({

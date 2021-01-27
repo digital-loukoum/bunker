@@ -1,8 +1,5 @@
-import { encode } from '../utf8string'
 import Type from '../Type'
 import Writer from './Writer'
-import guessSchema from '../guessSchema'
-import createDispatcher from '../createDispatcher'
 
 export default class BufferWriter extends Writer {
 	protected size = 0
@@ -11,9 +8,7 @@ export default class BufferWriter extends Writer {
 		protected capacity = 64,
 		protected buffer = new Uint8Array(capacity),
 		protected view = new DataView(buffer.buffer),
-	) {
-		super()
-	}
+	) { super() }
 
 	get data() {
 		return new Uint8Array(this.buffer.buffer, 0, this.size)
@@ -39,19 +34,18 @@ export default class BufferWriter extends Writer {
 	}
 
 	[Type.Null] = (value: null | undefined) => {
-		this.writeChar(value === undefined ? 1 : 0)
+		this[Type.Character](value === undefined ? 1 : 0)
 	};
 	
-	[Type.Any] = (value: any, schema = guessSchema(value)) => {
-		this.writeSchema(schema)
-		createDispatcher(schema, this)(value)
-	};
-
 	[Type.Boolean] = (value: boolean) => {
-		this.writeChar(value ? 1 : 0)
+		this[Type.Character](value ? 1 : 0)
 	};
 
-	[Type.Character] = this.writeChar.bind(this);
+	[Type.Character] = (value: number) => {
+		this.incrementSizeBy(1)
+		this.view.setUint8(this.size, value)
+		this.size++
+	}
 
 	[Type.Number] = (value: number) => {
 		this.incrementSizeBy(8)
@@ -66,14 +60,14 @@ export default class BufferWriter extends Writer {
 			value = -value
 		}
 		const nextValue = Math.floor(value / 64)
-		this.writeChar(sign + (nextValue ? 64: 0) + (value % 64))
+		this[Type.Character](sign + (nextValue ? 64: 0) + (value % 64))
 		if (nextValue) this[Type.PositiveInteger](nextValue)
 	};
 
 	[Type.PositiveInteger] = (value: number) => {
 		do {
 			const nextValue = Math.floor(value / 128)
-			this.writeChar(value % 128 + (nextValue ? 128 : 0))
+			this[Type.Character](value % 128 + (nextValue ? 128 : 0))
 			value = nextValue
 		} while (value)
 	};
@@ -85,12 +79,12 @@ export default class BufferWriter extends Writer {
 			value = -value
 		}
 		let nextValue = value / 64n
-		this.writeChar(sign + (nextValue ? 64 : 0) + Number(value % 64n))
+		this[Type.Character](sign + (nextValue ? 64 : 0) + Number(value % 64n))
 		if (nextValue) {
 			value = nextValue
 			do {
 				nextValue = value / 128n
-				this.writeChar((nextValue ? 128 : 0) + Number(value % 128n))
+				this[Type.Character]((nextValue ? 128 : 0) + Number(value % 128n))
 				value = nextValue
 			} while (value)
 		}
@@ -102,24 +96,16 @@ export default class BufferWriter extends Writer {
 		this.size += 8
 	};
 
-	[Type.String] = this.writeString.bind(this);
-
-	[Type.RegExp] = (value: RegExp) => {
-		this.writeString(value.source)
-		this.writeString(value.flags)
-	};
-
-	writeChar(value: number) {
-		this.incrementSizeBy(1)
-		this.view.setUint8(this.size, value)
-		this.size++
-	}
-
-	writeString(value: string) {
-		const encoded = encode(value)
+	[Type.String] = (value: string) => {
+		const encoded = this.encode(value)
 		this.incrementSizeBy(encoded.byteLength + 1)
 		this.buffer.set(encoded, this.size)
 		this.size += encoded.byteLength
 		this.view.setUint8(this.size++, 0)
 	}
+
+	[Type.RegExp] = (value: RegExp) => {
+		this[Type.String](value.source)
+		this[Type.String](value.flags)
+	};
 }

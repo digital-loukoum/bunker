@@ -1,15 +1,23 @@
 import Type from '../Type.js'
 import ByteIndicator from '../ByteIndicator.js'
 import Handler from '../Handler.js'
-import Schema, { isPrimitive, Nullable, ArrayOf, thenIsObject, SetOf, MapOf, RecordOf } from '../Schema.js'
+import Schema, {
+	isPrimitive,
+	Nullable,
+	ArrayOf,
+	thenIsObject,
+	SetOf,
+	MapOf,
+	RecordOf,
+	ReferenceTo,
+} from '../Schema.js'
+import guessSchema from '../guessSchema'
 
 export type Dispatcher<Type = any> = (value: Type) => any
 type PropertyDispatcher = Record<string, Dispatcher>
 
-export default abstract class Writer implements Handler {
-	private references: Object[] = []  // list of all objects written. The index is the reference
+export default abstract class Writer extends Handler {
 	abstract [Type.Null]: Dispatcher<null | undefined>
-	abstract [Type.Any]: Dispatcher<any>
 	abstract [Type.Boolean]: Dispatcher<boolean>
 	abstract [Type.Character]: Dispatcher<number>
 	abstract [Type.Number]: Dispatcher<number>
@@ -35,9 +43,17 @@ export default abstract class Writer implements Handler {
 		return false
 	}
 
-	[Type.Unknown]() {}
+	[Type.Any] = (value: any, schema = guessSchema(value)) => {
+		console.log("Any!", value)
+		this.writeSchema(schema)
+		// @ts-ignore
+		console.log("Schema written", this.data)
+		const dispatch = this.createDispatcher(schema)
+		dispatch(value)
+	};
 
-	[Type.Nullable](dispatch: Dispatcher, nullable: any) {
+
+	[Type.Nullable] = (dispatch: Dispatcher, nullable: any) => {
 		if (nullable == null)
 			this[Type.Character](nullable === null ? ByteIndicator.null : ByteIndicator.undefined);
 		else {
@@ -46,14 +62,15 @@ export default abstract class Writer implements Handler {
 		}
 	}
 	
-	[Type.Object](dispatchProperty: PropertyDispatcher, object: Record<string, any>) {
+	[Type.Object] = (dispatchProperty: PropertyDispatcher, object: Record<string, any>) => {
+		console.log("Write object!", object)
 		if (this.dispatchReference(object)) return
+		this.references.push(object)
 		for (const key in dispatchProperty)
 			dispatchProperty[key](object[key])
-		this.references.push(object)
 	}
 	
-	[Type.Record](dispatchElement: Dispatcher, object: Record<string, any>) {
+	[Type.Record] = (dispatchElement: Dispatcher, object: Record<string, any>) => {
 		if (this.dispatchReference(object)) return
 		this[Type.PositiveInteger](Object.keys(object).length)
 		for (const key in object) {
@@ -63,7 +80,7 @@ export default abstract class Writer implements Handler {
 		this.references.push(object)
 	}
 	
-	[Type.Array](dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher, array: Array<any>) {
+	[Type.Array] = (dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher, array: Array<any>) => {
 		if (this.dispatchReference(array)) return
 		this[Type.PositiveInteger](array.length)
 		for (const element of array)
@@ -73,7 +90,7 @@ export default abstract class Writer implements Handler {
 		this.references.push(array)
 	}
 	
-	[Type.Set](dispatchElement: Dispatcher, set: Set<any>) {
+	[Type.Set] = (dispatchElement: Dispatcher, set: Set<any>) => {
 		if (this.dispatchReference(set)) return
 		this[Type.PositiveInteger](set.size)
 		for (const element of set.values())
@@ -81,14 +98,14 @@ export default abstract class Writer implements Handler {
 		this.references.push(set)
 	}
 	
-	[Type.Map](dispatchProperty: PropertyDispatcher, map: Map<string | number, any>) {
+	[Type.Map] = (dispatchProperty: PropertyDispatcher, map: Map<string | number, any>) => {
 		if (this.dispatchReference(map)) return
 		for (const key in dispatchProperty)
 			dispatchProperty[key](map.get(key))
 		this.references.push(map)
 	}
 	
-	[Type.MapRecord](dispatchElement: Dispatcher, map: Map<string, any>) {
+	[Type.MapRecord] = (dispatchElement: Dispatcher, map: Map<string, any>) => {
 		if (this.dispatchReference(map)) return
 		this[Type.PositiveInteger](map.size)
 		for (const [key, value] of map.entries()) {
@@ -102,40 +119,42 @@ export default abstract class Writer implements Handler {
 		if (isPrimitive(schema)) {
 			this[Type.Character](schema)
 		}
-
+		else if (schema.constructor == ReferenceTo) {
+			this[Type.Character](ByteIndicator.reference)
+			this[Type.PositiveInteger](this.schemaReferences.indexOf(schema.link))
+		}
 		else if (schema.constructor == Nullable) {
-			this[Type.Character](Type.Nullable)
+			this[Type.Character](ByteIndicator.nullable)
 			this.writeSchema(schema.type)
 		}
-		
-		else if (schema.constructor == RecordOf) {
-			this[Type.Character](Type.Record)
-			this.writeSchema(schema.type)
-		}
-	
-		else if (schema.constructor == ArrayOf) {
-			this[Type.Character](Type.Array)
-			this.writeSchema(schema.type)
-			this.writeSchema(schema.properties || {})
-		}
-	
-		else if (schema.constructor == SetOf) {
-			this[Type.Character](Type.Set)
-			this.writeSchema(schema.type)
-		}
-	
-		else if (schema.constructor == MapOf) {
-			this[Type.Character](Type.Map)
-			this.writeSchema(schema.type)
-		}
+		else {
+			this.schemaReferences.push(schema)
 
-		else if (thenIsObject(schema)) {  // regular object
-			this[Type.Character](Type.Object)
-			for (const key in schema) {
-				this[Type.String](key)
-				this.writeSchema(schema[key])
+			if (schema.constructor == RecordOf) {
+				this[Type.Character](ByteIndicator.record)
+				this.writeSchema(schema.type)
 			}
-			this[Type.Character](0)  // end of object
-		}
+			else if (schema.constructor == ArrayOf) {
+				this[Type.Character](ByteIndicator.array)
+				this.writeSchema(schema.type)
+				this.writeSchema(schema.properties || {})
+			}
+			else if (schema.constructor == SetOf) {
+				this[Type.Character](ByteIndicator.set)
+				this.writeSchema(schema.type)
+			}
+			else if (schema.constructor == MapOf) {
+				this[Type.Character](ByteIndicator.map)
+				this.writeSchema(schema.type)
+			}
+			else if (thenIsObject(schema)) {  // regular object
+				this[Type.Character](ByteIndicator.object)
+				for (const key in schema) {
+					this[Type.String](key)
+					this.writeSchema(schema[key])
+				}
+				this[Type.Character](ByteIndicator.stop)  // end of object
+			}
+			}
 	}
 }

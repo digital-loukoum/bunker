@@ -2,7 +2,9 @@ import Type from './Type.js'
 import Schema, {
 	mapOf,
 	arrayOf,
+	ArrayOf,
 	setOf,
+	referenceTo,
 	SchemaObject,
 } from './Schema.js'
 import joinSchemas from './joinSchemas.js'
@@ -21,7 +23,7 @@ const schemaFromType: Record<string, (value: any, cache: Map<Object, Schema>) =>
 		else if (object instanceof RegExp) return Type.RegExp
 
 		const cached = cache.get(object)
-		if (cached) return cached
+		if (cached) return referenceTo(cached)
 		let schema: Schema
 
 		if (Array.isArray(object)) {
@@ -43,8 +45,7 @@ const schemaFromType: Record<string, (value: any, cache: Map<Object, Schema>) =>
 			}
 			schema.type = type
 			if (hasOtherProperties) {
-				// @ts-ignore
-				schema.properties = otherProperties
+				(schema as ArrayOf).properties = otherProperties
 			}
 		}
 

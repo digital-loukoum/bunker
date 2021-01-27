@@ -17,7 +17,6 @@ enum Type {
 	Array,
 	Set,
 	Map,
-	MapRecord,
 }
 
 export default Type
