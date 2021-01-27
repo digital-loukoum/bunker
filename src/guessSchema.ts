@@ -20,13 +20,13 @@ import Schema, {
 
 
 // return a bunker schema from the result of a `typeof`
-const schemaFromType: Record<string, (value: any, lazy: boolean) => Schema> = {
+const schemaFromType: Record<string, (value: any, cache: Map<Object, Schema>) => Schema> = {
 	undefined: () => Type.Null,
 	number: (value: number) => Number.isInteger(value) ? Type.Integer : Type.Number,
 	bigint: () => Type.BigInteger,
 	string: () => Type.String,
 	boolean: () => Type.Boolean,
-	object: (object: Record<string, any>, lazy) => {
+	object: (object: Record<string, any>) => {
 		if (!object) return Type.Null
 		else if (object instanceof Date) return Type.Date
 		else if (object instanceof RegExp) return Type.RegExp
@@ -39,9 +39,7 @@ const schemaFromType: Record<string, (value: any, lazy: boolean) => Schema> = {
 			for (const key in object) {
 				if (Number.isInteger(+key)) {
 					const valueType = guessSchema(object[key])
-					if (!lazy || type == Type.Unknown || type == Type.Null) {
-						type = joinSchemas(type, valueType)
-					}
+					type = joinSchemas(type, valueType)
 				}
 				else if (typeof object[key] != 'function') {
 					hasOtherProperties = true
@@ -55,8 +53,7 @@ const schemaFromType: Record<string, (value: any, lazy: boolean) => Schema> = {
 			let type: Schema = Type.Unknown
 			for (const value of object) {
 				const valueType = guessSchema(value)
-				if (!lazy || type == Type.Unknown || type == Type.Null)
-					type = joinSchemas(type, valueType)
+				type = joinSchemas(type, valueType)
 			}
 			return new Set([type]) as Schema
 		}
@@ -187,8 +184,9 @@ function joinSchemas(a: Schema, b: Schema): Schema {
 
 
 // guess the bunker schema of any value
-export default function guessSchema(value: string | number | Object | boolean | bigint, lazy = false): Schema {
+export default function guessSchema(value: string | number | Object | boolean | bigint): Schema {
+	const cache = new Map<Object, Schema>()
 	if (typeof value == 'function')
 		throw `Cannot serialize a function as bunker data`
-	return schemaFromType[typeof value](value, lazy)
+	return schemaFromType[typeof value](value, cache)
 }
