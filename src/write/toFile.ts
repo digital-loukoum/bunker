@@ -1,5 +1,4 @@
 import Type from '../Type.js'
-import Schema from '../Schema.js'
 import { writeFile } from 'fs/promises'
 import guessSchema from '../guessSchema.js'
 import BufferWriter from './BufferWriter.js'

@@ -1,4 +1,3 @@
-import Schema from '../Schema.js'
 import guessSchema from '../guessSchema.js'
 import FileWriter from './FileWriter.js'
 
