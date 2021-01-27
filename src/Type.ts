@@ -13,7 +13,7 @@ enum Type {
 	Date,
 	Nullable,
 	Object,
-	ObjectRecord,
+	Record,
 	Array,
 	Set,
 	Map,

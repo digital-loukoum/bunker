@@ -1,8 +1,13 @@
 ○ Add references
+○ Benchmark : add fastest and percentage
 ○ Benchmark : compare bunker with and without schema
 ○ Benchmark : compare file writing speed
-○ Streamed file reading
 ○ Sets and maps can have other properties
 ○ Add string references (will greatly improve speed and size for many cases)
-○ Rewrite schema's API : no more Maps and Sets
 ○ Add tuples
+
+○ Use an async service worker @next 
+
+✔ Rewrite schema's API : no more Maps and Sets @done(21-01-27 11:26)
+
+✘ Streamed file reading @cancelled(21-01-27 11:27)

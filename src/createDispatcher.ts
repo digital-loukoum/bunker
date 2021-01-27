@@ -1,4 +1,4 @@
-import Schema, { isObject, isObjectRecord, isArray, isSet, isMap, isMapRecord, isPrimitive, isNullable } from './Schema.js'
+import Schema, { isObject, isPrimitive, Nullable, RecordOf, ArrayOf, SetOf, MapOf } from './Schema.js'
 import Handler from './Handler.js'
 import Dispatcher from './Dispatcher.js'
 import Type from './Type.js'
@@ -15,7 +15,7 @@ export default function createDispatcher(schema: Schema, handler: Handler): Disp
 		return handler[schema]
 	}
 	
-	else if (isNullable(schema)) {
+	else if (schema.constructor == Nullable) {
 		return handler[Type.Nullable].bind(handler, createDispatcher(schema.type, handler))
 	}
 
@@ -26,35 +26,23 @@ export default function createDispatcher(schema: Schema, handler: Handler): Disp
 		return handler[Type.Object].bind(handler, propertyDispatcher)
 	}
 
-	else if (isObjectRecord(schema)) {
-		return handler[Type.ObjectRecord].bind(handler, createDispatcher(schema.type, handler))
+	else if (schema.constructor == RecordOf) {
+		return handler[Type.Record].bind(handler, createDispatcher(schema.type, handler))
 	}
 
-	else if (isArray(schema)) {
-		const type = schema[0]
-		const properties = schema[1]
+	else if (schema.constructor == ArrayOf) {
 		const propertyDispatcher: PropertyDispatcher = {}
-		
-		if (properties)
-			for (const key in properties)
-				propertyDispatcher[key] = createDispatcher(properties[key], handler)
-		
-		return handler[Type.Array].bind(handler, createDispatcher(type, handler), propertyDispatcher)
+		if (schema.properties) for (const key in schema.properties) {
+			propertyDispatcher[key] = createDispatcher(schema.properties[key], handler)
+		}
+		return handler[Type.Array].bind(handler, createDispatcher(schema.type, handler), propertyDispatcher)
 	}
 	
-	else if (isSet(schema)) {
-		const type = schema.values().next().value
-		return handler[Type.Set].bind(handler, createDispatcher(type, handler))
+	else if (schema.constructor == SetOf) {
+		return handler[Type.Set].bind(handler, createDispatcher(schema.type, handler))
 	}
 
-	else if (isMap(schema)) {
-		const propertyDispatcher: PropertyDispatcher = {}
-		for (const [key, value] of schema.entries())
-			propertyDispatcher[key] = createDispatcher(value, handler)
-		return handler[Type.Map].bind(handler, propertyDispatcher)
-	}
-
-	else if (isMapRecord(schema)) {
+	else if (schema.constructor == MapOf) {
 		return handler[Type.MapRecord].bind(handler, createDispatcher(schema.type, handler))
 	}
 

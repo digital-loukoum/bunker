@@ -16,7 +16,7 @@ type Handler = {
 	[Type.RegExp]: Dispatcher
 	[Type.Nullable]: Dispatcher
 	[Type.Object]: Dispatcher
-	[Type.ObjectRecord]: Dispatcher
+	[Type.Record]: Dispatcher
 	[Type.Array]: Dispatcher
 	[Type.Set]: Dispatcher
 	[Type.Map]: Dispatcher

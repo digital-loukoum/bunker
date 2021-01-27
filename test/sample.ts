@@ -25,18 +25,14 @@ export default new class {
 	setOfAny = new Set(['string', 12])
 	setOfObjects = new Set([{x: 12, y: "Hello"}, {x: 121, y:" world"}])
 
-	mapRecord = new Map([
+	map = new Map([
 		[1, 'one'],
 		[2, 'two'],
 		[3, 'three'],
 	])
-	mapRecordOfObjects = new Map([
+	mapOfObjects = new Map([
 		["zabu", {x: 12, y: "Hello"}],
 		["coco", {x: 121, y: 12}],
-	])
-	mapAsObject = new Map<string, any>([
-		["name", "Hercule"],
-		["strength", 12],
 	])
 
 	arrayWithProperties = Object.assign([5, 9, 232], {

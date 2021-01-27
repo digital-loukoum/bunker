@@ -57,7 +57,7 @@ export default abstract class Reader implements Handler {
 		return this.addReference(object)
 	}
 
-	[Type.ObjectRecord](dispatchElement: Dispatcher) {
+	[Type.Record](dispatchElement: Dispatcher) {
 		if (this.isReference()) return this.reference
 		const length = this[Type.PositiveInteger]()
 		const object: Record<string, any> = {}

@@ -1,7 +1,7 @@
 import Type from '../Type.js'
 import ByteIndicator from '../ByteIndicator.js'
 import Handler from '../Handler.js'
-import Schema, { isObject, isArray, isObjectRecord, isSet, isMap, isMapRecord, isPrimitive, isNullable } from '../Schema.js'
+import Schema, { isPrimitive, Nullable, ArrayOf, thenIsObject, SetOf, MapOf, RecordOf } from '../Schema.js'
 
 export type Dispatcher<Type = any> = (value: Type) => any
 type PropertyDispatcher = Record<string, Dispatcher>
@@ -53,7 +53,7 @@ export default abstract class Writer implements Handler {
 		this.references.push(object)
 	}
 	
-	[Type.ObjectRecord](dispatchElement: Dispatcher, object: Record<string, any>) {
+	[Type.Record](dispatchElement: Dispatcher, object: Record<string, any>) {
 		if (this.dispatchReference(object)) return
 		this[Type.PositiveInteger](Object.keys(object).length)
 		for (const key in object) {
@@ -103,12 +103,33 @@ export default abstract class Writer implements Handler {
 			this[Type.Character](schema)
 		}
 
-		else if (isNullable(schema)) {
+		else if (schema.constructor == Nullable) {
 			this[Type.Character](Type.Nullable)
 			this.writeSchema(schema.type)
 		}
 		
-		else if (isObject(schema)) {
+		else if (schema.constructor == RecordOf) {
+			this[Type.Character](Type.Record)
+			this.writeSchema(schema.type)
+		}
+	
+		else if (schema.constructor == ArrayOf) {
+			this[Type.Character](Type.Array)
+			this.writeSchema(schema.type)
+			this.writeSchema(schema.properties || {})
+		}
+	
+		else if (schema.constructor == SetOf) {
+			this[Type.Character](Type.Set)
+			this.writeSchema(schema.type)
+		}
+	
+		else if (schema.constructor == MapOf) {
+			this[Type.Character](Type.Map)
+			this.writeSchema(schema.type)
+		}
+
+		else if (thenIsObject(schema)) {  // regular object
 			this[Type.Character](Type.Object)
 			for (const key in schema) {
 				this[Type.String](key)
@@ -116,34 +137,5 @@ export default abstract class Writer implements Handler {
 			}
 			this[Type.Character](0)  // end of object
 		}
-	
-		else if (isObjectRecord(schema)) {
-			this[Type.Character](Type.ObjectRecord)
-			this.writeSchema(schema.type)
-		}
-	
-		else if (isArray(schema)) {
-			this[Type.Character](Type.Array)
-			this.writeSchema(schema[0])
-			this.writeSchema(schema[1] || {})
-		}
-	
-		else if (isSet(schema)) {
-			this[Type.Character](Type.Set)
-			this.writeSchema(schema.values().next().value)
-		}
-	
-		else if (isMap(schema)) {
-			this[Type.Character](Type.Map)
-			for (const [key, value] of schema.entries()) {
-				this[Type.String](key)
-				this.writeSchema(value)
-			}
-			this[Type.Character](0)  // end of object
-		} 
-	
-		else if (isMapRecord(schema)) {
-			this[Type.Character](Type.MapRecord)
-			this.writeSchema(schema.type)
-		}
-	}}
+	}
+}

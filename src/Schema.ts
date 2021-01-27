@@ -2,26 +2,41 @@ import Type from './Type.js'
 
 type Schema =
 	| Type
-	| ObjectSchema
-	| ArraySchema
-	| Map<string | number, Schema>
-	| ObjectRecord
-	| MapRecord
-	| Set<Schema>
+	| SchemaObject
+	| ArrayOf
+	| MapOf
+	| RecordOf
+	| SetOf
 	| Nullable
 
 export default Schema
 
-export type ObjectSchema = { [key: string]: Schema }
-export type ArraySchema = [ Schema, { [key: string]: Schema }? ]  // a null type indicates an empty array
 
-export class ObjectRecord {
+/* --- Primitives --- */
+export const integer = Type.Integer
+export const string = Type.String
+export const unknown = Type.Unknown
+export const regExp = Type.RegExp
+export const positiveInteger = Type.PositiveInteger
+export const number = Type.Number
+export const any = Type.Any
+export const boolean = Type.Boolean
+export const character = Type.Character
+export const bigInteger = Type.BigInteger
+export const date = Type.Date
+export const nil = Type.Null
+
+
+/* --- Constructible types --- */
+// Object
+export type SchemaObject = { [key: string]: Schema }
+
+// Record
+export class RecordOf {
 	keys?: string[]
-
 	constructor(public type: Schema, keys?: string[]) {
 		if (keys) this.keys = keys
 	}
-
 	toObject(): { [key: string]: Schema } {  // downgrade the record to an object
 		const schema: { [key: string]: Schema } = {}
 		if (this.type == null)
@@ -32,61 +47,55 @@ export class ObjectRecord {
 		return schema
 	}
 }
+export const recordOf = (type: Schema, keys?: string[]) => new RecordOf(type, keys)
 
-export class MapRecord {
-	keys?: string[]
-
-	constructor(public type: Schema, keys?: string[]) {
-		if (keys) this.keys = keys
-	}
-
-	toMap(): Map<string, Schema> {  // downgrade the record to a map
-		const schema = new Map<string, Schema>()
-		if (this.type == null)
-			return schema
-		if (this.keys)
-			for (const key of this.keys)
-				schema.set(key, this.type)
-		return schema
-	}
-}
-
-class Nullable {
+// Nullable
+export class Nullable {
 	constructor(public type: Schema) {}
 }
-const _Nullable = (type: Schema) =>
-	type == Type.Any || type == Type.Null || isNullable(type) ? type : new Nullable(type)
-export { _Nullable as Nullable }
+export const nullable = (type: Schema) =>
+	type == Type.Any || type == Type.Null || type.constructor == Nullable ? type : new Nullable(type)
 
-/* Type guards */
+// Array
+export class ArrayOf {
+	properties?: SchemaObject
+	constructor(public type: Schema, properties?: SchemaObject) {
+		if (properties) this.properties = properties
+	}
+}
+export const arrayOf = (type: Schema, properties?: SchemaObject) => new ArrayOf(type, properties)
+
+// Set
+export class SetOf {
+	properties?: SchemaObject
+	constructor(public type: Schema, properties?: SchemaObject) {
+		if (properties) this.properties = properties
+	}
+}
+export const setOf = (type: Schema, properties?: SchemaObject) => new SetOf(type, properties)
+
+// Map
+export class MapOf {
+	keys?: string[]
+	properties?: SchemaObject
+	constructor(public type: Schema, properties?: SchemaObject, keys?: string[]) {
+		if (properties) this.properties = properties
+		if (keys) this.keys = keys
+	}
+}
+export const mapOf = (type: Schema, properties?: SchemaObject, keys?: string[]) => new MapOf(type, properties, keys)
+
+
+/* --- Type guards --- */
 export const isPrimitive = (schema: Schema): schema is Type =>
 	typeof schema == 'number'
 
-export const isObject = (schema: Schema): schema is ObjectSchema =>
+export const isObject = (schema: Schema): schema is SchemaObject =>
 	schema.constructor == Object
 
-export const isObjectRecord = (schema: Schema): schema is ObjectRecord =>
-	schema.constructor == ObjectRecord
-
-export const isArray = (schema: Schema): schema is ArraySchema =>
-	schema.constructor == Array
-
-export const isSet = (schema: Schema): schema is Set<Schema> =>
-	schema.constructor == Set
-
-export const isMap = (schema: Schema): schema is Map<string, Schema> =>
-	schema.constructor == Map
-
-export const isMapRecord = (schema: Schema): schema is MapRecord =>
-	schema.constructor == MapRecord
-
-export const isNullable = (schema: Schema): schema is Nullable =>
-	schema.constructor == Nullable
-
-export const thenIsObject = (_: Schema): _ is ObjectSchema => true
-export const thenIsObjectRecord = (_: Schema): _ is ObjectRecord => true
-export const thenIsArray = (_: Schema): _ is ArraySchema => true
-export const thenIsSet = (_: Schema): _ is Set<Schema> => true
-export const thenIsMap = (_: Schema): _ is Map<string, Schema> => true
-export const thenIsMapRecord = (_: Schema): _ is MapRecord => true
+export const thenIsObject = (_: Schema): _ is SchemaObject => true
+export const thenIsRecord = (_: Schema): _ is RecordOf => true
+export const thenIsArray = (_: Schema): _ is ArrayOf => true
+export const thenIsSet = (_: Schema): _ is SetOf => true
+export const thenIsMap = (_: Schema): _ is MapOf => true
 export const thenIsNullable = (_: Schema): _ is Nullable => true

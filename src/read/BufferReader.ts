@@ -2,7 +2,7 @@ import Type from '../Type'
 import { decode } from '../utf8string'
 import createDispatcher from '../createDispatcher'
 import Reader from './Reader'
-import Schema, { MapRecord, Nullable, ObjectRecord } from '../Schema'
+import Schema, { arrayOf, setOf, mapOf, nullable, recordOf, SchemaObject } from '../Schema'
 
 export default class BufferReader extends Reader {
 	private view = new DataView(this.buffer.buffer)
@@ -109,29 +109,19 @@ export default class BufferReader extends Reader {
 			}
 	
 			case Type.Array:
-				return [this.readSchema(), this.readSchema()] as Schema
+				return arrayOf(this.readSchema(), this.readSchema() as SchemaObject)
 
 			case Type.Nullable:
-				return Nullable(this.readSchema())
+				return nullable(this.readSchema())
 					
-			case Type.ObjectRecord:
-				return new ObjectRecord(this.readSchema())
+			case Type.Record:
+				return recordOf(this.readSchema())
 	
 			case Type.Set:
-				return new Set([this.readSchema()])
+				return setOf(this.readSchema())
 			
-			case Type.Map: {
-				const schema = new Map
-				while (this.buffer[this.cursor]) {  // BUG : empty keys will cause to stop early
-					const key = this.readString()
-					schema.set(key, this.readSchema())
-				}
-				this.cursor++
-				return schema
-			}
-
-			case Type.MapRecord:
-				return new MapRecord(this.readSchema())
+			case Type.Map:
+				return mapOf(this.readSchema())
 		}
 		
 		return type
