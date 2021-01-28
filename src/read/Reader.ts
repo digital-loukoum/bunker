@@ -58,8 +58,10 @@ export default abstract class Reader extends Handler {
 		if (this[Type.Reference]()) return this.reference
 		const object: Record<string, any> = {}
 		this.references.push(object)
-		for (const key in dispatchProperty)
-			object[key] = dispatchProperty[key]()
+		for (const key in dispatchProperty) {
+			const value = dispatchProperty[key]()
+			if (value !== undefined) object[key] = value
+		}
 		return object
 	}
 
