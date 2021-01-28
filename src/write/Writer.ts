@@ -44,10 +44,7 @@ export default abstract class Writer extends Handler {
 	}
 
 	[Type.Any] = (value: any, schema = guessSchema(value)) => {
-		console.log("Any!", value)
 		this.writeSchema(schema)
-		// @ts-ignore
-		console.log("Schema written", this.data)
 		const dispatch = this.createDispatcher(schema)
 		dispatch(value)
 	};
@@ -63,7 +60,6 @@ export default abstract class Writer extends Handler {
 	}
 	
 	[Type.Object] = (dispatchProperty: PropertyDispatcher, object: Record<string, any>) => {
-		console.log("Write object!", object)
 		if (this[Type.Reference](object)) return
 		this.references.push(object)
 		for (const key in dispatchProperty)

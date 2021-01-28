@@ -50,7 +50,6 @@ export default abstract class Handler {
 		if (schema.constructor == Nullable) return this[Type.Nullable].bind(this, this.createDispatcher(schema.type))
 		if (schema.constructor == ReferenceTo) {
 			const reference = this.schemaReferences.indexOf(schema.link)
-			console.log("Dispatcher reference", reference)
 			return (value?: any) => this.dispatchers[reference](value)
 		}
 
@@ -58,7 +57,6 @@ export default abstract class Handler {
 		let dispatcher!: Dispatcher
 
 		if (isObject(schema)) {
-			console.log("Create object dispatcher...")
 			const propertyDispatcher: PropertyDispatcher = {}
 			for (const key in schema)
 				propertyDispatcher[key] = this.createDispatcher(schema[key])
@@ -85,7 +83,6 @@ export default abstract class Handler {
 			dispatcher = this[Type.Map].bind(this, this.createDispatcher(schema.type))
 		}
 
-		console.log("Add dispatcher reference", reference)
 		this.dispatchers[reference] = dispatcher
 		return dispatcher	
 	}

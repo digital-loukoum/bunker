@@ -149,11 +149,8 @@ start("Bunker", async function({stage, same}) {
 			"Circular reference": c,
 		})) {
 			const schema = guessSchema(c)
-			console.log("1. Schema", schema)
 			const buffer = bunker(value)
-			console.log("2. Buffer", buffer)
 			const result = debunker(buffer)
-			console.log("3. Result", result)
 			same(value, result, name)
 		}
 	}

@@ -33,9 +33,7 @@ export default abstract class Reader extends Handler {
 
 	[Type.Any] = () => {
 		const schema = this.readSchema()
-		console.log("[Read] Schema read:", schema)
 		const dispatch = this.createDispatcher(schema)
-		console.log("[Read] Dispatcher created")
 		return dispatch()
 	}
 
@@ -51,7 +49,6 @@ export default abstract class Reader extends Handler {
 		if (this[Type.Character]() == Type.Reference) {
 			const reference = this[Type.PositiveInteger]()
 			this.reference = this.references[reference]
-			console.log("Read reference!", reference, "of", this.references)
 			return true
 		}
 		return false
@@ -59,7 +56,6 @@ export default abstract class Reader extends Handler {
 	
 	[Type.Object] = (dispatchProperty: PropertyDispatcher) => {
 		if (this[Type.Reference]()) return this.reference
-		console.log("Read object")
 		const object: Record<string, any> = {}
 		this.references.push(object)
 		for (const key in dispatchProperty)
@@ -122,7 +118,6 @@ export default abstract class Reader extends Handler {
 			
 			case Type.Reference: {
 				const reference = this[Type.PositiveInteger]()
-				console.log("Read schema reference!", reference, this.schemaReferences[reference])
 				return referenceTo(this.schemaReferences[reference])
 			}
 
@@ -157,14 +152,11 @@ export default abstract class Reader extends Handler {
 			}
 
 			case Type.Object: {
-				console.log("Read schema object!")
 				const schema: Schema = {}
 				this.schemaReferences.push(schema)
 				while (!this.expectCharacter(ByteIndicator.stop)) {
 					const key = this[Type.String]()
-					console.log("key", key)
 					schema[key] = this.readSchema()
-					console.log("value", schema[key])
 				}
 				return schema
 			}
