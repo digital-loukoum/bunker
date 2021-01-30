@@ -7,7 +7,6 @@ import {
 } from '../src'
 import {
 	bunkerFile,
-	bunkerFile2,
 } from '../src/node'
 import { formatSize, formatTime } from './formatters'
 import Table from 'cli-table'
@@ -17,6 +16,7 @@ import * as msgpack from '@msgpack/msgpack'
 import notepack from 'notepack.io'
 import { performance } from 'perf_hooks'
 import Schema from '../src/Schema'
+import chalk from 'chalk'
 
 import samples from '../samples'
 
@@ -27,7 +27,7 @@ async function benchmark() {
 		'bunker': (value: any) => bunker(value),
 		'bunker (with schema)': (value: any, schema: Schema) => bunker(value, schema),
 		'notepack': (value: any) => notepack.encode(value),
-		'msgpack': (value: any) => notepack.encode(value),
+		'msgpack': (value: any) => msgpack.encode(value),
 	}
 	
 	const inputs = []
@@ -78,8 +78,11 @@ async function benchmark() {
 		const timeRow = [trial.replace(/\.[^/.]+$/, "")]
 		for (const challenger in results[trial]) {
 			if (challenger == 'fastest') continue
-			const speed = results[trial][challenger]
-			timeRow.push(~~speed + ' ops/s')
+			let speed = results[trial][challenger]
+			speed = Intl.NumberFormat().format(~~speed) + ' ops/s'
+			if (challenger == results[trial].fastest)
+				speed = chalk.bold.green(speed)
+			timeRow.push(speed)
 		}
 		timeTable.push(timeRow)
 	}

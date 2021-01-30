@@ -39,8 +39,8 @@ export default abstract class Writer extends Handler {
 			this[Type.PositiveInteger](index)
 			return true
 		}
-		this[Type.Character](ByteIndicator.object)
 		this.references.push(object)
+		this[Type.Character](ByteIndicator.object)
 		return false
 	}
 
