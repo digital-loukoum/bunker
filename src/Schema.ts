@@ -32,9 +32,9 @@ export type SchemaObject = { [key: string]: Schema }
 
 // Reference
 export class ReferenceTo {
-	constructor(public link: Schema) {}
+	constructor(public reference: number) {}
 }
-export const referenceTo = (link: Schema) => new ReferenceTo(link)
+export const referenceTo = (reference: number) => new ReferenceTo(reference)
 
 // Record
 export class RecordOf {

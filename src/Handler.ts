@@ -49,8 +49,7 @@ export default abstract class Handler {
 		if (isPrimitive(schema)) return this[schema]
 		if (schema.constructor == Nullable) return this[Type.Nullable].bind(this, this.createDispatcher(schema.type))
 		if (schema.constructor == ReferenceTo) {
-			const reference = this.schemaReferences.indexOf(schema.link)
-			return (value?: any) => this.dispatchers[reference](value)
+			return (value?: any) => this.dispatchers[schema.reference](value)
 		}
 
 		const reference = this.dispatchers.length++

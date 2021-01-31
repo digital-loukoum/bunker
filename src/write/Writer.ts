@@ -106,7 +106,7 @@ export default abstract class Writer extends Handler {
 		}
 		else if (schema.constructor == ReferenceTo) {
 			this[Type.Character](Type.Reference)
-			this[Type.PositiveInteger](this.schemaReferences.indexOf(schema.link))
+			this[Type.PositiveInteger](schema.reference)
 		}
 		else if (schema.constructor == Nullable) {
 			this[Type.Character](Type.Nullable)

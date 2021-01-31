@@ -25,7 +25,7 @@ export default {
 	one: integer,
 	references: {
 		o,
-		alias: referenceTo(o),
+		alias: referenceTo(2),
 	},
 	arrayOfIntegers: arrayOf(integer),
 	arrayOfNullableIntegers: arrayOf(nullable(integer)),
@@ -51,4 +51,3 @@ export default {
 	arrayWithProperties: arrayOf(integer, { name: string, working: boolean }),
 	nested: { name: string, strength: integer }
 }
-

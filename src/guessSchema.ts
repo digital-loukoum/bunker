@@ -11,7 +11,7 @@ import joinSchemas from './joinSchemas.js'
 
 
 // return a bunker schema from the result of a `typeof`
-const schemaFromType: Record<string, (value: any, cache: WeakMap<Object, Schema>) => Schema> = {
+const schemaFromType: Record<string, (value: any, cache: Array<Object>) => Schema> = {
 	undefined: () => Type.Null,
 	number: (value: number) => Number.isInteger(value) ? Type.Integer : Type.Number,
 	bigint: () => Type.BigInteger,
@@ -22,13 +22,13 @@ const schemaFromType: Record<string, (value: any, cache: WeakMap<Object, Schema>
 		else if (object instanceof Date) return Type.Date
 		else if (object instanceof RegExp) return Type.RegExp
 
-		const cached = cache.get(object)
-		if (cached) return referenceTo(cached)
+		const reference = cache.indexOf(object)
+		if (~reference) return referenceTo(reference)
 		let schema: Schema
 
 		if (Array.isArray(object)) {
 			schema = arrayOf()
-			cache.set(object, schema)
+			cache.push(object)
 			let type: Schema = Type.Unknown
 			const otherProperties: Schema = {}
 			let hasOtherProperties = false
@@ -51,7 +51,7 @@ const schemaFromType: Record<string, (value: any, cache: WeakMap<Object, Schema>
 
 		else if (object instanceof Set) {
 			schema = setOf(Type.Any)
-			cache.set(object, schema)
+			cache.push(object)
 			let type: Schema = Type.Unknown
 			for (const value of object) {
 				if (typeof value == 'function') throw `Cannot bunker function '${value.name}' from set`
@@ -62,7 +62,7 @@ const schemaFromType: Record<string, (value: any, cache: WeakMap<Object, Schema>
 
 		else if (object instanceof Map) {
 			schema = mapOf(Type.Any)
-			cache.set(object, schema)
+			cache.push(object)
 			let type: Schema = Type.Unknown
 			for (const [key, value] of object.entries()) {
 				if (typeof key == 'function') throw `Cannot bunker key function '${key.name}' from map`
@@ -74,7 +74,7 @@ const schemaFromType: Record<string, (value: any, cache: WeakMap<Object, Schema>
 
 		else {  // regular object
 			schema = {}
-			cache.set(object, schema)
+			cache.push(object)
 			fillSchemaObject(object, schema, cache)
 		}
 
@@ -84,7 +84,7 @@ const schemaFromType: Record<string, (value: any, cache: WeakMap<Object, Schema>
 
 
 // fill a schema object from an object
-function fillSchemaObject(object: Record<string, any>, schema: SchemaObject, cache: WeakMap<Object, Schema>) {
+function fillSchemaObject(object: Record<string, any>, schema: SchemaObject, cache: Array<Object>) {
 	for (const key in object) {
 		if (typeof object[key] != 'function') {
 			schema[key] = guessSchema(object[key], cache)
@@ -94,7 +94,7 @@ function fillSchemaObject(object: Record<string, any>, schema: SchemaObject, cac
 
 
 // guess the bunker schema of any value
-export default function guessSchema(value: string | number | Object | boolean | bigint, cache = new WeakMap<Object, Schema>()): Schema {
+export default function guessSchema(value: string | number | Object | boolean | bigint, cache = new Array<Object>()): Schema {
 	if (typeof value == 'function')
 		throw `Cannot serialize a function as bunker data`
 	return schemaFromType[typeof value](value, cache)

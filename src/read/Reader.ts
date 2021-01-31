@@ -120,7 +120,7 @@ export default abstract class Reader extends Handler {
 			
 			case Type.Reference: {
 				const reference = this[Type.PositiveInteger]()
-				return referenceTo(this.schemaReferences[reference])
+				return referenceTo(reference)
 			}
 
 			case Type.Array: {
