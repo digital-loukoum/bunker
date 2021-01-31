@@ -6,7 +6,6 @@ import {
 } from '../src'
 import {
 	bunkerFile,
-	bunkerFile2,
 	debunkerFile,
 } from '../src/node'
 import Type from '../src/Type'
@@ -22,14 +21,6 @@ start("Bunker node API", async function({stage, same}) {
 	for (const [name, value] of Object.entries(samples)) {
 		const filename = `test/output/${name}`
 		await bunkerFile(filename, value)
-		const result = await debunkerFile(filename)
-		same(value, result, name)
-	}
-
-	stage("Write file using double-buffering")
-	for (const [name, value] of Object.entries(samples)) {
-		const filename = `test/output/(doubleBuffering) ${name}`
-		await bunkerFile2(filename, value)
 		const result = await debunkerFile(filename)
 		same(value, result, name)
 	}
