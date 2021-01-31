@@ -4,8 +4,10 @@ import Schema, {
 	arrayOf,
 	ArrayOf,
 	setOf,
+	SetOf,
 	referenceTo,
 	SchemaObject,
+	MapOf,
 } from './Schema.js'
 import joinSchemas from './joinSchemas.js'
 
@@ -58,6 +60,9 @@ const schemaFromType: Record<string, (value: any, cache: Array<Object>) => Schem
 				type = joinSchemas(type, guessSchema(value, cache))
 			}
 			schema.type = type
+			let properties: SchemaObject = {}
+			if (fillSchemaObject(object, properties, cache))
+				(schema as SetOf).properties = properties
 		}
 
 		else if (object instanceof Map) {
@@ -70,6 +75,9 @@ const schemaFromType: Record<string, (value: any, cache: Array<Object>) => Schem
 				type = joinSchemas(type, guessSchema(value, cache))
 			}
 			schema.type = type
+			let properties: SchemaObject = {}
+			if (fillSchemaObject(object, properties, cache))
+				(schema as MapOf).properties = properties
 		}
 
 		else {  // regular object
@@ -85,11 +93,14 @@ const schemaFromType: Record<string, (value: any, cache: Array<Object>) => Schem
 
 // fill a schema object from an object
 function fillSchemaObject(object: Record<string, any>, schema: SchemaObject, cache: Array<Object>) {
+	let hasProperties = false
 	for (const key in object) {
 		if (typeof object[key] != 'function') {
+			hasProperties = true
 			schema[key] = guessSchema(object[key], cache)
 		}
 	}
+	return hasProperties
 }
 
 

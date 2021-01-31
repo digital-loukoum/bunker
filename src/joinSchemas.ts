@@ -77,6 +77,9 @@ export default function joinSchemas(a: Schema, b: Schema): Schema {
 		/* Join sets */
 		else if (a.constructor == SetOf && thenIsSet(b)) {
 			joint = setOf(joinSchemas(a.type, b.type))
+			if (a.properties || b.properties) {
+				(joint as SetOf).properties = joinSchemas(a.properties || {}, b.properties || {}) as SchemaObject
+			}
 		}
 		/* Join maps */
 		else if (a.constructor == MapOf && thenIsMap(b)) {
@@ -84,6 +87,9 @@ export default function joinSchemas(a: Schema, b: Schema): Schema {
 			const keys: string[] =  ([] as string[]).concat(a.keys || [])
 			b.keys?.forEach(key => keys.includes(key) || keys.push(key))
 			joint = mapOf(jointType, undefined, keys)
+			if (a.properties || b.properties) {
+				(joint as SetOf).properties = joinSchemas(a.properties || {}, b.properties || {}) as SchemaObject
+			}
 		}
 	}
 	

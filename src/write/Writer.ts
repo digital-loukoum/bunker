@@ -3,6 +3,7 @@ import ByteIndicator from '../ByteIndicator.js'
 import Handler from '../Handler.js'
 import Schema, {
 	isPrimitive,
+	isTuple,
 	Nullable,
 	ArrayOf,
 	thenIsObject,
@@ -74,6 +75,13 @@ export default abstract class Writer extends Handler {
 			dispatchProperty[key](object[key])
 	}
 	
+	[Type.Tuple] = (dispatchers: Dispatcher[], tuple: Array<any>) => {
+		if (this[Type.Reference](tuple)) return
+		for (let i = 0; i < dispatchers.length; i++) {
+			dispatchers[i](tuple[i])
+		}
+	}
+	
 	[Type.Record] = (dispatchElement: Dispatcher, object: Record<string, any>) => {
 		if (this[Type.Reference](object)) return
 		this[Type.PositiveInteger](Object.keys(object).length)
@@ -92,20 +100,24 @@ export default abstract class Writer extends Handler {
 			dispatchProperty[key](array[key as any])
 	}
 	
-	[Type.Set] = (dispatchElement: Dispatcher, set: Set<any>) => {
+	[Type.Set] = (dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher, set: Set<any>) => {
 		if (this[Type.Reference](set)) return
 		this[Type.PositiveInteger](set.size)
 		for (const element of set.values())
 			dispatchElement(element)
+		for (const key in dispatchProperty)
+			dispatchProperty[key]((set as any)[key])
 	}
 	
-	[Type.Map] = (dispatchElement: Dispatcher, map: Map<string, any>) => {
+	[Type.Map] = (dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher, map: Map<string, any>) => {
 		if (this[Type.Reference](map)) return
 		this[Type.PositiveInteger](map.size)
 		for (const [key, value] of map.entries()) {
 			this[Type.String](key)
 			dispatchElement(value)
 		}
+		for (const key in dispatchProperty)
+			dispatchProperty[key]((map as any)[key])
 	}
 
 	writeSchema(schema: Schema) {
@@ -132,13 +144,21 @@ export default abstract class Writer extends Handler {
 				this.writeSchema(schema.type)
 				this.writeSchema(schema.properties || {})
 			}
+			else if (isTuple(schema)) {
+				this[Type.Character](Type.Tuple)
+				this[Type.PositiveInteger](schema.length)
+				for (const element of schema)
+					this.writeSchema(element)
+			}
 			else if (schema.constructor == SetOf) {
 				this[Type.Character](Type.Set)
 				this.writeSchema(schema.type)
+				this.writeSchema(schema.properties || {})
 			}
 			else if (schema.constructor == MapOf) {
 				this[Type.Character](Type.Map)
 				this.writeSchema(schema.type)
+				this.writeSchema(schema.properties || {})
 			}
 			else if (thenIsObject(schema)) {  // regular object
 				this[Type.Character](Type.Object)

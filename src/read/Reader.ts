@@ -70,6 +70,16 @@ export default abstract class Reader extends Handler {
 		return object
 	}
 
+	[Type.Tuple] = (dispatchers: Dispatcher[]) => {
+		if (this[Type.Reference]()) return this.reference
+		const tuple: Array<any> = []
+		this.references.push(tuple)
+		for (let i = 0; i < dispatchers.length; i++) {
+			tuple[i] = dispatchers[i]()
+		}
+		return tuple
+	}
+
 	[Type.Record] = (dispatchElement: Dispatcher) => {
 		if (this[Type.Reference]()) return this.reference
 		const length = this[Type.PositiveInteger]()
@@ -94,17 +104,19 @@ export default abstract class Reader extends Handler {
 		return array
 	}
 	
-	[Type.Set] = (dispatchElement: Dispatcher) => {
+	[Type.Set] = (dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher) => {
 		if (this[Type.Reference]()) return this.reference
 		const length = this[Type.PositiveInteger]()
 		const set = new Set
 		this.references.push(set)
 		for (let i = 0; i < length; i++)
 			set.add(dispatchElement())
+		for (const key in dispatchProperty)
+			(set as any)[key] = dispatchProperty[key]()
 		return set
 	}
 	
-	[Type.Map] = (dispatchElement: Dispatcher) => {
+	[Type.Map] = (dispatchElement: Dispatcher, dispatchProperty: PropertyDispatcher) => {
 		if (this[Type.Reference]()) return this.reference
 		const length = this[Type.PositiveInteger]()
 		const map: Map<string, any> = new Map
@@ -113,6 +125,8 @@ export default abstract class Reader extends Handler {
 			const key = this[Type.String]()
 			map.set(key, dispatchElement())
 		}
+		for (const key in dispatchProperty)
+			(map as any)[key] = dispatchProperty[key]()
 		return map
 	}
 
@@ -136,18 +150,28 @@ export default abstract class Reader extends Handler {
 				return schema
 			}
 
+			case Type.Tuple: {
+				const length = this[Type.PositiveInteger]()
+				const schema = new Array<Schema>(length)
+				this.schemaReferences.push(schema)
+				for (let i = 0; i < length; i++) {
+					schema[i] = this.readSchema()
+				}
+				return schema
+			}
+
 			case Type.Record: {
 				const schema = recordOf()
 				this.schemaReferences.push(schema)
 				schema.type = this.readSchema()
 				return schema
-
 			}
 
 			case Type.Set: {
 				const schema = setOf()
 				this.schemaReferences.push(schema)
 				schema.type = this.readSchema()
+				schema.properties = this.readSchema() as SchemaObject
 				return schema
 			}
 
@@ -155,6 +179,7 @@ export default abstract class Reader extends Handler {
 				const schema = mapOf()
 				this.schemaReferences.push(schema)
 				schema.type = this.readSchema()
+				schema.properties = this.readSchema() as SchemaObject
 				return schema
 			}
 

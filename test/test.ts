@@ -9,7 +9,22 @@ import {
 	debunkerFile,
 } from '../src/node'
 import Type from '../src/Type'
-import { recordOf, nullable } from '../src/Schema'
+import {
+	recordOf,
+	nullable,
+	arrayOf,
+	setOf,
+	mapOf,
+	integer,
+	string,
+	any,
+	date,
+	boolean,
+	nil,
+	number,
+	regExp,
+	referenceTo,
+} from '../src/Schema'
 
 import sample from './sample'
 import sampleSchemaShouldBe from './sampleSchemaShouldBe'
@@ -151,6 +166,27 @@ start("Bunker", async function({stage, same}) {
 			}
 		}
 	}
+
+	stage('Tuples')
+	{
+		const value = {
+			tuple: ["Hercule", 121],
+			array: ["Hercule", 121],
+			arrayOfTuples: [
+				["Foo", 1],
+				["Bar", 2],
+				["Zabu", 12],
+			]
+		}
+		const schema = {
+			tuple: [string, integer],
+			array: arrayOf(any),
+			arrayOfTuples: arrayOf([string, integer]),
+		}
+		const buffer = bunker(value, schema)
+		const result = debunker(buffer)
+		same(value, result, "Basic tuple test")
+}
 
 	stage('Samples')
 	for (const [name, value] of Object.entries(samples)) {

@@ -15,6 +15,7 @@ enum Type {
 	Nullable,
 	Reference,
 	Object,
+	Tuple,
 	Record,
 	Array,
 	Set,

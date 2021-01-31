@@ -9,6 +9,7 @@ type Schema =
 	| SetOf
 	| Nullable
 	| ReferenceTo
+	| SchemaTuple
 export default Schema
 
 /* --- Primitives --- */
@@ -29,6 +30,9 @@ export const nil = Type.Null
 /* --- Constructible types --- */
 // Object
 export type SchemaObject = { [key: string]: Schema }
+
+// Tuple
+export type SchemaTuple = Schema[]
 
 // Reference
 export class ReferenceTo {
@@ -98,7 +102,11 @@ export const isPrimitive = (schema: Schema): schema is Type =>
 export const isObject = (schema: Schema): schema is SchemaObject =>
 	schema.constructor == Object
 
+export const isTuple = (schema: Schema): schema is SchemaTuple =>
+	schema.constructor == Array
+
 export const thenIsObject = (_: Schema): _ is SchemaObject => true
+export const thenIsTuple = (_: Schema): _ is SchemaTuple => true
 export const thenIsRecord = (_: Schema): _ is RecordOf => true
 export const thenIsArray = (_: Schema): _ is ArrayOf => true
 export const thenIsSet = (_: Schema): _ is SetOf => true
