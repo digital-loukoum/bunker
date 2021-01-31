@@ -45,6 +45,11 @@ export default abstract class Reader extends Handler {
 		}
 	}
 
+	[Type.StringReference] = () => {
+		const reference = this[Type.PositiveInteger]()
+		return this.stringReferences[reference]
+	}
+
 	[Type.Reference] = () => {
 		if (this[Type.Character]() == Type.Reference) {
 			const reference = this[Type.PositiveInteger]()

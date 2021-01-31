@@ -44,6 +44,14 @@ export default abstract class Writer extends Handler {
 		return false
 	}
 
+	[Type.StringReference] = (string: string): boolean => {
+		const reference = this.stringReferences.indexOf(string)
+		if (reference == -1) return false
+		this[Type.Character](ByteIndicator.stringReference)
+		this[Type.PositiveInteger](reference)
+		return true
+	}
+
 	[Type.Any] = (value: any, schema = guessSchema(value)) => {
 		this.writeSchema(schema)
 		const dispatch = this.createDispatcher(schema)
@@ -140,6 +148,6 @@ export default abstract class Writer extends Handler {
 				}
 				this[Type.Character](ByteIndicator.stop)  // end of object
 			}
-			}
+		}
 	}
 }

@@ -3,6 +3,7 @@ enum ByteIndicator {
 	undefined,
 	defined,
 	object,
+	stringReference = 0xF8,
 	stop = 255,
 }
 

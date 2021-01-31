@@ -9,6 +9,7 @@ enum Type {
 	BigInteger,
 	Number,
 	String,
+	StringReference,
 	RegExp,
 	Date,
 	Nullable,

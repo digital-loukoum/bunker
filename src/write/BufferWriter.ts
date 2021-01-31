@@ -97,11 +97,13 @@ export default class BufferWriter extends Writer {
 	};
 
 	[Type.String] = (value: string) => {
-		const encoded = this.encode(value)
-		this.incrementSizeBy(encoded.byteLength + 1)
-		this.buffer.set(encoded, this.size)
-		this.size += encoded.byteLength
-		this.view.setUint8(this.size++, 0)
+		if (this[Type.StringReference](value) == false) {
+			const encoded = this.encode(value)
+			this.incrementSizeBy(encoded.byteLength + 1)
+			this.buffer.set(encoded, this.size)
+			this.size += encoded.byteLength
+			this.view.setUint8(this.size++, 0)
+		}
 	}
 
 	[Type.RegExp] = (value: RegExp) => {

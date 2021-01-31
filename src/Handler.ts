@@ -12,6 +12,7 @@ export default abstract class Handler {
 	protected references: Object[] = []  // list of all objects that have been read. The index is the reference
 	protected schemaReferences: Schema[] = []
 	protected dispatchers: Dispatcher[] = []
+	protected stringReferences: string[] = []
 
 	protected [Type.Unknown] = () => {}
 	abstract [Type.Null]: Dispatcher
@@ -24,6 +25,7 @@ export default abstract class Handler {
 	abstract [Type.BigInteger]: Dispatcher
 	abstract [Type.Date]: Dispatcher
 	abstract [Type.String]: Dispatcher
+	abstract [Type.StringReference]: Dispatcher
 	abstract [Type.RegExp]: Dispatcher
 	abstract [Type.Nullable]: Dispatcher
 	abstract [Type.Reference]: Dispatcher
@@ -34,11 +36,15 @@ export default abstract class Handler {
 	abstract [Type.Map]: Dispatcher
 
 	decode(data: Uint8Array, begin: number, end: number) {
-		return decode(data, begin, end)
+		const decoded = decode(data, begin, end)
+		this.stringReferences.push(decoded)
+		return decoded
 	}
 
 	encode(string: string) {
-		return encode(string)
+		const encoded = encode(string)
+		this.stringReferences.push(string)
+		return encoded
 	}
 
 	// private dispatchSchemaReference(reference: number, value: any) {

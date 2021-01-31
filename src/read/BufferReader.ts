@@ -1,5 +1,6 @@
 import Type from '../Type'
 import Reader from './Reader'
+import ByteIndicator from '../ByteIndicator'
 
 export default class BufferReader extends Reader {
 	private view = new DataView(this.buffer.buffer)
@@ -15,12 +16,15 @@ export default class BufferReader extends Reader {
 	[Type.Null] = () => this[Type.Character]() ? undefined : null;
 	[Type.Boolean] = () => !!this[Type.Character]();
 	[Type.Character] = () => this.view.getUint8(this.cursor++);
+	[Type.RegExp] = () => new RegExp(this[Type.String](), this[Type.String]());
+
 	[Type.String] = () => {
+		if (this.expectCharacter(ByteIndicator.stringReference))
+			return this[Type.StringReference]()
 		const begin = this.cursor
 		while (this.buffer[this.cursor]) this.cursor++;
 		return this.decode(this.buffer, begin, this.cursor++)
 	};
-	[Type.RegExp] = () => new RegExp(this[Type.String](), this[Type.String]());
 
 	[Type.Number] = () => {
 		const number = this.view.getFloat64(this.cursor)
