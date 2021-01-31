@@ -22,8 +22,8 @@ import samples from '../samples'
 
 export type Comparison = {
 	title?: string
-	challengers: Record<string, (...args: any[]) => any>
 	inputs: Record<string, any>
+	challengers: Record<string, (...args: any[]) => any>
 	sort?: (a: any, b: any) => boolean
 	format?: (a: any) => string
 	apply?: (a: any) => any
@@ -39,18 +39,18 @@ async function compare(comparison: Comparison) {
 	
 	// we collect the results
 	for (const trial in inputs) {
+		results[trial] = {}
 		let bestResult = undefined
 		let bestChallenger = undefined
 
 		for (const challenger in challengers) {
-			let run = () => challengers[challenger].apply(null, inputs[trial])
+			let run = () => challengers[challenger](inputs[trial])
 			if (apply) run = apply.bind(null, run)
 			const result = await run()
 			if (bestResult === undefined || sort(bestResult, result)) {
 				bestResult = result
 				bestChallenger = challenger
 			}
-			if (!(trial in results)) results[trial] = {}
 			results[trial][challenger] = (format || String)(result)
 		}
 		Object.defineProperty(results[trial], 'bestChallenger', {
@@ -102,16 +102,52 @@ for (const [sample, value] of Object.entries(samples)) {
 	inputs[name] = [value, guessSchema(value)]
 }
 
+const encoders = {
+	'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
+	'bunker': ([value]: any) => bunker(value),
+	'msgpack': ([value]: any) => msgpack.encode(value),
+}
+
+const encoded = {}
+for (const trial in inputs) {
+	encoded[trial] = {}
+	for (const encoder in encoders) {
+		encoded[trial][encoder] = encoders[encoder](trial)
+	}
+}
+
+compare({
+	title: "Output size",
+	inputs,
+	challengers: encoders,
+	apply: async (run: Function) => (await run()).length,
+	format: (value: number) => Intl.NumberFormat().format(value) + ' o',
+	sort: (a, b) => a > b,
+})
+
 compare({
 	title: "Encoding speed",
-	challengers: {
-		'json': (value: any) => Buffer.from(JSON.stringify(value)),
-		'bunker': (value: any) => bunker(value),
-		'bunker (with schema)': (value: any, schema: Schema) => bunker(value, schema),
-		'notepack': (value: any) => notepack.encode(value),
-		'msgpack': (value: any) => msgpack.encode(value),
-	},
 	inputs,
+	challengers: {
+		'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
+		'bunker': ([value]: any) => bunker(value),
+		'bunker (with schema)': ([value, schema]: [any, Schema]) => bunker(value, schema),
+		'notepack': ([value]: any) => notepack.encode(value),
+		'msgpack': ([value]: any) => msgpack.encode(value),
+	},
+	format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
+	apply: benchmark,
+})
+
+compare({
+	title: "Decoding speed",
+	inputs: encoded,
+	challengers: {
+		'json': (encoded: any) => JSON.parse(encoded.json.toString()),
+		'bunker': (encoded: any) => debunker(encoded.bunker),
+		'notepack': (encoded: any) => notepack.decode(encoded.msgpack),
+		'msgpack': (encoded: any) => msgpack.decode(encoded.msgpack),
+	},
 	format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
 	apply: benchmark,
 })
