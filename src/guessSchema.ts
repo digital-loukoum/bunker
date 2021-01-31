@@ -11,7 +11,7 @@ import joinSchemas from './joinSchemas.js'
 
 
 // return a bunker schema from the result of a `typeof`
-const schemaFromType: Record<string, (value: any, cache: Map<Object, Schema>) => Schema> = {
+const schemaFromType: Record<string, (value: any, cache: WeakMap<Object, Schema>) => Schema> = {
 	undefined: () => Type.Null,
 	number: (value: number) => Number.isInteger(value) ? Type.Integer : Type.Number,
 	bigint: () => Type.BigInteger,
@@ -84,7 +84,7 @@ const schemaFromType: Record<string, (value: any, cache: Map<Object, Schema>) =>
 
 
 // fill a schema object from an object
-function fillSchemaObject(object: Record<string, any>, schema: SchemaObject, cache: Map<Object, Schema>) {
+function fillSchemaObject(object: Record<string, any>, schema: SchemaObject, cache: WeakMap<Object, Schema>) {
 	for (const key in object) {
 		if (typeof object[key] != 'function') {
 			schema[key] = guessSchema(object[key], cache)
@@ -94,7 +94,7 @@ function fillSchemaObject(object: Record<string, any>, schema: SchemaObject, cac
 
 
 // guess the bunker schema of any value
-export default function guessSchema(value: string | number | Object | boolean | bigint, cache = new Map<Object, Schema>()): Schema {
+export default function guessSchema(value: string | number | Object | boolean | bigint, cache = new WeakMap<Object, Schema>()): Schema {
 	if (typeof value == 'function')
 		throw `Cannot serialize a function as bunker data`
 	return schemaFromType[typeof value](value, cache)
