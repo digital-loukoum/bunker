@@ -17,6 +17,10 @@ import notepack from 'notepack.io'
 import { performance } from 'perf_hooks'
 import Schema from '../src/Schema'
 import chalk from 'chalk'
+import { deflate, unzip as inflate } from 'zlib'
+import { promisify } from 'util'
+const zip = promisify(deflate)
+const unzip = promisify(inflate)
 
 import samples from '../samples'
 
@@ -24,7 +28,7 @@ export type Comparison = {
 	title?: string
 	inputs: Record<string, any>
 	challengers: Record<string, (...args: any[]) => any>
-	sort?: (a: any, b: any) => boolean
+	sort?: (a: number, b: number) => boolean
 	format?: (a: any) => string
 	apply?: (a: any) => any
 }
@@ -35,7 +39,7 @@ export type Comparison = {
 async function compare(comparison: Comparison) {
 	let { title, challengers, inputs, sort, format, apply } = comparison
 	sort ??= (a: number, b: number) => a < b
-	const results: Record<string, Record<string, string>> = {}
+	const results: Record<string, Record<string, number> & { bestChallenger?: string }> = {}
 	
 	// we collect the results
 	for (const trial in inputs) {
@@ -51,7 +55,7 @@ async function compare(comparison: Comparison) {
 				bestResult = result
 				bestChallenger = challenger
 			}
-			results[trial][challenger] = (format || String)(result)
+			results[trial][challenger] = result
 		}
 		Object.defineProperty(results[trial], 'bestChallenger', {
 			enumerable: false,
@@ -67,12 +71,46 @@ async function compare(comparison: Comparison) {
 		const row = [trial.replace(/\.[^/.]+$/, "")]
 
 		for (const challenger in results[trial]) {
-			let result = results[trial][challenger]
+			let result = (format || String)(results[trial][challenger])
 			if (challenger == results[trial].bestChallenger)
 				result = chalk.bold.green(result)
 			row.push(result)
 		}
 		table.push(row)
+	}
+
+	// we add the average row
+	{
+		const averageRow = [chalk.bold.blue('Average')]
+		const trialsCount = Object.keys(results).length
+		const format = (value: number) => chalk.bold(Intl.NumberFormat().format(~~(value * 100)) + ' %')
+		let bestChallengerIndex = 0
+		let challengerIndex = 1
+		let bestAverage = 1
+		let firstChallenger: undefined | string = undefined
+
+		for (const challenger in challengers) {
+			if (firstChallenger === undefined) {
+				firstChallenger = challenger
+				averageRow.push(format(1))
+				continue
+			}
+
+			let sum = 0
+			for (const trial in results) {
+				sum += results[trial][challenger] / results[trial][firstChallenger]
+			}
+			const average = sum / trialsCount
+			if (sort(bestAverage, average)) {
+				bestAverage = average
+				bestChallengerIndex = challengerIndex
+			}
+			averageRow.push(format(average))
+			challengerIndex++
+		}
+
+		averageRow[bestChallengerIndex + 1] = chalk.bold.green(averageRow[bestChallengerIndex + 1])
+		table.push(averageRow)
 	}
 	
 	console.log(table.toString())
@@ -95,59 +133,63 @@ async function benchmark(fn: Function, iterations = 10000) {
 	return operations / (time - start) * 1000
 }
 
-
-const inputs = {}
-for (const [sample, value] of Object.entries(samples)) {
-	const name = sample.replace(/\.[^/.]+$/, "")
-	inputs[name] = [value, guessSchema(value)]
-}
-
-const encoders = {
-	'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
-	'bunker': ([value]: any) => bunker(value),
-	'msgpack': ([value]: any) => msgpack.encode(value),
-}
-
-const encoded = {}
-for (const trial in inputs) {
-	encoded[trial] = {}
-	for (const encoder in encoders) {
-		encoded[trial][encoder] = encoders[encoder](trial)
++async function() {
+	const inputs = {}
+	for (const [sample, value] of Object.entries(samples)) {
+		const name = sample.replace(/\.[^/.]+$/, "")
+		inputs[name] = [value, guessSchema(value)]
 	}
-}
-
-compare({
-	title: "Output size",
-	inputs,
-	challengers: encoders,
-	apply: async (run: Function) => (await run()).length,
-	format: (value: number) => Intl.NumberFormat().format(value) + ' o',
-	sort: (a, b) => a > b,
-})
-
-compare({
-	title: "Encoding speed",
-	inputs,
-	challengers: {
+	
+	const encoders = {
 		'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
+		'zipped json': async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
 		'bunker': ([value]: any) => bunker(value),
-		'bunker (with schema)': ([value, schema]: [any, Schema]) => bunker(value, schema),
-		'notepack': ([value]: any) => notepack.encode(value),
 		'msgpack': ([value]: any) => msgpack.encode(value),
-	},
-	format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
-	apply: benchmark,
-})
-
-compare({
-	title: "Decoding speed",
-	inputs: encoded,
-	challengers: {
-		'json': (encoded: any) => JSON.parse(encoded.json.toString()),
-		'bunker': (encoded: any) => debunker(encoded.bunker),
-		'notepack': (encoded: any) => notepack.decode(encoded.msgpack),
-		'msgpack': (encoded: any) => msgpack.decode(encoded.msgpack),
-	},
-	format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
-	apply: benchmark,
-})
+	}
+	
+	const encoded = {}
+	for (const trial in inputs) {
+		encoded[trial] = {}
+		for (const encoder in encoders) {
+			encoded[trial][encoder] = await encoders[encoder](trial)
+		}
+	}
+	
+	compare({
+		title: "Output size",
+		inputs,
+		challengers: encoders,
+		apply: async (run: Function) => (await run()).length,
+		format: (value: number) => Intl.NumberFormat().format(value) + ' o',
+		sort: (a, b) => a > b,
+	})
+	
+	compare({
+		title: "Encoding speed",
+		inputs,
+		challengers: {
+			'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
+			'zipped json': async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
+			'bunker': ([value]: any) => bunker(value),
+			'bunker (with schema)': ([value, schema]: [any, Schema]) => bunker(value, schema),
+			'notepack': ([value]: any) => notepack.encode(value),
+			'msgpack': ([value]: any) => msgpack.encode(value),
+		},
+		format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
+		apply: benchmark,
+	})
+	
+	compare({
+		title: "Decoding speed",
+		inputs: encoded,
+		challengers: {
+			'json': (encoded: any) => JSON.parse(encoded.json.toString()),
+			'zipped json': async (encoded: any) => JSON.parse((await unzip(encoded['zipped json'])).toString()),
+			'bunker': (encoded: any) => debunker(encoded.bunker),
+			'notepack': (encoded: any) => notepack.decode(encoded.msgpack),
+			'msgpack': (encoded: any) => msgpack.decode(encoded.msgpack),
+		},
+		format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
+		apply: benchmark,
+	})
+}()
