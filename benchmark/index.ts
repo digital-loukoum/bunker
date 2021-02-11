@@ -83,22 +83,23 @@ async function compare(comparison: Comparison) {
 	{
 		const averageRow = [chalk.bold.blue('Average')]
 		const trialsCount = Object.keys(results).length
-		const format = (value: number) => chalk.bold(Intl.NumberFormat().format(~~(value * 100)) + ' %')
+		const format = (value: number) => chalk.bold((value >= 0 ? '+' : '') + Intl.NumberFormat().format(~~(value * 100)) + '%')
 		let bestChallengerIndex = 0
 		let challengerIndex = 1
-		let bestAverage = 1
+		let bestAverage = 0
 		let firstChallenger: undefined | string = undefined
 
 		for (const challenger in challengers) {
 			if (firstChallenger === undefined) {
 				firstChallenger = challenger
-				averageRow.push(format(1))
+				averageRow.push(format(0))
 				continue
 			}
 
 			let sum = 0
 			for (const trial in results) {
-				sum += results[trial][challenger] / results[trial][firstChallenger]
+				const ratio = results[trial][challenger] / results[trial][firstChallenger]
+				sum += ratio >= 1 ? ratio - 1 : -1 / ratio + 1
 			}
 			const average = sum / trialsCount
 			if (sort(bestAverage, average)) {
