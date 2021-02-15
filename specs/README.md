@@ -1,4 +1,4 @@
-# Bunker specifications
+# Bunker's binary format specifications
 
 Bunker is a very efficient binary data format that can be used as a replacement for Json, Csv or MessagePack. Bunker format is great for every type of data but especially shines when handling big arrays of objects.
 
@@ -21,45 +21,104 @@ This document explains the format used by Bunker to achieve great performance in
 
 The following notions are necessary to understand the bunker specifications.
 
+### Base structure
+
+Bunker data is composed of two parts: the data schema and then the data itself. Storing the schema before writing the data is the key to Bunker's efficieny. Imagine you have this object in Json:
+
+```json
+[
+  {
+    "name": "name1",
+    "company": "company1",
+    "phone": "number1"
+  },
+  {
+    "name": "name2",
+    "company": "company2",
+    "phone": "number2"
+  },
+  {
+    "name": "name3",
+    "company": "company3",
+    "phone": "number3"
+  },
+  ...etc etc...
+]
+```
+
+Then if we would write this same data using Bunker in a Json-way, it would be something like:
+
+```json
+{
+  "schema": {
+    "type": "Array",
+    "arrayOf": {
+      "name": "String",
+      "company": "String",
+      "phone": "String",
+    }
+  },
+  "data": [
+    ["name1", "company1", "number1"],
+    ["name2", "company2", "number2"],
+    ["name3", "company3", "number3"],
+    ...etc etc...
+  ]
+}
+```
+
+We can easily understand why the longer and the longer the array becomes, the better Bunker will compare to Json (or MessagePack). The keys "name", "company" and "phone" are not be repeated over and over (only once in the schema), which leads to a huge size improvement.
+
+It's the same way as Csv or Sql works - except Csv can only handle arrays of objects, while Bunker can handle any type of data. 
+
+
 ### Base enumerations
 
 The specification is based on two enumerations:
 
-- The `Type` enumeration is used to write and read the schema/
+- The `Type` enumeration is used to write and read the schema.
   ```ts
   enum Type {
-    unknown = 0x00,
-    null = 0x01,
-    any = 0x02,
-    boolean = 0x03,
-    character = 0x04,
-    integer = 0x05,
-    positiveInteger = 0x06,
-    bigInteger = 0x07,
-    number = 0x08,
-    string = 0x09,
-    stringReference = 0x0A,
-    regExp = 0x0B,
-    date = 0x0C,
-    nullable = 0x0D,
-    reference = 0x0E,
-    object = 0x0F,
-    tuple = 0x10,
-    record = 0x11,
-    array = 0x12,
-    set = 0x13,
-    map = 0x14,
+    // primitive types
+    unknown = 0,
+    any,
+    boolean,
+    character,
+    integer,
+    positiveInteger,
+    bigInteger,
+    number,
+    string,
+    regularExpression,
+    date,
+    reference,
+    // non-primitive types
+    nullable,
+    object,
+    array,
+    set,
+    tuple,
+    record,
+    map,
   }
   ```
-- The `ByteIndicator` enumeration is used to handle special use cases.
+
+- The `NullableValue` enumeration indicates if a nullable value is null, undefined, or well-defined.
   ```ts
-  enum ByteIndicator {
-    null = 0x00,
-    undefined = 0x01,
-    defined = 0x02,
-    object = 0x03,
-    reference = 0xF8,
-    stop = 0xFF,
+  enum NullableValue {
+    null = 0,
+    undefined = 1,
+    defined = 2,
+  }
+  ```
+
+  > Note: depending on the language, if the `undefined` value does not exist it can be treated as a `null`.
+
+- The constant `Byte` object stores special byte values.
+  ```ts
+  const Byte = {
+    reference = 0xF8,  // used to indicate if the value is a reference to another value
+    stop = 0xFF,  // used to indicate the end of an object definition in a schema
   }
   ```
 
@@ -127,55 +186,6 @@ Examples:
 `"的"` -> `[231, 154, 132, 0]`
 `"😋"` -> `[240, 159, 152, 139, 0]`
 
-### Schema
-
-Bunker data is composed of two parts: the data schema and then the data itself. Storing the schema before writing the data is the key to Bunker's efficieny. Imagine you have this object in Json:
-
-```json
-[
-  {
-    "name": "name1",
-    "company": "company1",
-    "phone": "number1"
-  },
-  {
-    "name": "name2",
-    "company": "company2",
-    "phone": "number2"
-  },
-  {
-    "name": "name3",
-    "company": "company3",
-    "phone": "number3"
-  },
-  ...etc etc...
-]
-```
-
-Then if we would write this same data using Bunker in a Json-way, it would be something like:
-
-```json
-{
-  "schema": {
-    "type": "Array",
-    "arrayOf": {
-      "name": "String",
-      "company": "String",
-      "phone": "String",
-    }
-  },
-  "data": [
-    ["name1", "company1", "number1"],
-    ["name2", "company2", "number2"],
-    ["name3", "company3", "number3"],
-    ...etc etc...
-  ]
-}
-```
-
-We can easily understand why the longer and the longer the array becomes, the better will be Bunker when compared to Json. The keys "name", "company" and "phone" will not be repeated with Bunker, which will lead to a huge difference in space.
-
-It's the same way as Csv or Sql works - except Csv can only handle arrays of objects, while Bunker can handle any type of data. 
 
 ### References
 
@@ -205,7 +215,10 @@ Three arrays are needed: one for object references in schema, one for object ref
 - `Primitive`
   
   The type of the primitive is written as a byte.
-  Example: for a boolean, write `Type.boolean` - which is equal to `3`.
+
+  Primitive types are: unknown, null, any, boolean, character, integer, positiveInteger, bigInteger, number, string, regExp, date and reference.
+  
+  Example: for a boolean, write `Type.boolean` - which is equal to `3`. For a character, write `Type.character`, etc...
   
   Size (in bytes): `1`
 
@@ -318,3 +331,146 @@ Three arrays are needed: one for object references in schema, one for object ref
 
 ### Encoded data specifications
 
+After the schema comes the encoded data. You no longer encode the type of the data but its value.
+
+#### Primitive values
+
+- `Character`
+
+  A character is a single byte value that goes from 0 to 255.
+
+  Size: `1`
+
+- `Unknown`
+
+  The `unknown` type is used to describe the values type of an empty array, empty set, empty map or empty record. It can be encoded in the schema but not in the data.
+
+  Size: `0` (cannot happen in encoded data)
+
+- `Boolean`
+
+  If true, write the character `1`, else write the character `0`.
+
+  Size: `1`
+
+- `Integer`
+
+  Write the integer's value as an elastic signed integer.
+
+  Size: `1+`
+
+- `PositiveInteger`
+
+  Write the integer's value as an elastic unsigned integer.
+
+  Size: `1+`
+
+- `Number`
+
+  Write the number's value as an elastic floating number.
+
+  Size: `2+`
+
+- `BigInteger`
+
+  Write the big integer's value as an elastic signed integer.
+
+  Size: `1+`
+
+- `String`
+
+  If the first byte is `ByteIndicator.reference`, then the string is a reference to a previously encountered string and the next value is a `positive integer` which indicates the index of the string in the array of encountered strings.
+
+  Size: `1 + sizeof(index)`
+
+  Else, write the string with a trailing zero at the end.
+
+  Size: `1 + sizeof(string encoded as utf-8)`
+
+  > Note: since the `ByteIndicator.reference` is a character that cannot happen in utf-8, there is no chance to mix a string with a string reference.
+
+- `RegularExpression`
+
+  Write the expression as a string, then the flags as a string.
+  
+  Size: `2+`
+
+- `Date`
+
+  Write the timestamp as an elastic signed integer.
+
+  Size: `1+`
+
+- `Reference`
+
+  Any non-primitive value or string can be a reference to a previously encountered non-primitive value or string.
+
+  > Note: empty strings should not be referenced.
+
+  Write `Byte.reference`, then the index of the object or the string in its corresponding array.
+
+  Size: `2+`
+
+#### Non-primitive values
+
+Non-primitive values are constructed from primitive values.
+
+When decoding and for each of the following types, the first byte must be checked: if it equals `Byte.reference`, then the value should be treated as a reference.
+
+- `Nullable`
+
+  First write:
+
+  - `NullableValue.null` is the value is null,
+  - or `NullableValue.undefined` is the value is undefined,
+  - or `NullableValue.defined` is the value is defined,
+
+  and then if the value is defined, write the value.
+
+  Size: `1` if null or undefined, `2+` elsewhere.
+
+- `Object`
+
+  Write the values of the object one after the other, in the same order as defined in the schema.
+
+  Size: `0+`
+
+- `Array` and `Set`
+
+  Write the length of the array as an `elastic signed integer`, then write all the array values, then the array's properties as an object.
+
+  > Note: it is important to write the length as a signed integer instead of an unsigned even if an array length is always positive, so that there is no chance to mix a length byte with a `Byte.reference` character.
+
+  Size: `0+`
+
+- `Tuple`
+
+  Write the values of the tuple one after the other, in the same order as defined in the schema.
+
+  Size: `0+`
+
+- `Record` and `Map`
+
+  Write the values of the map / record one after the other, in the same order as defined in the schema.
+
+  Then write the record or map properties as an object.
+
+  Size: `1+`
+
+
+## Implementation notes
+
+### References
+
+Let `o` be a random object. There can be two types of references:
+
+- circular references: `o.self = o`,
+- regular references: `[o, o]`.
+
+There is no choice but to use a reference when encountering a circular reference - otherwise you would create an infinite loop - but when dealing with regular references you can freely choose to repeat the data instead of inserting a reference.
+
+### String references
+
+Checking if a string has already been referenced can impact badly the encoding speed.
+
+You should compare pointers of strings instead of comparing content (not possible in every language), and if you have to compare contents, only compare small strings.
