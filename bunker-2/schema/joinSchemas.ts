@@ -1,82 +1,76 @@
 import Type from '../constants/Type'
+import Schema, {
+	isPrimitive,
+	isObject, BunkerObject,
+	nullable, isNullable,
+	array, isArray,
+	set, isSet,
+	record, isRecord,
+	map, isMap,
+} from './Schema'
+
+// join two object properties
+function joinProperties(a?: BunkerObject, b?: BunkerObject): BunkerObject | undefined {
+	if (a) return b ? joinBunkerObjects(a, b) : a
+	if (b) return a ? joinBunkerObjects(a, b) : b
+}
+
+// join two schema objects
+function joinBunkerObjects(a: BunkerObject, b: BunkerObject): BunkerObject {
+	const schema: BunkerObject = {}
+	for (const key in a)
+		schema[key] = key in b ? joinSchemas(a[key], b[key]) : nullable(a[key])
+	for (const key in b)
+		if (!(key in a))  // key exists in b but not in a
+			schema[key] = nullable(b[key])
+	return schema
+}
 
 // join two schemas into a compatible one
 export default function joinSchemas(a: Schema, b: Schema): Schema {
-	if (a == Type.null) return nullable(b)
-	if (b == Type.null) return nullable(a)
-	let joint!: Schema
+	let joint: Schema
 	let castToNullable = false
-	if (a.constructor == Nullable) {
+	if (isNullable(a)) {
 		castToNullable = true
 		a = a.type
 	}
-	if (b.constructor == Nullable) {
+	if (isNullable(b)) {
 		castToNullable = true
 		b = b.type
 	}
 
-	if (a == Type.unknown) joint = b
-	else if (b == Type.unknown) joint = a
-	else if (typeof a == 'number' || typeof b == 'number') {
+	if (a == Type.unknown) {
+		joint = b
+	}
+	else if (b == Type.unknown) {
+		joint = a
+	}
+	// -- no common constructor -> cannot join schemas
+	else if (a.constructor != b.constructor) {
+		joint = Type.any
+	}
+	// -- join primitives
+	else if (isPrimitive(a) || isPrimitive(b)) {
 		joint = a === b ? a : Type.any
+	} 
+	// -- join objects
+	else if (isObject(a) && isObject(b)) {
+		joint = joinBunkerObjects(a, b)
+	}
+	else if (isArray(a) && isArray(b)) {
+		joint = array(joinSchemas(a.type, b.type), joinProperties(a.properties, b.properties))
+	}
+	else if (isSet(a) && isSet(b)) {
+		joint = set(joinSchemas(a.type, b.type), joinProperties(a.properties, b.properties))
+	}
+	else if (isMap(a) && isMap(b)) {
+		joint = map(joinSchemas(a.type, b.type), joinProperties(a.properties, b.properties))
+	}
+	else if (isRecord(a) && isRecord(b)) {
+		joint = record(joinSchemas(a.type, b.type), joinProperties(a.properties, b.properties))
 	}
 	else {
-		// we downgrade records to regular objects
-		if (a.constructor == Object && b.constructor == RecordOf)  b = b.toObject()
-		else if (b.constructor == Object && a.constructor == RecordOf)  a = a.toObject()
-		
-		if (a.constructor != b.constructor) {
-			joint = Type.any
-		}
-
-		/* Join arrays */
-		else if (a.constructor == ArrayOf && thenIsArray(b)) {
-			joint = arrayOf(joinSchemas(a.type, b.type))
-			if (a.properties || b.properties) {
-				(joint as ArrayOf).properties = joinSchemas(a.properties || {}, b.properties || {}) as SchemaObject
-			}
-		}
-
-		/* Join object records */
-		else if (a.constructor == RecordOf && thenIsRecord(b)) {
-			const jointType: Schema = a.type && b.type ? joinSchemas(a.type, b.type) : a || b
-			const keys: string[] = a.keys ? [...a.keys] : []
-			b.keys?.forEach(key => keys.includes(key) || keys.push(key))
-			joint = recordOf(jointType, keys)
-		}
-
-		/* Join objects */
-		else if (isObject(a) && thenIsObject(b)) {
-			const schema: Schema = {}
-			for (const key in a) {
-				schema[key] = key in b ? joinSchemas(a[key], b[key]) : nullable(a[key])
-			}
-			for (const key in b) {
-				if (!(key in a)) {  // key exists in b but not in a
-					schema[key] = nullable(b[key])
-				}
-			}
-			joint = schema
-		}
-
-		/* Join sets */
-		else if (a.constructor == SetOf && thenIsSet(b)) {
-			joint = setOf(joinSchemas(a.type, b.type))
-			if (a.properties || b.properties) {
-				(joint as SetOf).properties = joinSchemas(a.properties || {}, b.properties || {}) as SchemaObject
-			}
-		}
-		
-		/* Join maps */
-		else if (a.constructor == MapOf && thenIsMap(b)) {
-			const jointType: Schema = a.type && b.type ? joinSchemas(a.type, b.type) : a || b
-			const keys: string[] =  ([] as string[]).concat(a.keys || [])
-			b.keys?.forEach(key => keys.includes(key) || keys.push(key))
-			joint = mapOf(jointType, undefined, keys)
-			if (a.properties || b.properties) {
-				(joint as SetOf).properties = joinSchemas(a.properties || {}, b.properties || {}) as SchemaObject
-			}
-		}
+		joint = Type.any
 	}
 	
 	return castToNullable ? nullable(joint) : joint

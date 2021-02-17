@@ -1,9 +1,17 @@
 import Type from '../constants/Type'
-import Schema from '../schema/index'
 import NullableValue from '../constants/NullableValue'
 import Byte from '../constants/Byte'
+import Schema, {
+	nullable,
+	reference,
+	BunkerObject,
+	isPrimitive, isObject, isArray,
+	array, BunkerArray,
+	set, BunkerSet,
+	map, BunkerMap,
+} from '../schema/Schema'
 
-export type Dispatcher<Type = any> = (value: Type) => any
+export type Dispatcher<Type = any> = (value: any) => void
 export type PropertyDispatcher = Record<string, Dispatcher> | null
 
 /**
@@ -13,11 +21,17 @@ export default abstract class Encoder {
 	references: Object[] = []
 	stringReferences: string[] = []
 	stringEncoder = new TextEncoder
-
+	
+	abstract data: any
 	abstract byte(value: number): void  // write a single byte
 	abstract bytes(value: Uint8Array): void  // write an array of bytes
 	abstract prefix(bytes: Uint8Array): void  // prefix the data with the given bytes array
-	abstract reset(): void  // reset data (but keep prefix bytes if any)
+	
+	// reset data (but keep prefix bytes if any)
+	reset() {
+		this.references.length = 0
+		this.stringReferences.length = 0
+	}  
 
 	character(value: number) {
 		this.byte(value)
@@ -121,6 +135,11 @@ export default abstract class Encoder {
 		return false
 	}
 
+	tuple(dispatchers: Dispatcher[], value: [...any]) {
+		for (let i = 0; i < dispatchers.length; i++)
+			dispatchers[i](value[i])
+	}
+
 	properties(properties: PropertyDispatcher, value: Record<string, any>) {
 		if (properties) for (const key in properties) properties[key](value[key])
 	}
@@ -157,14 +176,6 @@ export default abstract class Encoder {
 		this.properties(properties, value)
 	}
 
-	tuple(dispatchers: Dispatcher[], properties: PropertyDispatcher, value: [...any]) {
-		if (this.reference(value)) return
-		this.byte(Byte.start)
-		for (let i = 0; i < dispatchers.length; i++)
-			dispatchers[i](value[i])
-		this.properties(properties, value)
-	}
-
 	record(dispatchElement: Dispatcher, properties: PropertyDispatcher, value: Record<string, any>) {
 		if (this.reference(value)) return
 		this.positiveInteger(Object.keys(value).length)
@@ -185,7 +196,37 @@ export default abstract class Encoder {
 		this.properties(properties, map)
 	}
 
-	schema(value: Schema) {
-
+	// --- compile schema
+	compile(schema: Schema): Dispatcher {
+		if (isPrimitive(schema)) {
+			this.byte(schema)
+			// @ts-ignore [TODO]
+			return this[Type[schema]]
+		}
+		else if (isObject(schema)) {
+			this.byte(Type.object)
+			const dispatcher: Record<string, Dispatcher> = {}
+			for (const key in schema) {
+				this.string(key)
+				dispatcher[key] = this.compile(schema[key])
+			}
+			return this.object.bind(this, dispatcher)
+		}
+		else if (isArray(schema)) {
+			this.byte(Type.object)
+			const dispatcher = this.compile(schema.type)
+			const propertiesDispatcher = this.compileObject(schema.properties)
+		}
+		// else if (isArray(schema)) {
+		// 	this.byte(Type.object)
+		// 	const dispatcher: Record<string, Dispatcher> = {}
+		// 	for (const key in schema) {
+		// 		this.string(key)
+		// 		dispatcher[key] = this.compile(schema[key])
+		// 	}
+		// 	return this.object.bind(this, dispatcher)
+		// }
 	}
+
+
 }

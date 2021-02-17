@@ -15,6 +15,7 @@ export default class BufferEncoder extends Encoder {
 	}
 
 	reset() {
+		super.reset()
 		this.size = this.prefixSize
 	}
 

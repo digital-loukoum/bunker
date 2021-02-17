@@ -92,12 +92,12 @@ The specification is based on two enumerations:
     regularExpression,
     date,
     reference,
-    // non-primitive types
+    tuple,
     nullable,
+    // object types
     object,
     array,
     set,
-    tuple,
     record,
     map,
   }
@@ -401,6 +401,12 @@ After the schema comes the encoded data. You no longer encode the type of the da
 
   Size: `1+`
 
+- `Tuple`
+
+  Write the values of the tuple one after the other, in the same order as defined in the schema.
+
+  Size: `0+`
+
 - `Reference`
 
   Any non-primitive value or string can be a reference to a previously encountered non-primitive value or string.
@@ -410,12 +416,6 @@ After the schema comes the encoded data. You no longer encode the type of the da
   Write `Byte.reference`, then the index of the object or the string in its corresponding array.
 
   Size: `2+`
-
-#### Non-primitive values
-
-Non-primitive values are constructed from primitive values.
-
-When decoding and for each of the following types, the first byte must be checked: if it equals `Byte.reference`, then the value should be treated as a reference.
 
 - `Nullable`
 
@@ -428,6 +428,13 @@ When decoding and for each of the following types, the first byte must be checke
   and then if the value is defined, write the value.
 
   Size: `1` if null or undefined, `2+` elsewhere.
+
+
+#### Non-primitive values
+
+Non-primitive values are constructed from primitive values.
+
+When decoding and for each of the following types, the first byte must be checked: if it equals `Byte.reference`, then the value should be treated as a reference.
 
 - `Object`
 
@@ -443,12 +450,6 @@ When decoding and for each of the following types, the first byte must be checke
 
   Size: `0+`
 
-- `Tuple`
-
-  Write the values of the tuple one after the other, in the same order as defined in the schema.
-
-  Size: `0+`
-
 - `Record` and `Map`
 
   Write the values of the map / record one after the other, in the same order as defined in the schema.
@@ -458,19 +459,12 @@ When decoding and for each of the following types, the first byte must be checke
   Size: `1+`
 
 
-## Implementation notes
-
-### References
-
-Let `o` be a random object. There can be two types of references:
-
-- circular references: `o.self = o`,
-- regular references: `[o, o]`.
-
-There is no choice but to use a reference when encountering a circular reference - otherwise you would create an infinite loop - but when dealing with regular references you can freely choose to repeat the data instead of inserting a reference.
+## Implementation advices
 
 ### String references
 
 Checking if a string has already been referenced can impact badly the encoding speed.
 
 You should compare pointers of strings instead of comparing content (not possible in every language), and if you have to compare contents, only compare small strings.
+
+It also means two bunker files can have different sizes depending on the implementation.
