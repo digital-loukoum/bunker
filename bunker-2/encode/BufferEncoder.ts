@@ -24,6 +24,10 @@ export default class BufferEncoder extends Encoder {
 		this.size = this.prefixSize = bytes.byteLength
 	}
 
+	lockAsPrefix() {
+		this.prefixSize = this.size
+	}
+
 	incrementSizeBy(value: number) {
 		const requiredSize = this.size + value
 		if (this.capacity < requiredSize)

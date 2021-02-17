@@ -9,11 +9,6 @@ import Schema, {
 	map, isMap,
 } from './Schema'
 
-// join two object properties
-function joinProperties(a?: BunkerObject, b?: BunkerObject): BunkerObject | undefined {
-	if (a) return b ? joinBunkerObjects(a, b) : a
-	if (b) return a ? joinBunkerObjects(a, b) : b
-}
 
 // join two schema objects
 function joinBunkerObjects(a: BunkerObject, b: BunkerObject): BunkerObject {
@@ -58,16 +53,16 @@ export default function joinSchemas(a: Schema, b: Schema): Schema {
 		joint = joinBunkerObjects(a, b)
 	}
 	else if (isArray(a) && isArray(b)) {
-		joint = array(joinSchemas(a.type, b.type), joinProperties(a.properties, b.properties))
+		joint = array(joinSchemas(a.type, b.type), joinBunkerObjects(a.properties, b.properties))
 	}
 	else if (isSet(a) && isSet(b)) {
-		joint = set(joinSchemas(a.type, b.type), joinProperties(a.properties, b.properties))
+		joint = set(joinSchemas(a.type, b.type), joinBunkerObjects(a.properties, b.properties))
 	}
 	else if (isMap(a) && isMap(b)) {
-		joint = map(joinSchemas(a.type, b.type), joinProperties(a.properties, b.properties))
+		joint = map(joinSchemas(a.type, b.type), joinBunkerObjects(a.properties, b.properties))
 	}
 	else if (isRecord(a) && isRecord(b)) {
-		joint = record(joinSchemas(a.type, b.type), joinProperties(a.properties, b.properties))
+		joint = record(joinSchemas(a.type, b.type), joinBunkerObjects(a.properties, b.properties))
 	}
 	else {
 		joint = Type.any

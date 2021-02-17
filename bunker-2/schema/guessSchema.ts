@@ -38,7 +38,7 @@ export default (value: any, references: Object[] = []): Schema => {
 
 	function guessArraySchema(value: any[]): BunkerArray {
 		let type: Schema = Type.unknown
-		let properties: BunkerObject | undefined = undefined
+		let properties: BunkerObject = {}
 		let index = 0, indexes = 0
 		
 		for (let i = 0; i < value.length; i++) {
@@ -47,7 +47,6 @@ export default (value: any, references: Object[] = []): Schema => {
 		}
 		for (const key in value) {
 			if (index++ < indexes) continue  // the first keys are always the array values
-			if (!properties) properties = {}
 			properties[key] = guessSchema(value[key])
 		}
 
@@ -55,11 +54,8 @@ export default (value: any, references: Object[] = []): Schema => {
 	}
 
 	function guessPropertiesSchema(value: Record<string, any>) {
-		let properties: BunkerObject | undefined = undefined
-		for (const key in value) {
-			if (!properties) properties = {}
-			properties[key] = guessSchema(value[key])
-		}
+		let properties: BunkerObject = {}
+		for (const key in value) properties[key] = guessSchema(value[key])
 		return properties
 	}
 	

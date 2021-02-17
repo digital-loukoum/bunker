@@ -2,16 +2,21 @@ import Type from '../constants/Type'
 import NullableValue from '../constants/NullableValue'
 import Byte from '../constants/Byte'
 import Schema, {
-	nullable,
-	reference,
 	BunkerObject,
-	isPrimitive, isObject, isArray,
-	array, BunkerArray,
-	set, BunkerSet,
-	map, BunkerMap,
+	isPrimitive,
+	isObject,
+	isArray,
+	isMap,
+	isRecord,
+	isReference,
+	isTuple,
+	isSet,
+	isNullable,
 } from '../schema/Schema'
+import guessSchema from '../schema/guessSchema'
 
-export type Dispatcher<Type = any> = (value: any) => void
+export type Dispatcher = (value: any) => void
+export type ObjectDispatcher = Record<string, Dispatcher>
 export type PropertyDispatcher = Record<string, Dispatcher> | null
 
 /**
@@ -26,7 +31,8 @@ export default abstract class Encoder {
 	abstract byte(value: number): void  // write a single byte
 	abstract bytes(value: Uint8Array): void  // write an array of bytes
 	abstract prefix(bytes: Uint8Array): void  // prefix the data with the given bytes array
-	
+	abstract lockAsPrefix(): void  // lock the current data as prefix; resets will keep it alive
+
 	// reset data (but keep prefix bytes if any)
 	reset() {
 		this.references.length = 0
@@ -95,7 +101,7 @@ export default abstract class Encoder {
 	}
 
 	any(value: any) {
-		this.schema(value)(value)
+		this.compile(guessSchema(value))(value)
 	}
 	
 	regularExpression(value: RegExp) {
@@ -196,37 +202,64 @@ export default abstract class Encoder {
 		this.properties(properties, map)
 	}
 
-	// --- compile schema
+	/**
+	 * Compile a schema.
+	 * Write the schema's encoded bytes and return a dispatcher.
+	 * Execute the dispatcher with a value corresponding to the given schema
+	 * to encode it.
+	 */
 	compile(schema: Schema): Dispatcher {
 		if (isPrimitive(schema)) {
 			this.byte(schema)
 			// @ts-ignore [TODO]
-			return this[Type[schema]]
+			return this[Type[schema]].bind(this)
 		}
 		else if (isObject(schema)) {
 			this.byte(Type.object)
-			const dispatcher: Record<string, Dispatcher> = {}
-			for (const key in schema) {
-				this.string(key)
-				dispatcher[key] = this.compile(schema[key])
-			}
-			return this.object.bind(this, dispatcher)
+			return this.object.bind(this, this.compileProperties(schema))
 		}
 		else if (isArray(schema)) {
-			this.byte(Type.object)
-			const dispatcher = this.compile(schema.type)
-			const propertiesDispatcher = this.compileObject(schema.properties)
+			this.byte(Type.array)
+			return this.array.bind(this, this.compile(schema.type), this.compileProperties(schema.properties))
 		}
-		// else if (isArray(schema)) {
-		// 	this.byte(Type.object)
-		// 	const dispatcher: Record<string, Dispatcher> = {}
-		// 	for (const key in schema) {
-		// 		this.string(key)
-		// 		dispatcher[key] = this.compile(schema[key])
-		// 	}
-		// 	return this.object.bind(this, dispatcher)
-		// }
+		else if (isNullable(schema)) {
+			this.byte(Type.nullable)
+			return this.nullable.bind(this, this.compile(schema.type))
+		}
+		else if (isReference(schema)) {
+			this.byte(Type.reference)
+			this.positiveInteger(schema.reference)
+			return this.reference.bind(this)
+		}
+		else if (isSet(schema)) {
+			this.byte(Type.set)
+			return this.set.bind(this, this.compile(schema.type), this.compileProperties(schema.properties))
+		}
+		else if (isMap(schema)) {
+			this.byte(Type.map)
+			return this.map.bind(this, this.compile(schema.type), this.compileProperties(schema.properties))
+		}
+		else if (isRecord(schema)) {
+			this.byte(Type.record)
+			return this.map.bind(this, this.compile(schema.type), this.compileProperties(schema.properties))
+		}
+		else if (isTuple(schema)) {
+			this.byte(Type.tuple)
+			return this.tuple.bind(this, schema.map(type => this.compile(type)))
+		}
+		else {
+			console.error('Unkown schema type:', schema)
+			throw Error(`Unknown schema type`)
+		}
 	}
 
-
+	compileProperties(schema: BunkerObject): ObjectDispatcher {
+		const dispatcher: Record<string, Dispatcher> = {}
+		for (const key in schema) {
+			this.string(key)
+			dispatcher[key] = this.compile(schema[key])
+		}
+		this.byte(Byte.stop)
+		return dispatcher
+	}
 }
