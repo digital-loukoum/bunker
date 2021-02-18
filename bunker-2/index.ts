@@ -1,10 +1,10 @@
 import Encoder from './encode/Encoder'
 import BufferEncoder from './encode/BufferEncoder'
 import BufferDecoder from './decode/BufferDecoder'
-import Schema, { schemaBuilder as type, createSchema } from './schema/Schema'
+import Schema, { schemaBuilder, createSchema } from './schema/Schema'
 import guessSchema from './schema/guessSchema'
 
-export { Schema, guessSchema, type, createSchema }
+export { Schema, guessSchema, schemaBuilder as Type, createSchema }
 
 export function bunker(value: any, schema = guessSchema(value)) {
 	const encoder = new BufferEncoder

@@ -62,7 +62,7 @@ export default function joinSchemas(a: Schema, b: Schema): Schema {
 		joint = map(joinSchemas(a.type, b.type), joinBunkerObjects(a.properties, b.properties))
 	}
 	else if (isRecord(a) && isRecord(b)) {
-		joint = record(joinSchemas(a.type, b.type), joinBunkerObjects(a.properties, b.properties))
+		joint = record(joinSchemas(a.type, b.type))
 	}
 	else {
 		joint = Type.any

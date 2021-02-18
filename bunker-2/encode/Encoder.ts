@@ -176,38 +176,37 @@ export default abstract class Encoder {
 		this.properties(properties, value)
 	}
 
-	array(dispatchElement: Dispatcher, properties: ObjectDispatcher, value: any[]) {
+	array(dispatch: Dispatcher, properties: ObjectDispatcher, value: any[]) {
 		if (this.reference(value)) return
 		this.integer(value.length)
 		for (const element of value)
-			dispatchElement(element)
+			dispatch(element)
 		this.properties(properties, value)
 	}
 
-	set(dispatchElement: Dispatcher, properties: ObjectDispatcher, value: Set<any>) {
+	set(dispatch: Dispatcher, properties: ObjectDispatcher, value: Set<any>) {
 		if (this.reference(value)) return
 		this.integer(value.size)
 		for (const element of value)
-			dispatchElement(element)
+			dispatch(element)
 		this.properties(properties, value)
 	}
 
-	record(dispatchElement: Dispatcher, properties: ObjectDispatcher, value: Record<string, any>) {
+	record(dispatch: Dispatcher, value: Record<string, any>) {
 		if (this.reference(value)) return
 		this.positiveInteger(Object.keys(value).length)
 		for (const key in value) {
-			this.string(key)  // we  the key
-			dispatchElement(value[key])  // we  the value
+			this.string(key)
+			dispatch(value[key])
 		}
-		this.properties(properties, value)
 	}
 
-	map(dispatchElement: Dispatcher, properties: ObjectDispatcher, map: Map<string, any>) {
+	map(dispatch: Dispatcher, properties: ObjectDispatcher, map: Map<string, any>) {
 		if (this.reference(map)) return
 		this.positiveInteger(map.size)
 		for (const [key, value] of map.entries()) {
 			this.string(key)
-			dispatchElement(value)
+			dispatch(value)
 		}
 		this.properties(properties, map)
 	}
@@ -251,7 +250,7 @@ export default abstract class Encoder {
 		}
 		else if (isRecord(schema)) {
 			this.byte(Type.record)
-			return this.map.bind(this, this.compile(schema.type), this.compileProperties(schema.properties))
+			return this.record.bind(this, this.compile(schema.type))
 		}
 		else if (isTuple(schema)) {
 			this.byte(Type.tuple)

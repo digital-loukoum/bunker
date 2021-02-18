@@ -53,9 +53,9 @@ export const isSet = (type: Schema): type is BunkerSet => type.constructor == Bu
 
 // -- record
 export class BunkerRecord {
-	constructor(public type: Schema, public properties: BunkerObject) {}
+	constructor(public type: Schema) {}
 }
-export const record = (type: Schema = Type.unknown, properties: BunkerObject = {}) => new BunkerRecord(type, properties)
+export const record = (type: Schema = Type.unknown) => new BunkerRecord(type)
 export const isRecord = (type: Schema): type is BunkerRecord => type.constructor == BunkerRecord
 
 // -- map

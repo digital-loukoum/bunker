@@ -145,13 +145,13 @@ export default abstract class Decoder {
 		return dispatchProperties(object, properties)
 	}
 
-	record(dispatch: Dispatcher, properties: ObjectDispatcher): Record<string, any> {
+	record(dispatch: Dispatcher): Record<string, any> {
 		if (this.nextByteIs(Byte.reference)) return this.reference() as Record<string, any>
 		const length = this.integer()
-		const object: Record<string, any> = {}
-		this.references.push(object)
-		for (let i = 0; i < length; i++) object[this.string()] = dispatch()
-		return dispatchProperties(object, properties)
+		const record: Record<string, any> = {}
+		this.references.push(record)
+		for (let i = 0; i < length; i++) record[this.string()] = dispatch()
+		return record
 	}
 
 	array(dispatch: Dispatcher, properties: ObjectDispatcher): any[] {
@@ -207,7 +207,7 @@ export default abstract class Decoder {
 			case Type.array: return this.array.bind(this, this.compile(), this.compileProperties())
 			case Type.set: return this.set.bind(this, this.compile(), this.compileProperties())
 			case Type.map: return this.map.bind(this, this.compile(), this.compileProperties())
-			case Type.record: return this.record.bind(this, this.compile(), this.compileProperties())
+			case Type.record: return this.record.bind(this, this.compile())
 
 			case Type.tuple: {
 				const length = this.positiveInteger()

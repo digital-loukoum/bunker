@@ -1,5 +1,5 @@
 import start from 'fartest'
-import { bunker, debunker, createSchema } from '../bunker-2'
+import { bunker, debunker, createSchema, Type } from '../bunker-2'
 import samples from '../samples'
 
 
@@ -79,48 +79,48 @@ start("Bunker • 2", async function({stage, same}) {
 		same(value, result, name)
 	}
 
-	// stage('Records')
-	// {
-	// 	const value = {x: 1, y: 2, z: 3}
-	// 	const buffer = bunker(value, recordOf(Type.Integer))
-	// 	const result = debunker(buffer)
-	// 	same(value, result, "Record of numbers")
-	// }
-	// {
-	// 	const value = {x: "1", y: "2", z: "3"}
-	// 	const buffer = bunker(value, recordOf(Type.String))
-	// 	const result = debunker(buffer)
-	// 	same(value, result, "Record of strings")
-	// }
-	// {
-	// 	const value = {x: "1", y: null, z: "3"}
-	// 	const buffer = bunker(value, recordOf(nullable(Type.String)))
-	// 	const result = debunker(buffer)
-	// 	same(value, result, "Record of nullable strings")
-	// }
+	stage('Records')
+	{
+		const value = {x: 1, y: 2, z: 3}
+		const buffer = bunker(value, Type.record(Type.integer))
+		const result = debunker(buffer)
+		same(value, result, "Record of numbers")
+	}
+	{
+		const value = {x: "1", y: "2", z: "3"}
+		const buffer = bunker(value, Type.record(Type.string))
+		const result = debunker(buffer)
+		same(value, result, "Record of strings")
+	}
+	{
+		const value = {x: "1", y: null, z: "3"}
+		const buffer = bunker(value, Type.record(Type.nullable(Type.string)))
+		const result = debunker(buffer)
+		same(value, result, "Record of nullable strings")
+	}
 
-	// stage('References')
-	// {
-	// 	const o = { x: 12, y: 11 }
-	// 	const c = {} as any
-	// 	c.c = c
-	// 	for (const [name, value] of Object.entries({
-	// 		"Reference in object": {a: o, b: o},
-	// 		"Reference in array": [o, {x: 13}, o],
-	// 		"Reference in set": { o, set: new Set([o, {x: 14}]) },
-	// 		"Circular reference": c,
-	// 	})) {
-	// 		const buffer = bunker(value)
-	// 		const result = debunker(buffer)
-	// 		if (!same(value, result, name)) {
-	// 			console.log(`------ ${name} ------`)
-	// 			console.log("buffer", buffer)
-	// 			console.log("input", value)
-	// 			console.log("output", result)
-	// 			console.log('------------\n')
-	// 		}
-	// 	}
-	// }
+	stage('References')
+	{
+		const o = { x: 12, y: 11 }
+		const c = {} as any
+		c.self = c
+		for (const [name, value] of Object.entries({
+			"Reference in object": {a: o, b: o},
+			"Reference in array": [o, {x: 13}, o],
+			"Reference in set": { o, set: new Set([o, {x: 14}]) },
+			// "Circular reference": c,
+		})) {
+			const buffer = bunker(value)
+			const result = debunker(buffer)
+			if (!same(value, result, name)) {
+				console.log(`------ ${name} ------`)
+				console.log("buffer", buffer)
+				console.log("input", value)
+				console.log("output", result)
+				console.log('------------\n')
+			}
+		}
+	}
 
 	stage('Tuples')
 	{
