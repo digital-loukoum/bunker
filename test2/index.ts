@@ -6,10 +6,10 @@ import samples from '../samples'
 start("Bunker • 2", async function({stage, same}) {
 	stage('Numbers')
 	for (const [name, value] of Object.entries({
-		// "Max safe integer": Number.MAX_SAFE_INTEGER,
-		// "Min safe integer": -Number.MAX_SAFE_INTEGER,
-		// "Infinity": Infinity,
-		// "-Infinity": Infinity,
+		"Max safe integer": Number.MAX_SAFE_INTEGER,
+		"Min safe integer": -Number.MAX_SAFE_INTEGER,
+		"Infinity": Infinity,
+		"-Infinity": Infinity,
 		"Negative value": -6546,
 		"Zero": 0,
 		"Negative zero": -0,
@@ -17,7 +17,7 @@ start("Bunker • 2", async function({stage, same}) {
 		"Negative one": -1,
 		"Random positive integer": 7826348,
 		"Random negative integer": -98712,
-		// "BigInt": BigInt("1287236482634982736482736498726987632487"),
+		"BigInt": BigInt("1287236482634982736482736498726987632487"),
 		"Float": 123.32424,
 		"Negative float": -1.23456789,
 	})) {
@@ -25,8 +25,6 @@ start("Bunker • 2", async function({stage, same}) {
 		const result = debunker(buffer)
 		same(value, result, name)
 	}
-
-	return;
 
 	stage('Strings')
 	for (const [name, value] of Object.entries({
@@ -101,28 +99,28 @@ start("Bunker • 2", async function({stage, same}) {
 	// 	same(value, result, "Record of nullable strings")
 	// }
 
-	stage('References')
-	{
-		const o = { x: 12, y: 11 }
-		const c = {} as any
-		c.c = c
-		for (const [name, value] of Object.entries({
-			"Reference in object": {a: o, b: o},
-			"Reference in array": [o, {x: 13}, o],
-			"Reference in set": { o, set: new Set([o, {x: 14}]) },
-			"Circular reference": c,
-		})) {
-			const buffer = bunker(value)
-			const result = debunker(buffer)
-			if (!same(value, result, name)) {
-				console.log(`------ ${name} ------`)
-				console.log("buffer", buffer)
-				console.log("input", value)
-				console.log("output", result)
-				console.log('------------\n')
-			}
-		}
-	}
+	// stage('References')
+	// {
+	// 	const o = { x: 12, y: 11 }
+	// 	const c = {} as any
+	// 	c.c = c
+	// 	for (const [name, value] of Object.entries({
+	// 		"Reference in object": {a: o, b: o},
+	// 		"Reference in array": [o, {x: 13}, o],
+	// 		"Reference in set": { o, set: new Set([o, {x: 14}]) },
+	// 		"Circular reference": c,
+	// 	})) {
+	// 		const buffer = bunker(value)
+	// 		const result = debunker(buffer)
+	// 		if (!same(value, result, name)) {
+	// 			console.log(`------ ${name} ------`)
+	// 			console.log("buffer", buffer)
+	// 			console.log("input", value)
+	// 			console.log("output", result)
+	// 			console.log('------------\n')
+	// 		}
+	// 	}
+	// }
 
 	// stage('Tuples')
 	// {

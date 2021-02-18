@@ -41,6 +41,10 @@ export default abstract class Encoder {
 		this.byte(value)
 	}
 
+	unknown() {
+		throw Error(`Call to Encoder::unknown`)
+	}
+
 	positiveInteger(value: number) {
 		do {
 			const nextValue = Math.floor(value / 128)
@@ -60,27 +64,28 @@ export default abstract class Encoder {
 		if (nextValue) this.positiveInteger(nextValue)
 	}
 
+	/**
+	 * Encoding numbers is hard in Javascript as arithmetic operations
+	 * do not always return the expected result.
+	 * Example: '12.3456 * 10' will return '123.45599999999999'
+	 */
 	number(value: number) {
-		if (value == 0) {
-			this.integer(0)
-			this.integer(value)
+		if (value == Infinity) return this.integer(2 ** 13)
+		else if (value == -Infinity) return this.integer(-(2 ** 13))
+		let [integer, decimals] = value.toString().split('.')
+		let mantissa = 0
+		let exponent = 0
+		if (decimals) {
+			mantissa = +(integer + decimals)
+			exponent = -(decimals.length)
 		}
 		else {
-			let base = value, exponent = 0
-			if (Number.isInteger(base)) {
-				while (Number.isInteger(value = base / 10)) {
-					base = value
-					exponent++
-				}
-			}
-			else do {
-				base *= 10
-				exponent--
-			} while (!Number.isInteger(base))
-			console.log("[Encoder] exponent", exponent, "base", base)
-			this.integer(exponent)
-			this.integer(base)
+			while (integer[integer.length - exponent - 1] == '0') exponent++
+			mantissa = +(integer.slice(0, -exponent))
 		}
+
+		this.integer(exponent)
+		this.integer(mantissa)
 	}
 
 	bigInteger(value: bigint) {

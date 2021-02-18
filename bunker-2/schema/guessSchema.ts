@@ -14,7 +14,7 @@ export default (value: any, references: Object[] = []): Schema => {
 		switch (typeof value) {
 			case 'undefined': return nullable()
 			case 'number': return Number.isInteger(value) ? Type.integer : Type.number
-			case 'bigint': return Type.integer
+			case 'bigint': return Type.bigInteger
 			case 'string': return Type.string
 			case 'boolean': return Type.boolean
 			case 'function': throw `Cannot encode a function into bunker data`

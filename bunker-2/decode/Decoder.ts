@@ -48,9 +48,9 @@ export default abstract class Decoder {
 
 	number() {
 		const exponent = this.integer()
-		const base = this.integer()
-		console.log("[Decoder] exponent", exponent, "base", base)
-		return 10 ** exponent * base
+		if (exponent == 2 ** 13) return Infinity
+		else if (exponent == -(2 ** 13)) return -Infinity
+		return +`${this.integer()}e${exponent}`
 	}
 
 	integer() {
@@ -206,8 +206,14 @@ export default abstract class Decoder {
 			case Type.array: return this.array.bind(this, this.compile(), this.compileProperties())
 			case Type.set: return this.set.bind(this, this.compile(), this.compileProperties())
 			case Type.map: return this.map.bind(this, this.compile(), this.compileProperties())
-			case Type.map: return this.map.bind(this, this.compile(), this.compileProperties())
 			case Type.record: return this.record.bind(this, this.compile(), this.compileProperties())
+
+			case Type.tuple: {
+				const length = this.positiveInteger()
+				const dispatch = new Array<Dispatcher>(length)
+				for (let i = 0; i < length; i++) dispatch[i] = this.compile()
+				return this.tuple.bind(this, dispatch)
+			}
 
 			default: throw Error(`Bad schema byte`)
 		}
