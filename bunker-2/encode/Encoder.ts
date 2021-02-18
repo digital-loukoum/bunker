@@ -255,6 +255,7 @@ export default abstract class Encoder {
 		}
 		else if (isTuple(schema)) {
 			this.byte(Type.tuple)
+			this.positiveInteger(schema.length)
 			return this.tuple.bind(this, schema.map(type => this.compile(type)))
 		}
 		else {

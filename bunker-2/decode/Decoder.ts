@@ -187,7 +187,8 @@ export default abstract class Decoder {
 	 * Execute the dispatcher to retrieve the encoded data.
 	 */
 	compile(): Dispatcher {
-		switch (this.byte()) {
+		const byte = this.byte()
+		switch (byte) {
 			case Type.unknown: return this.unknown
 			case Type.any: return this.any.bind(this)
 			case Type.boolean: return this.boolean.bind(this)
@@ -215,7 +216,8 @@ export default abstract class Decoder {
 				return this.tuple.bind(this, dispatch)
 			}
 
-			default: throw Error(`Bad schema byte`)
+			default:
+				throw Error(`[Decoder] Bad schema byte: ${byte}`)
 		}
 	}
 

@@ -41,39 +41,67 @@ export const isNullable = (type: Schema): type is Nullable => type.constructor =
 export class BunkerArray {
 	constructor(public type: Schema, public properties: BunkerObject) {}
 }
-export const array = (type: Schema = Type.unknown, properties: BunkerObject) => new BunkerArray(type, properties)
+export const array = (type: Schema = Type.unknown, properties: BunkerObject = {}) => new BunkerArray(type, properties)
 export const isArray = (type: Schema): type is BunkerArray => type.constructor == BunkerArray
 
 // -- set
 export class BunkerSet {
 	constructor(public type: Schema, public properties: BunkerObject) {}
 }
-export const set = (type: Schema = Type.unknown, properties: BunkerObject) => new BunkerSet(type, properties)
+export const set = (type: Schema = Type.unknown, properties: BunkerObject = {}) => new BunkerSet(type, properties)
 export const isSet = (type: Schema): type is BunkerSet => type.constructor == BunkerSet
 
 // -- record
 export class BunkerRecord {
 	constructor(public type: Schema, public properties: BunkerObject) {}
 }
-export const record = (type: Schema = Type.unknown, properties: BunkerObject) => new BunkerRecord(type, properties)
+export const record = (type: Schema = Type.unknown, properties: BunkerObject = {}) => new BunkerRecord(type, properties)
 export const isRecord = (type: Schema): type is BunkerRecord => type.constructor == BunkerRecord
 
 // -- map
 export class BunkerMap {
 	constructor(public type: Schema, public properties: BunkerObject) {}
 }
-export const map = (type: Schema = Type.unknown, properties: BunkerObject) => new BunkerMap(type, properties)
+export const map = (type: Schema = Type.unknown, properties: BunkerObject = {}) => new BunkerMap(type, properties)
 export const isMap = (type: Schema): type is BunkerMap => type.constructor == BunkerMap
 
 
+/* --- Handmade schema creation --- */
+type SchemaBuilder = {
+	unknown: Type,
+	any: Type,
+	boolean: Type,
+	character: Type,
+	integer: Type,
+	positiveInteger: Type,
+	bigInteger: Type,
+	number: Type,
+	string: Type,
+	regularExpression: Type,
+	date: Type,
+	nullable: (type?: Schema) => Type.any | Nullable,
+	array: (type?: Schema, properties?: BunkerObject) => BunkerArray,
+	set: (type?: Schema, properties?: BunkerObject) => BunkerSet,
+	map: (type?: Schema, properties?: BunkerObject) => BunkerMap,
+	record: (type?: Schema, properties?: BunkerObject) => BunkerRecord,
+}
+export const schemaBuilder: SchemaBuilder = {
+	unknown: Type.unknown,
+	any: Type.any,
+	boolean: Type.boolean,
+	character: Type.character,
+	integer: Type.integer,
+	positiveInteger: Type.positiveInteger,
+	bigInteger: Type.bigInteger,
+	number: Type.number,
+	string: Type.string,
+	regularExpression: Type.regularExpression,
+	date: Type.date,
+	nullable,
+	array,
+	set,
+	map,
+	record,
+}
 
-// /* --- Schema constants (used for handmade schemas) --- */
-// export default {
-// 	...Type,
-// 	reference,
-// 	nullable,
-// 	array,
-// 	set,
-// 	record,
-// 	map,
-// }
+export const createSchema = (callback: (type: SchemaBuilder) => Schema) => callback(schemaBuilder)

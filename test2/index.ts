@@ -1,5 +1,5 @@
 import start from 'fartest'
-import { bunker, debunker } from '../bunker-2'
+import { bunker, debunker, createSchema } from '../bunker-2'
 import samples from '../samples'
 
 
@@ -122,26 +122,26 @@ start("Bunker • 2", async function({stage, same}) {
 	// 	}
 	// }
 
-	// stage('Tuples')
-	// {
-	// 	const value = {
-	// 		tuple: ["Hercule", 121],
-	// 		array: ["Hercule", 121],
-	// 		arrayOfTuples: [
-	// 			["Foo", 1],
-	// 			["Bar", 2],
-	// 			["Zabu", 12],
-	// 		]
-	// 	}
-	// 	const schema = {
-	// 		tuple: [string, integer],
-	// 		array: arrayOf(any),
-	// 		arrayOfTuples: arrayOf([string, integer]),
-	// 	}
-	// 	const buffer = bunker(value, schema)
-	// 	const result = debunker(buffer)
-	// 	same(value, result, "Basic tuple test")
-	// }
+	stage('Tuples')
+	{
+		const value = {
+			tuple: ["Hercule", 121],
+			array: ["Hercule", 121],
+			arrayOfTuples: [
+				["Foo", 1],
+				["Bar", 2],
+				["Zabu", 12],
+			]
+		}
+		const schema = createSchema(({string, integer, array, any}) => ({
+			tuple: [string, integer],
+			array: array(any),
+			arrayOfTuples: array([string, integer]),
+		}))
+		const buffer = bunker(value, schema)
+		const result = debunker(buffer)
+		same(value, result, "Basic tuple test")
+	}
 
 	stage('Samples')
 	for (const [name, value] of Object.entries(samples)) {
@@ -150,4 +150,3 @@ start("Bunker • 2", async function({stage, same}) {
 		same(value, result, name)
 	}
 })
-

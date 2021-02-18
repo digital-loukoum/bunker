@@ -1,10 +1,10 @@
 import Encoder from './encode/Encoder'
 import BufferEncoder from './encode/BufferEncoder'
 import BufferDecoder from './decode/BufferDecoder'
-import Schema from './schema/Schema'
+import Schema, { schemaBuilder as type, createSchema } from './schema/Schema'
 import guessSchema from './schema/guessSchema'
 
-export { Schema, guessSchema }
+export { Schema, guessSchema, type, createSchema }
 
 export function bunker(value: any, schema = guessSchema(value)) {
 	const encoder = new BufferEncoder
@@ -25,3 +25,5 @@ bunker.compile = (schema: Schema, encoder: Encoder = new BufferEncoder) => {
 export function debunker(data: Uint8Array) {
 	return new BufferDecoder(data).compile()()
 }
+
+// for handmade schema
