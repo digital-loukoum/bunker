@@ -19,11 +19,6 @@ export default class BufferEncoder extends Encoder {
 		this.size = this.prefixSize
 	}
 
-	prefix(bytes = new Uint8Array) {
-		this.bytes(bytes)
-		this.size = this.prefixSize = bytes.byteLength
-	}
-
 	lockAsPrefix() {
 		this.prefixSize = this.size
 	}

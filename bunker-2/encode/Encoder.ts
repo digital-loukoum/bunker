@@ -17,7 +17,6 @@ import guessSchema from '../schema/guessSchema'
 
 export type Dispatcher = (value: any) => void
 export type ObjectDispatcher = Record<string, Dispatcher>
-export type PropertyDispatcher = Record<string, Dispatcher> | null
 
 /**
  * The Encoder abstract class implements the encoding logic without the details.
@@ -30,7 +29,6 @@ export default abstract class Encoder {
 	abstract data: any
 	abstract byte(value: number): void  // write a single byte
 	abstract bytes(value: Uint8Array): void  // write an array of bytes
-	abstract prefix(bytes: Uint8Array): void  // prefix the data with the given bytes array
 	abstract lockAsPrefix(): void  // lock the current data as prefix; resets will keep it alive
 
 	// reset data (but keep prefix bytes if any)
@@ -146,7 +144,7 @@ export default abstract class Encoder {
 			dispatchers[i](value[i])
 	}
 
-	properties(properties: PropertyDispatcher, value: Record<string, any>) {
+	properties(properties: ObjectDispatcher, value: Record<string, any>) {
 		if (properties) for (const key in properties) properties[key](value[key])
 	}
 
@@ -161,12 +159,12 @@ export default abstract class Encoder {
 		}
 	}
 
-	object(properties: PropertyDispatcher, value: Record<string, any>) {
+	object(properties: ObjectDispatcher, value: Record<string, any>) {
 		if (this.reference(value)) return
 		this.properties(properties, value)
 	}
 
-	array(dispatchElement: Dispatcher, properties: PropertyDispatcher, value: any[]) {
+	array(dispatchElement: Dispatcher, properties: ObjectDispatcher, value: any[]) {
 		if (this.reference(value)) return
 		this.integer(value.length)
 		for (const element of value)
@@ -174,7 +172,7 @@ export default abstract class Encoder {
 		this.properties(properties, value)
 	}
 
-	set(dispatchElement: Dispatcher, properties: PropertyDispatcher, value: Set<any>) {
+	set(dispatchElement: Dispatcher, properties: ObjectDispatcher, value: Set<any>) {
 		if (this.reference(value)) return
 		this.integer(value.size)
 		for (const element of value)
@@ -182,7 +180,7 @@ export default abstract class Encoder {
 		this.properties(properties, value)
 	}
 
-	record(dispatchElement: Dispatcher, properties: PropertyDispatcher, value: Record<string, any>) {
+	record(dispatchElement: Dispatcher, properties: ObjectDispatcher, value: Record<string, any>) {
 		if (this.reference(value)) return
 		this.positiveInteger(Object.keys(value).length)
 		for (const key in value) {
@@ -192,7 +190,7 @@ export default abstract class Encoder {
 		this.properties(properties, value)
 	}
 
-	map(dispatchElement: Dispatcher, properties: PropertyDispatcher, map: Map<string, any>) {
+	map(dispatchElement: Dispatcher, properties: ObjectDispatcher, map: Map<string, any>) {
 		if (this.reference(map)) return
 		this.positiveInteger(map.size)
 		for (const [key, value] of map.entries()) {
@@ -254,7 +252,7 @@ export default abstract class Encoder {
 	}
 
 	compileProperties(schema: BunkerObject): ObjectDispatcher {
-		const dispatcher: Record<string, Dispatcher> = {}
+		const dispatcher: ObjectDispatcher = {}
 		for (const key in schema) {
 			this.string(key)
 			dispatcher[key] = this.compile(schema[key])
