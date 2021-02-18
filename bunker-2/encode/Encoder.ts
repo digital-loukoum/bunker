@@ -67,10 +67,17 @@ export default abstract class Encoder {
 		}
 		else {
 			let base = value, exponent = 0
-			while (Number.isInteger(value = base / 10)) {
-				base = value
-				exponent++
+			if (Number.isInteger(base)) {
+				while (Number.isInteger(value = base / 10)) {
+					base = value
+					exponent++
+				}
 			}
+			else do {
+				base *= 10
+				exponent--
+			} while (!Number.isInteger(base))
+			console.log("[Encoder] exponent", exponent, "base", base)
 			this.integer(exponent)
 			this.integer(base)
 		}

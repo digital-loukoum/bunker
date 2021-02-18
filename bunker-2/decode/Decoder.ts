@@ -37,7 +37,9 @@ export default abstract class Decoder {
 
 	string() {
 		if (this.nextByteIs(Byte.reference)) return this.stringReference()
-		return this.stringDecoder.decode(this.bytes(0))
+		const decoded = this.stringDecoder.decode(this.bytes(0))
+		this.stringReferences.push(decoded)
+		return decoded
 	}
 
 	stringReference() {
@@ -45,7 +47,10 @@ export default abstract class Decoder {
 	}
 
 	number() {
-		return 10 ** this.integer() * this.integer()
+		const exponent = this.integer()
+		const base = this.integer()
+		console.log("[Decoder] exponent", exponent, "base", base)
+		return 10 ** exponent * base
 	}
 
 	integer() {

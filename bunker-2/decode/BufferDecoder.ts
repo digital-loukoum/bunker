@@ -8,19 +8,14 @@ export default class BufferDecoder extends Decoder {
 		private cursor = 0,
 	) { super() }
 
-	decode() {
-		this.cursor = 0
-		return this.compile()()
-	}
-
 	byte(): number {
 		return this.view.getUint8(this.cursor++)
 	}
 
 	bytes(stopAtByte: number) {
 		const start = this.cursor
-		while (this.view.getUint8(this.cursor) != stopAtByte) this.cursor++
-		return new Uint8Array(this.data.buffer, start, this.cursor)
+		while (this.view.getUint8(this.cursor++) != stopAtByte);
+		return new Uint8Array(this.data.buffer, start, this.cursor - start - 1)
 	}
 
 	nextByteIs(byte: number): boolean {

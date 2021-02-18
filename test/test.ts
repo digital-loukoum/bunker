@@ -49,29 +49,6 @@ start("Bunker node API", async function({stage, same}) {
 	}
 })
 
-
-start("Bunker 2", function({stage, same, test}) {
-	stage('Numbers')
-	for (const [name, value] of Object.entries({
-		"Max safe integer": Number.MAX_SAFE_INTEGER,
-		"Min safe integer": -Number.MAX_SAFE_INTEGER,
-		"Infinity": Infinity,
-		"-Infinity": Infinity,
-		"Negative value": -6546,
-		"Zero": 0,
-		"Negative zero": -0,
-		"One": 1,
-		"Negative one": -1,
-		"Random positive integer": 7826348,
-		"Random negative integer": -98712,
-		"BigInt": BigInt("1287236482634982736482736498726987632487"),
-		"Float": 123.32424,
-		"Negative float": -1.23456789,
-	})) {
-		const buffer = bunker(value)
-		const buffer2 = bunker2(value)
-	}})
-
 start("Bunker", async function({stage, same}) {
 	stage('Schema')
 	const schema = guessSchema(sample) as any
