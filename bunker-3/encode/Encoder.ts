@@ -17,6 +17,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	abstract byte(value: number): void  // write a single byte
 	abstract bytes(value: Uint8Array): void  // write an array of bytes
 
+	abstract dispatcher(value: any): Dispatcher  // return the right dispatcher of a given value
+
 	inMemory(object: object) {
 		const index = this.memory.indexOf(object)
 		if (~index) {
@@ -212,30 +214,11 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.encodeProperties(properties, map)
 	}
 
-
 	/**
-	 * --- Return the right dispatcher for the given value
+	 * --- Schema
+	 * Encode the given dispatcher's schema
 	 */
-	dispatcher(value: any) {
-		switch (typeof value) {
-			case 'undefined': return nullable()
-			case 'number': return Number.isInteger(value) ? Type.integer : Type.number
-			case 'bigint': return Type.bigInteger
-			case 'string': return Type.string
-			case 'boolean': return Type.boolean
-			case 'function': throw `Cannot encode a function into bunker data`
-			default:
-				if (value == null) return nullable()
-				if (value instanceof Date) return Type.date
-				if (value instanceof RegExp) return Type.regularExpression
-	
-				// new object
-				if (value instanceof Array) schema = guessArraySchema(value, cache)
-				if (value instanceof Set) schema = guessSetSchema(value, cache)
-				if (value instanceof Map) schema = guessMapSchema(value, cache)
-				else schema = guessObjectSchema(value, cache)
-				
-		}
-	
+	schema(dispatcher: Dispatcher) {
+		
 	}
 }
