@@ -20,6 +20,7 @@ export default class BufferEncoder extends Encoder {
 	}
 
 	lockAsPrefix() {
+		super.lockAsPrefix()
 		this.prefixSize = this.size
 	}
 

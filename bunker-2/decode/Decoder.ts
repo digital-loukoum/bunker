@@ -13,6 +13,7 @@ function dispatchProperties(object: any, dispatch: ObjectDispatcher) {
 
 export default abstract class Decoder {
 	references: object[] = []
+	schemaReferences: object[] = []
 	stringReferences: string[] = []
 	stringDecoder = new TextDecoder
 
@@ -135,18 +136,22 @@ export default abstract class Decoder {
 	}
 
 	reference() {
+	}
+
+	// recall a previously encountered object
+	recall() {
 		return this.references[this.positiveInteger()] as unknown
 	}
 
 	object(properties: ObjectDispatcher): Record<string, any> {
-		if (this.nextByteIs(Byte.reference)) return this.reference() as Record<string, any>
+		if (this.nextByteIs(Byte.reference)) return this.recall() as Record<string, any>
 		const object: Record<string, any> = {}
 		this.references.push(object)
 		return dispatchProperties(object, properties)
 	}
 
 	record(dispatch: Dispatcher): Record<string, any> {
-		if (this.nextByteIs(Byte.reference)) return this.reference() as Record<string, any>
+		if (this.nextByteIs(Byte.reference)) return this.recall() as Record<string, any>
 		const length = this.integer()
 		const record: Record<string, any> = {}
 		this.references.push(record)
@@ -155,7 +160,7 @@ export default abstract class Decoder {
 	}
 
 	array(dispatch: Dispatcher, properties: ObjectDispatcher): any[] {
-		if (this.nextByteIs(Byte.reference)) return this.reference() as any[]
+		if (this.nextByteIs(Byte.reference)) return this.recall() as any[]
 		const length = this.integer()
 		const array = Array<any>(length)
 		this.references.push(array)
@@ -164,7 +169,7 @@ export default abstract class Decoder {
 	}
 	
 	set(dispatch: Dispatcher, properties: ObjectDispatcher): Set<any> {
-		if (this.nextByteIs(Byte.reference)) return this.reference() as Set<any>
+		if (this.nextByteIs(Byte.reference)) return this.recall() as Set<any>
 		const length = this.integer()
 		const set = new Set<any>()
 		this.references.push(set)
@@ -173,7 +178,7 @@ export default abstract class Decoder {
 	}
 	
 	map(dispatch: Dispatcher, properties: ObjectDispatcher): Map<string, any> {
-		if (this.nextByteIs(Byte.reference)) return this.reference() as Map<string, any>
+		if (this.nextByteIs(Byte.reference)) return this.recall() as Map<string, any>
 		const length = this.integer()
 		const map= new Map<string, any>()
 		this.references.push(map)

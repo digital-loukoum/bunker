@@ -1,19 +1,19 @@
 import Type from '../constants/Type'
 import NullableValue from '../constants/NullableValue'
 import Byte from '../constants/Byte'
+import joinSchemas from '../schema/joinSchemas'
 import Schema, {
 	BunkerObject,
 	isPrimitive,
 	isObject,
-	isArray,
-	isMap,
+	isArray, BunkerArray,
+	isMap, BunkerMap,
 	isRecord,
-	isReference,
+	reference, isReference,
 	isTuple,
-	isSet,
-	isNullable,
+	isSet, BunkerSet,
+	nullable, isNullable,
 } from '../schema/Schema'
-import guessSchema from '../schema/guessSchema'
 
 export type Dispatcher = (value: any) => void
 export type ObjectDispatcher = Record<string, Dispatcher>
@@ -22,20 +22,28 @@ export type ObjectDispatcher = Record<string, Dispatcher>
  * The Encoder abstract class implements the encoding logic without the details.
  */
 export default abstract class Encoder {
-	references: Object[] = []
-	stringReferences: string[] = []
+	schemaMemory: object[] = []
+	compiledMemory: Dispatcher[] = []  // array of all compiled schema objects
+	memory: object[] = []  // array of all objects encountered
+	stringMemory: string[] = []  // array of all strings encountered
 	stringEncoder = new TextEncoder
+	compiledMemoryPrefixLength = 0  // the initial length of compiledMemory
 	
 	abstract data: any
 	abstract byte(value: number): void  // write a single byte
 	abstract bytes(value: Uint8Array): void  // write an array of bytes
-	abstract lockAsPrefix(): void  // lock the current data as prefix; resets will keep it alive
+	
+	// lock the current data as prefix; resets will keep it alive
+	lockAsPrefix() {
+		this.compiledMemoryPrefixLength = this.compiledMemory.length
+	}  
 
 	// reset data (but keep prefix bytes if any)
 	reset() {
-		this.references.length = 0
-		this.stringReferences.length = 0
-	}  
+		this.memory.length = 0
+		this.stringMemory.length = 0
+		this.compiledMemory.length = this.compiledMemoryPrefixLength
+	}
 
 	character(value: number) {
 		this.byte(value)
@@ -111,7 +119,7 @@ export default abstract class Encoder {
 	}
 
 	any(value: any) {
-		this.compile(guessSchema(value))(value)
+		this.compileSchema(this.guessSchema(value))(value)
 	}
 	
 	regularExpression(value: RegExp) {
@@ -124,30 +132,37 @@ export default abstract class Encoder {
 	}
 
 	string(value: string) {
-		if (this.stringReference(value)) return
+		// we check if the string is in memory
+		if (value.length > 1) {
+			const index = this.stringMemory.indexOf(value)
+			if (~index) {
+				this.byte(Type.reference)
+				this.positiveInteger(index)
+				return
+			}
+			this.stringMemory.push(value)
+		}
 		this.bytes(this.stringEncoder.encode(value))
 		this.byte(0)
 	}
 
-	stringReference(value: string) {
-		const index = this.stringReferences.indexOf(value)
-		if (~index) {
-			this.byte(Type.reference)
-			this.positiveInteger(index)
-			return true
-		}
-		this.references.push(value)
-		return false
+	reference(value: number) {
+		console.log("Reference!", value, this.memory)
+		this.byte(Type.reference)
+		this.positiveInteger(value)
 	}
 
-	reference(value: Object): boolean {
-		const index = this.references.indexOf(value)
+	inMemory(value: object): boolean {
+		console.log("Already encountered?")
+		const index = this.memory.indexOf(value)
 		if (~index) {
+			console.log("Yes!")
 			this.byte(Type.reference)
 			this.positiveInteger(index)
 			return true
 		}
-		this.references.push(value)
+		console.log("No.")
+		this.memory.push(value)
 		return false
 	}
 
@@ -172,12 +187,12 @@ export default abstract class Encoder {
 	}
 
 	object(properties: ObjectDispatcher, value: Record<string, any>) {
-		if (this.reference(value)) return
+		if (this.inMemory(value)) return
 		this.properties(properties, value)
 	}
 
 	array(dispatch: Dispatcher, properties: ObjectDispatcher, value: any[]) {
-		if (this.reference(value)) return
+		if (this.inMemory(value)) return
 		this.integer(value.length)
 		for (const element of value)
 			dispatch(element)
@@ -185,7 +200,7 @@ export default abstract class Encoder {
 	}
 
 	set(dispatch: Dispatcher, properties: ObjectDispatcher, value: Set<any>) {
-		if (this.reference(value)) return
+		if (this.inMemory(value)) return
 		this.integer(value.size)
 		for (const element of value)
 			dispatch(element)
@@ -193,7 +208,7 @@ export default abstract class Encoder {
 	}
 
 	record(dispatch: Dispatcher, value: Record<string, any>) {
-		if (this.reference(value)) return
+		if (this.inMemory(value)) return
 		this.positiveInteger(Object.keys(value).length)
 		for (const key in value) {
 			this.string(key)
@@ -202,7 +217,7 @@ export default abstract class Encoder {
 	}
 
 	map(dispatch: Dispatcher, properties: ObjectDispatcher, map: Map<string, any>) {
-		if (this.reference(map)) return
+		if (this.inMemory(map)) return
 		this.positiveInteger(map.size)
 		for (const [key, value] of map.entries()) {
 			this.string(key)
@@ -217,59 +232,112 @@ export default abstract class Encoder {
 	 * Execute the dispatcher with a value corresponding to the given schema
 	 * to encode it.
 	 */
-	compile(schema: Schema): Dispatcher {
+	compileSchema(schema: Schema): Dispatcher {
 		if (isPrimitive(schema)) {
 			this.byte(schema)
 			// @ts-ignore [TODO]
 			return this[Type[schema]].bind(this)
 		}
-		else if (isObject(schema)) {
-			this.byte(Type.object)
-			return this.object.bind(this, this.compileProperties(schema))
-		}
-		else if (isArray(schema)) {
-			this.byte(Type.array)
-			return this.array.bind(this, this.compile(schema.type), this.compileProperties(schema.properties))
-		}
-		else if (isNullable(schema)) {
+		if (isNullable(schema)) {
 			this.byte(Type.nullable)
-			return this.nullable.bind(this, this.compile(schema.type))
+			return this.nullable.bind(this, this.compileSchema(schema.type))
 		}
-		else if (isReference(schema)) {
-			this.byte(Type.reference)
-			this.positiveInteger(schema.reference)
-			return this.reference.bind(this)
-		}
-		else if (isSet(schema)) {
-			this.byte(Type.set)
-			return this.set.bind(this, this.compile(schema.type), this.compileProperties(schema.properties))
-		}
-		else if (isMap(schema)) {
-			this.byte(Type.map)
-			return this.map.bind(this, this.compile(schema.type), this.compileProperties(schema.properties))
-		}
-		else if (isRecord(schema)) {
-			this.byte(Type.record)
-			return this.record.bind(this, this.compile(schema.type))
-		}
-		else if (isTuple(schema)) {
+		if (isTuple(schema)) {
 			this.byte(Type.tuple)
 			this.positiveInteger(schema.length)
-			return this.tuple.bind(this, schema.map(type => this.compile(type)))
+			return this.tuple.bind(this, schema.map(type => this.compileSchema(type)))
 		}
-		else {
-			console.error('Unkown schema type:', schema)
-			throw Error(`Unknown schema type`)
+
+		// we have an object: we check if it exists in compiled memory
+		const index = this.schemaMemory.indexOf(schema)
+		if (~index) {
+			this.byte(Type.reference)
+			return this.reference.bind(this, index)
 		}
+		if (isObject(schema)) {
+			this.byte(Type.object)
+			return this.object.bind(this, this.compileSchemaProperties(schema))
+		}
+		if (isArray(schema)) {
+			this.byte(Type.array)
+			return this.array.bind(this, this.compileSchema(schema.type), this.compileSchemaProperties(schema.properties))
+		}
+		if (isSet(schema)) {
+			this.byte(Type.set)
+			return this.set.bind(this, this.compileSchema(schema.type), this.compileSchemaProperties(schema.properties))
+		}
+		if (isMap(schema)) {
+			this.byte(Type.map)
+			return this.map.bind(this, this.compileSchema(schema.type), this.compileSchemaProperties(schema.properties))
+		}
+		if (isRecord(schema)) {
+			this.byte(Type.record)
+			return this.record.bind(this, this.compileSchema(schema.type))
+		}
+
+		console.error('Unkown schema type:', schema)
+		throw Error(`Unknown schema type`)
 	}
 
-	compileProperties(schema: BunkerObject): ObjectDispatcher {
+	compileSchemaProperties(schema: BunkerObject): ObjectDispatcher {
 		const dispatcher: ObjectDispatcher = {}
 		for (const key in schema) {
 			this.string(key)
-			dispatcher[key] = this.compile(schema[key])
+			dispatcher[key] = this.compileSchema(schema[key])
 		}
 		this.byte(Byte.stop)
 		return dispatcher
+	}
+
+
+	/**
+	 * Compile a value.
+	 */
+	compileValue(value: any) {
+		switch (typeof value) {
+			case 'undefined': return this.nullable
+			case 'number': return Number.isInteger(value) ? this.integer : this.number
+			case 'bigint': return this.bigInteger
+			case 'string': return this.string
+			case 'boolean': return this.boolean
+			case 'function': throw `Cannot encode a function into bunker data`
+			default:
+				if (value == null) return this.nullable
+				if (value instanceof Date) return this.date
+				if (value instanceof RegExp) return this.regularExpression
+	
+				// if we have a schema reference, return it
+				// const cached = cache.get(value)
+				// if (cached) return cached
+				// let schema: Schema
+	
+				// new object
+				if (value instanceof Array) return this.compileArray(value)
+				if (value instanceof Set) return this.compileSet(value)
+				if (value instanceof Map) return this.compileMap(value)
+				else return this.compileObject(value)
+		}
+	}
+
+	compileArray(value: any[]) {
+		let dispatch: Dispatcher = this.unknown
+		let properties: ObjectDispatcher = {}
+		let index = 0, indexes = 0
+		for (let i = 0; i < value.length; i++) {
+			if (i in value) indexes++  // empty values are not indexed
+			dispatch = joinDispatchers(dispatch, this.compileValue(value[i]))
+		}
+		for (const key in value) {
+			if (index++ < indexes) continue  // the first keys are always the array values
+			properties[key] = guessSchema(value[key])
+		}
+		return new BunkerArray(dispatch, properties)
+	
+	}
+
+	bind(fn: Function, ...args: any[]) {
+		const bounded = fn.bind(null, ...args)
+		bounded.__boundedArgs__ = args
+		return bounded
 	}
 }
