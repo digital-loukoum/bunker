@@ -9,15 +9,15 @@ export default abstract class EncoderDispatcher extends Encoder {
 	dispatcher(value: any) {
 		switch (typeof value) {
 			case 'undefined': return this.nullable()
-			case 'number': return this.bind(Number.isInteger(value) ? this.integer : this.number)
-			case 'bigint': return this.bind(this.bigInteger)
-			case 'string': return this.bind(this.string)
-			case 'boolean': return this.bind(this.boolean)
+			case 'number': return Number.isInteger(value) ? this.integer : this.number
+			case 'bigint': return this.bigInteger
+			case 'string': return this.string
+			case 'boolean': return this.boolean
 			case 'function': throw `Cannot encode a function into bunker data`
 			default:
 				if (value == null) return this.nullable()
-				if (value instanceof Date) return this.bind(this.date)
-				if (value instanceof RegExp) return this.bind(this.regularExpression)
+				if (value instanceof Date) return this.date
+				if (value instanceof RegExp) return this.regularExpression
 	
 				// new object
 				if (value instanceof Array) return this.arrayDispatcher(value)

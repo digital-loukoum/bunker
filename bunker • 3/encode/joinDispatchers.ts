@@ -1,9 +1,9 @@
-import { Bound } from "../bind"
+import { isBound } from "../bind"
 import Encoder, { Dispatcher, DispatcherRecord } from "./Encoder"
 
 const encoder = Encoder.prototype
 
-export default function joinDispatchers(a: Bound<Dispatcher>, b: Bound<Dispatcher>): Bound<Dispatcher> {
+export default function joinDispatchers(a: Dispatcher, b: Dispatcher): Dispatcher {
 	let nullable = false
 	if (isBound(a) && a.target == encoder.nullable) {
 		nullable = true
