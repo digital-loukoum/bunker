@@ -1,5 +1,5 @@
 import Encoder, { Dispatcher, DispatcherRecord } from './Encoder'
-import joinDispatchers from './joinDispatchers'
+import { isBound } from '../bind'
 
 /**
  * Extends the EncoderSchema with the 'dispatcher' method which returns the right
@@ -39,7 +39,7 @@ export default abstract class EncoderDispatcher extends Encoder {
 		let index = 0, indexes = 0
 		for (let i = 0; i < value.length; i++) {
 			if (i in value) indexes++  // empty values are not indexed
-			dispatch = joinDispatchers(dispatch, this.dispatcher(value[i]))
+			dispatch = this.joinDispatchers(dispatch, this.dispatcher(value[i]))
 		}
 		for (const key in value) {
 			if (index++ < indexes) continue  // the first keys are always the array values
@@ -50,13 +50,76 @@ export default abstract class EncoderDispatcher extends Encoder {
 
 	private setDispatcher(value: Set<any>) {
 		let type: Dispatcher = this.unknown
-		for (const element of value) type = joinDispatchers(type, this.dispatcher(element))
+		for (const element of value) type = this.joinDispatchers(type, this.dispatcher(element))
 		return this.set(type, this.propertiesDispatcher(value))
 	}
 
 	private mapDispatcher(value: Map<string, any>) {
 		let type: Dispatcher = this.unknown
-		for (const element of value.values()) type = joinDispatchers(type, this.dispatcher(element))
+		for (const element of value.values()) type = this.joinDispatchers(type, this.dispatcher(element))
 		return this.map(type, this.propertiesDispatcher(value))	
 	}
+
+	private joinDispatchers(a: Dispatcher, b: Dispatcher): Dispatcher {
+		let nullable = false
+		if (isBound(a) && a.target == this.nullable) {
+			nullable = true
+			a = a.target
+		}
+		if (isBound(b) && b.target == this.nullable) {
+			nullable = true
+			b = b.target
+		}
+	
+		if (a == this.unknown) a = b
+		else if (b == this.unknown) {}
+		else if (!isBound(a) || !isBound(b)) a != b && (a = this.any)
+		else {  // -- join objects
+			const typeA = a.target, typeB = b.target
+	
+			if (typeA != typeB) {
+				a = this.any
+			}
+			else if (typeA == this.object) {
+				a = this.object(this.joinDispatcherRecords(a['0'], b['0']))
+			}
+			else if (typeA == this.array) {
+				a = this.array(
+					this.joinDispatchers(a['0'], b['0']),
+					this.joinDispatcherRecords(a['1'], b['1'])
+				)
+			}
+			else if (typeA == this.set) {
+				a = this.set(
+					this.joinDispatchers(a['0'], b['0']),
+					this.joinDispatcherRecords(a['1'], b['1'])
+				)
+			}
+			else if (typeA == this.map) {
+				a = this.map(
+					this.joinDispatchers(a['0'], b['0']),
+					this.joinDispatcherRecords(a['1'], b['1'])
+				)
+			}
+			else if (typeA == this.record) {
+				a = this.record(this.joinDispatchers(a['0'], b['0']))
+			}
+			else {
+				a = this.any
+			}
+		}
+		
+		return nullable ? this.nullable(a) : a
+	}
+	
+	private joinDispatcherRecords(a: DispatcherRecord, b: DispatcherRecord): DispatcherRecord {
+		const dispatcher: DispatcherRecord = {}
+		for (const key in a)
+			dispatcher[key] = key in b ? this.joinDispatchers(a[key], b[key]) : this.nullable(a[key])
+		for (const key in b)
+			if (!(key in a))  // key exists in b but not in a
+				dispatcher[key] = this.nullable(b[key])
+		return dispatcher
+	}
+	
 }
