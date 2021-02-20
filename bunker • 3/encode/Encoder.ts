@@ -20,9 +20,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	abstract dispatcher(value: any): Dispatcher  // return the right dispatcher of a given value
 
 	encode(value: any): Uint8Array {
-		const dispatch = this.dispatcher(value)
-		this.schema(dispatch)
-		dispatch.call(this, value)
+		this.any(value)
 		return this.data
 	}
 
@@ -131,7 +129,9 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	}
 
 	any = (value: any) => {
-
+		const dispatch = this.dispatcher(value)
+		this.schema(dispatch)
+		dispatch(value)
 	}
 
 	/**
