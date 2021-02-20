@@ -19,12 +19,10 @@ type Coder<Dispatcher extends Function> = {
 	nullable(dispatch: Dispatcher): Bound<Dispatcher>
 	tuple(dispatch: Dispatcher[]): Bound<Dispatcher>
 
-	object(dispatch: Record<string, Dispatcher>): Bound<Dispatcher>
-	array(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
-	set(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
+	object(dispatch: Record<string, Bound<Dispatcher>>): Bound<Dispatcher>
+	array(dispatch: Dispatcher, properties: Record<string, Bound<Dispatcher>>): Bound<Dispatcher>
+	set(dispatch: Dispatcher, properties: Record<string, Bound<Dispatcher>>): Bound<Dispatcher>
 	record(dispatch: Dispatcher): Bound<Dispatcher>
-	map(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
-
-	schema(dispatch: Dispatcher): any
+	map(dispatch: Dispatcher, properties: Record<string, Bound<Dispatcher>>): Bound<Dispatcher>
 }
 export default Coder

@@ -13,7 +13,8 @@ export function isBound<Fn extends Function>(fn: Fn): fn is Bound<Fn> {
  * Wrapper for the Function.prototype.bind function that give access to bound arguments.
  */
 export default function bind<Fn extends Function>(fn: Function, ...args: any[]): Bound<Fn> {
-	const bound = fn.bind(null, ...args)
+	// @ts-ignore
+	const bound = fn.bind(this, ...args)
 	bound.target = fn
 	bound['0'] = args[0]
 	bound['1'] = args[1]
