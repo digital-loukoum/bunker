@@ -22,7 +22,9 @@ type Coder<Dispatcher extends Function> = {
 	object(dispatch: Record<string, Dispatcher>): Bound<Dispatcher>
 	array(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
 	set(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
-	record(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
+	record(dispatch: Dispatcher): Bound<Dispatcher>
 	map(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
+
+	schema(dispatch: Dispatcher): any
 }
 export default Coder

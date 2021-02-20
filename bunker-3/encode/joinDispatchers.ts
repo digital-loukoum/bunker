@@ -5,50 +5,47 @@ const encoder = Encoder.prototype
 
 export default function joinDispatchers(a: Dispatcher, b: Dispatcher): Dispatcher {
 	let nullable = false
-	if (isBound(a) && a.__target__ == encoder.nullable) {
+	if (isBound(a) && a.target == encoder.nullable) {
 		nullable = true
-		a = a.__target__
+		a = a.target
 	}
-	if (isBound(b) && b.__target__ == encoder.nullable) {
+	if (isBound(b) && b.target == encoder.nullable) {
 		nullable = true
-		b = b.__target__
+		b = b.target
 	}
 
 	if (a == encoder.unknown) a = b
 	else if (b == encoder.unknown) {}
 	else if (!isBound(a) || !isBound(b)) a != b && (a = encoder.any)
 	else {  // -- join objects
-		const typeA = a.__target__, typeB = b.__target__
+		const typeA = a.target, typeB = b.target
 
 		if (typeA != typeB) {
 			a = encoder.any
 		}
 		else if (typeA == encoder.object) {
-			a = encoder.object(joinDispatcherRecords(a.__boundArguments__[0], b.__boundArguments__[0]))
+			a = encoder.object(joinDispatcherRecords(a['0'], b['0']))
 		}
 		else if (typeA == encoder.array) {
 			a = encoder.array(
-				joinDispatchers(a.__boundArguments__[0], b.__boundArguments__[0]),
-				joinDispatcherRecords(a.__boundArguments__[1], b.__boundArguments__[1])
+				joinDispatchers(a['0'], b['0']),
+				joinDispatcherRecords(a['1'], b['1'])
 			)
 		}
 		else if (typeA == encoder.set) {
 			a = encoder.set(
-				joinDispatchers(a.__boundArguments__[0], b.__boundArguments__[0]),
-				joinDispatcherRecords(a.__boundArguments__[1], b.__boundArguments__[1])
+				joinDispatchers(a['0'], b['0']),
+				joinDispatcherRecords(a['1'], b['1'])
 			)
 		}
 		else if (typeA == encoder.map) {
 			a = encoder.map(
-				joinDispatchers(a.__boundArguments__[0], b.__boundArguments__[0]),
-				joinDispatcherRecords(a.__boundArguments__[1], b.__boundArguments__[1])
+				joinDispatchers(a['0'], b['0']),
+				joinDispatcherRecords(a['1'], b['1'])
 			)
 		}
 		else if (typeA == encoder.record) {
-			a = encoder.record(
-				joinDispatchers(a.__boundArguments__[0], b.__boundArguments__[0]),
-				joinDispatcherRecords(a.__boundArguments__[1], b.__boundArguments__[1])
-			)
+			a = encoder.record(joinDispatchers(a['0'], b['0']))
 		}
 		else {
 			a = encoder.any

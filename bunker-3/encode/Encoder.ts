@@ -1,6 +1,6 @@
 import Coder from '../Coder'
 import Byte from '../Byte'
-import bind from '../bind'
+import bind, { isBound } from '../bind'
 
 export type Dispatcher = (value: any) => void
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -13,7 +13,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	stringMemory: string[] = []  // array of all strings encountered
 	encodeString = TextEncoder.prototype.encode.bind(new TextEncoder)
 
-	abstract data: any
+	abstract data: Uint8Array
 	abstract byte(value: number): void  // write a single byte
 	abstract bytes(value: Uint8Array): void  // write an array of bytes
 
@@ -130,6 +130,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	/**
 	 * --- Constructibles
 	 */
+	// -- nullable
 	nullable(dispatch: Dispatcher = this.unknown) {
 		return bind<Dispatcher>(this.encodeNullable, dispatch)
 	}
@@ -144,6 +145,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		}
 	}
 
+	// -- tuple
 	tuple(dispatchers: Dispatcher[] = []) {
 		return bind<Dispatcher>(this.encodeTuple, dispatchers)
 	}
@@ -166,6 +168,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		for (const key in properties) properties[key](value[key])
 	}
 
+	// -- array
 	array(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
 		return bind<Dispatcher>(this.encodeArray, dispatch, properties)
 	}
@@ -177,6 +180,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.encodeProperties(properties, value)
 	}
 
+	// -- set
 	set(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
 		return bind<Dispatcher>(this.encodeSet, dispatch, properties)
 	}
@@ -188,19 +192,20 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.encodeProperties(properties, value)
 	}
 
-	record(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
-		return bind<Dispatcher>(this.encodeRecord, dispatch, properties)
+	// -- record
+	record(dispatch: Dispatcher = this.unknown) {
+		return bind<Dispatcher>(this.encodeRecord, dispatch)
 	}
-	private encodeRecord(dispatch: Dispatcher, value: Record<string, any>, properties: DispatcherRecord) {
+	private encodeRecord(dispatch: Dispatcher, value: Record<string, any>) {
 		if (this.inMemory(value)) return
 		this.positiveInteger(Object.keys(value).length)
 		for (const key in value) {
 			this.string(key)
 			dispatch(value[key])
 		}
-		this.encodeProperties(properties, value)
 	}
 
+	// -- map
 	map(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
 		return bind<Dispatcher>(this.encodeMap, dispatch, properties)
 	}
@@ -219,6 +224,61 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	 * Encode the given dispatcher's schema
 	 */
 	schema(dispatcher: Dispatcher) {
-		
+		if (isBound(dispatcher)) switch (dispatcher.target) {
+			case this.nullable:
+				this.byte(Byte.nullable)
+				this.schema(dispatcher['0'])
+				break
+			case this.tuple:
+				this.byte(Byte.tuple)
+				dispatcher['0'].forEach((type: Dispatcher) => this.schema(type))
+				break
+			case this.object:
+				this.byte(Byte.object)
+				this.schemaProperties(dispatcher['0'])
+				break
+			case this.array:
+				this.byte(Byte.array)
+				this.schema(dispatcher['0'])
+				this.schemaProperties(dispatcher['1'])
+				break
+			case this.set:
+				this.byte(Byte.set)
+				this.schema(dispatcher['0'])
+				this.schemaProperties(dispatcher['1'])
+				break
+			case this.map:
+				this.byte(Byte.map)
+				this.schema(dispatcher['0'])
+				this.schemaProperties(dispatcher['1'])
+				break
+			case this.record:
+				this.byte(Byte.record)
+				this.schema(dispatcher['0'])
+				break
+		}
+		else switch (dispatcher) {
+			case this.character: this.byte(Byte.character); break
+			case this.boolean: this.byte(Byte.boolean); break
+			case this.integer: this.byte(Byte.integer); break
+			case this.positiveInteger: this.byte(Byte.positiveInteger); break
+			case this.bigInteger: this.byte(Byte.bigInteger); break
+			case this.number: this.byte(Byte.number); break
+			case this.string: this.byte(Byte.string); break
+			case this.regularExpression: this.byte(Byte.regularExpression); break
+			case this.date: this.byte(Byte.date); break
+			case this.any: this.byte(Byte.any); break
+		}
+
+		console.error('Unkown dispatcher type:', dispatcher)
+		throw Error(`Unknown dispatcher type`)
+	}
+
+	private schemaProperties(properties: DispatcherRecord) {
+		for (const key in properties) {
+			this.string(key)
+			this.schema(properties[key])
+		}
+		this.byte(Byte.stop)
 	}
 }
