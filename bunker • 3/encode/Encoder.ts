@@ -1,6 +1,6 @@
 import Coder from '../Coder'
 import Byte from '../Byte'
-import bind, { isBound, Bound } from '../bind'
+import bind, { isBound } from '../bind'
 
 export type Dispatcher = (value: any) => void
 export type DispatcherRecord = Record<string, Dispatcher>

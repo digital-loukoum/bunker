@@ -121,5 +121,4 @@ export default abstract class EncoderDispatcher extends Encoder {
 				dispatcher[key] = this.nullable(b[key])
 		return dispatcher
 	}
-	
 }
