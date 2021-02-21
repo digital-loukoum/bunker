@@ -5,6 +5,10 @@ import augment, { isAugmented } from '../augment'
 export type Dispatcher = (value: any) => void
 export type DispatcherRecord = Record<string, Dispatcher>
 
+const infinity = new Uint8Array([64, 64])
+const minusInfinity = new Uint8Array([192, 64])
+const nan = new Uint8Array([64, 32])
+
 /**
  * The Encoder abstract class implements the encoding logic without the details.
  */
@@ -88,8 +92,9 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	}
 
 	number(value: number) {
-		if (value == Infinity) return this.bytes(new Uint8Array([127, 127]))
-		else if (value == -Infinity) return this.bytes(new Uint8Array([255, 127]))
+		if (value == Infinity) return this.bytes(infinity)
+		else if (value == -Infinity) return this.bytes(minusInfinity)
+		else if (isNaN(value)) return this.bytes(nan)
 		let [integer, decimals] = value.toString().split('.')
 		let mantissa = 0
 		let exponent = 0
@@ -109,7 +114,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		if (value.length > 1) {
 			const index = this.stringMemory.indexOf(value)
 			if (~index) {
-				this.byte(Byte.reference)
+				this.byte(Byte.stringReference)
 				this.positiveInteger(index)
 				return
 			}
@@ -137,9 +142,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	/**
 	 * --- Constructibles
 	 */
-	// -- nullable
 	nullable(dispatch: Dispatcher = this.unknown) {
-		return augment(function encodeNullable(this: Encoder, value: any) {
+		return augment(function(this: Encoder, value: any) {
 			if (value === null)
 				this.byte(Byte.null)
 			else if (value === undefined)
@@ -151,8 +155,6 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		}, this.nullable, dispatch)
 	}
 	
-
-	// -- tuple
 	tuple(dispatchers: Dispatcher[] = []) {
 		return augment(function(this: Encoder, value: [...any]) {
 			for (let i = 0; i < dispatchers.length; i++)

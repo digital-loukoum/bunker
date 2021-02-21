@@ -44,7 +44,7 @@ export default abstract class Decoder {
 	}
 
 	stringReference() {
-		return this.stringReferences[this.positiveInteger()]
+		return 
 	}
 
 	number() {

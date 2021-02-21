@@ -16,13 +16,13 @@ type Coder<Dispatcher extends Function> = {
 	date: Dispatcher
 	any: Dispatcher
 
-	nullable(dispatch: Dispatcher): Augmented<Dispatcher>
-	tuple(dispatch: Dispatcher[]): Augmented<Dispatcher>
+	nullable(dispatch: Dispatcher): Dispatcher
+	tuple(dispatch: Dispatcher[]): Dispatcher
 
-	object(dispatch: Record<string, Dispatcher>): Augmented<Dispatcher>
-	array(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Augmented<Dispatcher>
-	set(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Augmented<Dispatcher>
-	record(dispatch: Dispatcher): Augmented<Dispatcher>
-	map(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Augmented<Dispatcher>
+	object(dispatch: Record<string, Dispatcher>): Dispatcher
+	array(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Dispatcher
+	set(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Dispatcher
+	record(dispatch: Dispatcher): Dispatcher
+	map(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Dispatcher
 }
 export default Coder
