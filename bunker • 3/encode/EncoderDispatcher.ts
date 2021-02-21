@@ -1,5 +1,5 @@
 import Encoder, { Dispatcher, DispatcherRecord } from './Encoder'
-import { isBound } from '../bind'
+import { isAugmented } from '../augment'
 
 /**
  * Extends the EncoderSchema with the 'dispatcher' method which returns the right
@@ -62,54 +62,55 @@ export default abstract class EncoderDispatcher extends Encoder {
 
 	private joinDispatchers(a: Dispatcher, b: Dispatcher): Dispatcher {
 		let nullable = false
-		if (isBound(a) && a.target == this.nullable) {
+		let joint: Dispatcher
+		if (isAugmented(a) && a.target == this.nullable) {
 			nullable = true
-			a = a.target
+			a = a['0']
 		}
-		if (isBound(b) && b.target == this.nullable) {
+		if (isAugmented(b) && b.target == this.nullable) {
 			nullable = true
-			b = b.target
+			b = b['0']
 		}
 	
-		if (a == this.unknown) a = b
-		else if (b == this.unknown) {}
-		else if (!isBound(a) || !isBound(b)) a != b && (a = this.any)
+		if (a == this.unknown) joint = b
+		else if (b == this.unknown) joint = a
+		else if (!isAugmented(a) || !isAugmented(b)) {
+			joint = a == b ? a : this.any
+		}
 		else {  // -- join objects
-			const typeA = a.target, typeB = b.target
-	
-			if (typeA != typeB) {
-				a = this.any
+			if (a.target != b.target) {
+				joint = this.any
 			}
-			else if (typeA == this.object) {
-				a = this.object(this.joinDispatcherRecords(a['0'], b['0']))
+			else if (a.target == this.object) {
+				joint = this.object(this.joinDispatcherRecords(a['0'], b['0']))
 			}
-			else if (typeA == this.array) {
-				a = this.array(
+			else if (a.target == this.array) {
+				joint = this.array(
 					this.joinDispatchers(a['0'], b['0']),
 					this.joinDispatcherRecords(a['1'], b['1'])
 				)
 			}
-			else if (typeA == this.set) {
-				a = this.set(
+			else if (a.target == this.set) {
+				joint = this.set(
 					this.joinDispatchers(a['0'], b['0']),
 					this.joinDispatcherRecords(a['1'], b['1'])
 				)
 			}
-			else if (typeA == this.map) {
-				a = this.map(
+			else if (a.target == this.map) {
+				joint = this.map(
 					this.joinDispatchers(a['0'], b['0']),
 					this.joinDispatcherRecords(a['1'], b['1'])
 				)
 			}
-			else if (typeA == this.record) {
-				a = this.record(this.joinDispatchers(a['0'], b['0']))
+			else if (a.target == this.record) {
+				joint = this.record(this.joinDispatchers(a['0'], b['0']))
 			}
 			else {
-				a = this.any
+				joint = this.any
 			}
 		}
 		
-		return nullable ? this.nullable(a) : a
+		return nullable ? this.nullable(joint) : joint
 	}
 	
 	private joinDispatcherRecords(a: DispatcherRecord, b: DispatcherRecord): DispatcherRecord {

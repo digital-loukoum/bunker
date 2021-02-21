@@ -9,7 +9,5 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	abstract byte(): number  // read a single byte
 	abstract bytes(stopAtByte: number): Uint8Array  // read bytes until a stop byte value
-	abstract nextByteIs(byte: number): boolean  // check if next byte has a value; increment the cursor if true
-
-	
+	abstract nextByteIs(byte: number): boolean  // check if next byte has a value; increment the cursor if true	
 }

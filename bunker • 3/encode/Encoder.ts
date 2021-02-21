@@ -1,6 +1,6 @@
 import Coder from '../Coder'
 import Byte from '../Byte'
-import bind, { isBound } from '../bind'
+import augment, { isAugmented } from '../augment'
 
 export type Dispatcher = (value: any) => void
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -42,15 +42,15 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		throw Error(`Call to Encoder::unknown`)
 	}
 
-	character = (value: number) => {
+	character(value: number) {
 		this.byte(value)
 	}
 	
-	boolean = (value: boolean) => {
+	boolean(value: boolean) {
 		this.byte(value ? 1 : 0)
 	}
 
-	integer = (value: number) => {
+	integer(value: number) {
 		let sign = 0
 		if (value < 0 ||( value == 0 && Object.is(value, -0))) {
 			sign = 128
@@ -61,7 +61,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		if (nextValue) this.positiveInteger(nextValue)
 	}
 
-	positiveInteger = (value: number) => {
+	positiveInteger(value: number) {
 		do {
 			const nextValue = Math.floor(value / 128)
 			this.byte(value % 128 + (nextValue ? 128 : 0))
@@ -69,7 +69,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		} while (value)
 	}
 
-	bigInteger = (value: bigint) => {
+	bigInteger(value: bigint) {
 		let sign = 0
 		if (value < 0n) {
 			sign = 128
@@ -87,7 +87,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		}
 	}
 
-	number = (value: number) => {
+	number(value: number) {
 		if (value == Infinity) return this.bytes(new Uint8Array([127, 127]))
 		else if (value == -Infinity) return this.bytes(new Uint8Array([255, 127]))
 		let [integer, decimals] = value.toString().split('.')
@@ -105,7 +105,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.integer(mantissa)
 	}
 
-	string = (value: string) => {
+	string(value: string) {
 		if (value.length > 1) {
 			const index = this.stringMemory.indexOf(value)
 			if (~index) {
@@ -119,152 +119,144 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.byte(0)
 	}
 
-	regularExpression = (value: RegExp) => {
+	regularExpression(value: RegExp) {
 		this.string(value.source)
 		this.string(value.flags)
 	}
 
-	date = (value: Date) => {
+	date(value: Date) {
 		this.integer(value.getTime())
 	}
 
-	any = (value: any) => {
+	any(value: any) {
 		const dispatch = this.dispatcher(value)
 		this.schema(dispatch)
-		dispatch(value)
+		dispatch.call(this, value)
 	}
 
 	/**
 	 * --- Constructibles
 	 */
 	// -- nullable
-	nullable = (dispatch: Dispatcher = this.unknown) => {
-		return bind<Dispatcher>(this.encodeNullable, dispatch)
+	nullable(dispatch: Dispatcher = this.unknown) {
+		return augment(function encodeNullable(this: Encoder, value: any) {
+			if (value === null)
+				this.byte(Byte.null)
+			else if (value === undefined)
+				this.byte(Byte.undefined)
+			else {
+				this.byte(Byte.defined)
+				dispatch.call(this, value)
+			}
+		}, this.nullable, dispatch)
 	}
-	private encodeNullable = (dispatch: Dispatcher, value: any) => {
-		if (value === null)
-			this.byte(Byte.null)
-		else if (value === undefined)
-			this.byte(Byte.undefined)
-		else {
-			this.byte(Byte.defined)
-			dispatch(value)
-		}
-	}
+	
 
 	// -- tuple
-	tuple = (dispatchers: Dispatcher[] = []) =>{
-		return bind<Dispatcher>(this.encodeTuple, dispatchers)
-	}
-	private encodeTuple = (dispatchers: Dispatcher[], value: [...any]) =>{
-		for (let i = 0; i < dispatchers.length; i++)
-			dispatchers[i](value[i])
+	tuple(dispatchers: Dispatcher[] = []) {
+		return augment(function(this: Encoder, value: [...any]) {
+			for (let i = 0; i < dispatchers.length; i++)
+			dispatchers[i].call(this, value[i])
+		}, this.tuple, dispatchers)
 	}
 
 	/**
 	 * --- Objects
 	 */
-	object = (properties: DispatcherRecord = {}) => {
-		return bind<Dispatcher>(this.encodeObject, properties)
-	}
-	private encodeObject = (properties: DispatcherRecord, value: Record<string, any>) => {
-		if (this.inMemory(value)) return
-		this.encodeProperties(properties, value)
-	}
-	private encodeProperties = (properties: DispatcherRecord, value: Record<string, any>) => {
-		for (const key in properties) properties[key](value[key])
+	private properties(properties: DispatcherRecord, value: Record<string, any>) {
+		for (const key in properties) properties[key].call(this, value[key])
 	}
 
-	// -- array
-	array = (dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) => {
-		return bind<Dispatcher>(this.encodeArray, dispatch, properties)
-	}
-	private encodeArray = (dispatch: Dispatcher, properties: DispatcherRecord, value: any[]) => {
-		if (this.inMemory(value)) return
-		this.integer(value.length)
-		for (const element of value)
-			dispatch(element)
-		this.encodeProperties(properties, value)
+	object(properties: DispatcherRecord = {}) {
+		return augment(function(this: Encoder, value: Record<string, any>) {
+			if (this.inMemory(value)) return
+			this.properties(properties, value)
+		}, this.object, properties)
 	}
 
-	// -- set
-	set = (dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) => {
-		return bind<Dispatcher>(this.encodeSet, dispatch, properties)
-	}
-	private encodeSet = (dispatch: Dispatcher, properties: DispatcherRecord, value: Set<any>) => {
-		if (this.inMemory(value)) return
-		this.integer(value.size)
-		for (const element of value)
-			dispatch(element)
-		this.encodeProperties(properties, value)
+	array(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
+		return augment(function(this: Encoder, value: any[]) {
+			if (this.inMemory(value)) return
+			this.integer(value.length)
+			for (const element of value)
+				dispatch.call(this, element)
+			this.properties(properties, value)
+		}, this.array, dispatch, properties)
 	}
 
-	// -- record
-	record = (dispatch: Dispatcher = this.unknown) => {
-		return bind<Dispatcher>(this.encodeRecord, dispatch)
-	}
-	private encodeRecord = (dispatch: Dispatcher, value: Record<string, any>) => {
-		if (this.inMemory(value)) return
-		this.positiveInteger(Object.keys(value).length)
-		for (const key in value) {
-			this.string(key)
-			dispatch(value[key])
-		}
+	set(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
+		return augment(function(this: Encoder, value: Set<any>) {
+			if (this.inMemory(value)) return
+			this.integer(value.size)
+			for (const element of value)
+				dispatch.call(this, element)
+			this.properties(properties, value)
+		}, this.set, dispatch, properties)
 	}
 
-	// -- map
-	map = (dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) => {
-		return bind<Dispatcher>(this.encodeMap, dispatch, properties)
+	record(dispatch: Dispatcher = this.unknown) {
+		return augment(function(this: Encoder, value: Record<string, any>) {
+			if (this.inMemory(value)) return
+			this.positiveInteger(Object.keys(value).length)
+			for (const key in value) {
+				this.string(key)
+				dispatch.call(this, value[key])
+			}
+		}, this.record, dispatch)
 	}
-	private encodeMap = (dispatch: Dispatcher, properties: DispatcherRecord, map: Map<string, any>) => {
-		if (this.inMemory(map)) return
-		this.positiveInteger(map.size)
-		for (const [key, value] of map.entries()) {
-			this.string(key)
-			dispatch(value)
-		}
-		this.encodeProperties(properties, map)
+
+	map(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
+		return augment(function(this: Encoder, map: Map<string, any>) {
+			if (this.inMemory(map)) return
+			this.positiveInteger(map.size)
+			for (const [key, value] of map.entries()) {
+				this.string(key)
+				dispatch.call(this, value)
+			}
+			this.properties(properties, map)
+		}, this.map, dispatch, properties)
 	}
 
 	/**
 	 * --- Schema
 	 * Encode the given dispatcher's schema
 	 */
-	schema = (dispatcher: Dispatcher) => {
-		if (isBound(dispatcher)) switch (dispatcher.target) {
-			case this.encodeNullable:
+	schema(dispatcher: Dispatcher) {
+		if (isAugmented(dispatcher)) switch (dispatcher.target) {
+			case this.nullable:
 				this.byte(Byte.nullable)
 				this.schema(dispatcher['0'])
 				return
-			case this.encodeTuple:
+			case this.tuple:
 				this.byte(Byte.tuple)
 				dispatcher['0'].forEach((type: Dispatcher) => this.schema(type))
 				return
-			case this.encodeObject:
+			case this.object:
 				this.byte(Byte.object)
 				this.schemaProperties(dispatcher['0'])
 				return
-			case this.encodeArray:
+			case this.array:
 				this.byte(Byte.array)
 				this.schema(dispatcher['0'])
 				this.schemaProperties(dispatcher['1'])
 				return
-			case this.encodeSet:
+			case this.set:
 				this.byte(Byte.set)
 				this.schema(dispatcher['0'])
 				this.schemaProperties(dispatcher['1'])
 				return
-			case this.encodeMap:
+			case this.map:
 				this.byte(Byte.map)
 				this.schema(dispatcher['0'])
 				this.schemaProperties(dispatcher['1'])
 				return
-			case this.encodeRecord:
+			case this.record:
 				this.byte(Byte.record)
 				this.schema(dispatcher['0'])
 				return
 		}
 		else switch (dispatcher) {
+			case this.unknown: return this.byte(Byte.unknown)
 			case this.character: return this.byte(Byte.character)
 			case this.boolean: return this.byte(Byte.boolean)
 			case this.integer: return this.byte(Byte.integer)
@@ -277,10 +269,11 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			case this.any: return this.byte(Byte.any)
 		}
 		console.error('Unknown dispatcher type:', dispatcher)
+		console.log("this.nullable", this.nullable, this.nullable == dispatcher)
 		throw Error(`Unknown dispatcher type`)
 	}
 
-	private schemaProperties = (properties: DispatcherRecord) => {
+	private schemaProperties(properties: DispatcherRecord) {
 		for (const key in properties) {
 			this.string(key)
 			this.schema(properties[key])

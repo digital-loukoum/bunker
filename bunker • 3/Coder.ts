@@ -1,4 +1,4 @@
-import { Bound } from './bind'
+import { Augmented } from './augment'
 
 /**
  * Base interface used by Encoder and Decoder
@@ -16,13 +16,13 @@ type Coder<Dispatcher extends Function> = {
 	date: Dispatcher
 	any: Dispatcher
 
-	nullable(dispatch: Dispatcher): Bound<Dispatcher>
-	tuple(dispatch: Dispatcher[]): Bound<Dispatcher>
+	nullable(dispatch: Dispatcher): Augmented<Dispatcher>
+	tuple(dispatch: Dispatcher[]): Augmented<Dispatcher>
 
-	object(dispatch: Record<string, Dispatcher>): Bound<Dispatcher>
-	array(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
-	set(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
-	record(dispatch: Dispatcher): Bound<Dispatcher>
-	map(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Bound<Dispatcher>
+	object(dispatch: Record<string, Dispatcher>): Augmented<Dispatcher>
+	array(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Augmented<Dispatcher>
+	set(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Augmented<Dispatcher>
+	record(dispatch: Dispatcher): Augmented<Dispatcher>
+	map(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Augmented<Dispatcher>
 }
 export default Coder
