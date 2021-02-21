@@ -29,7 +29,7 @@
     "benchtable": "^0.1.0",
     "chalk": "^4.1.0",
     "cli-table": "^0.3.4",
-    "fartest": "^2.1.4",
+    "fartest": "^2.1.5",
     "msgpack-js": "^0.3.0",
     "notepack.io": "^2.3.0",
     "pako": "^2.0.3",

@@ -10,10 +10,10 @@ start(function({stage, same}) {
 		same(sample, debunker(data), "Sample")
 	}
 
-	// stage('Random samples')
-	// for (const sample in samples) {
-	// 	const value = samples[sample]
-	// 	const data = bunker(value)
-	// 	same(value, debunker(data), sample)
-	// }
+	stage('Random samples')
+	for (const sample in samples) {
+		const value = samples[sample]
+		const data = bunker(value)
+		same(value, debunker(data), sample)
+	}
 })
