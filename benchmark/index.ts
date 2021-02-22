@@ -9,6 +9,7 @@ import {
 	bunkerFile,
 } from '../src/node'
 import { formatSize, formatTime } from './formatters'
+import { bunker as bunker3, debunker as debunker3 } from '../bunker • 3'
 import Table from 'cli-table'
 // import zlib from 'zlib'
 // import { inflate, deflate } from 'pako'
@@ -145,6 +146,7 @@ async function benchmark(fn: Function, iterations = 10000) {
 		'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
 		'zipped json': async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
 		'bunker': ([value]: any) => bunker(value),
+		'bunker•3': ([value]: any) => bunker3(value),
 		'msgpack': ([value]: any) => msgpack.encode(value),
 	}
 	
@@ -173,6 +175,7 @@ async function benchmark(fn: Function, iterations = 10000) {
 			'zipped json': async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
 			'bunker': ([value]: any) => bunker(value),
 			'bunker (with schema)': ([value, schema]: [any, Schema]) => bunker(value, schema),
+			'bunker•3': ([value]: any) => bunker3(value),
 			'notepack': ([value]: any) => notepack.encode(value),
 			'msgpack': ([value]: any) => msgpack.encode(value),
 		},
@@ -187,6 +190,7 @@ async function benchmark(fn: Function, iterations = 10000) {
 			'json': (encoded: any) => JSON.parse(encoded.json.toString()),
 			'zipped json': async (encoded: any) => JSON.parse((await unzip(encoded['zipped json'])).toString()),
 			'bunker': (encoded: any) => debunker(encoded.bunker),
+			'bunker•3': (encoded: any) => bunker3(encoded['bunker•3']),
 			'notepack': (encoded: any) => notepack.decode(encoded.msgpack),
 			'msgpack': (encoded: any) => msgpack.decode(encoded.msgpack),
 		},
