@@ -24,6 +24,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	abstract dispatcher(value: any): Dispatcher  // return the right dispatcher of a given value
 
 	encode(value: any): Uint8Array {
+		
 		this.any(value)
 		return this.data
 	}
@@ -156,7 +157,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	}
 	
 	tuple(dispatchers: Dispatcher[] = []) {
-		return augment(function(this: Encoder, value: [...any]) {
+		return augment(function(this: Encoder, value: any[]) {
 			for (let i = 0; i < dispatchers.length; i++)
 			dispatchers[i].call(this, value[i])
 		}, this.tuple, dispatchers)
@@ -260,6 +261,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		else switch (dispatcher) {
 			case this.unknown: return this.byte(Byte.unknown)
 			case this.character: return this.byte(Byte.character)
+			case this.bytes: return this.byte(Byte.bytes)
 			case this.boolean: return this.byte(Byte.boolean)
 			case this.integer: return this.byte(Byte.integer)
 			case this.positiveInteger: return this.byte(Byte.positiveInteger)
