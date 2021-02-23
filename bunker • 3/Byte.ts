@@ -2,7 +2,7 @@ enum Byte {
 	// primitives
 	unknown = 0,
 	character,
-	bytes,
+	binary,
 	boolean,
 	integer,
 	positiveInteger,

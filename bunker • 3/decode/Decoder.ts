@@ -13,8 +13,10 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	memory: object[] = []  // array of all objects encountered
 	stringMemory: string[] = []  // array of all strings encountered
 
+	abstract reset(): void
 	abstract byte(): number  // read a single byte
-	abstract bytes(stopAtByte: number): Uint8Array  // read bytes until a stop byte value
+	abstract bytes(length: number): Uint8Array  // read bytes
+	abstract bytesUntil(stopAtByte: number): Uint8Array  // read bytes until a stop byte value
 	abstract nextByteIs(byte: number): boolean  // check if next byte has a value; increment the cursor if true
 	abstract error(message: string): Error  // display an error message
 
@@ -32,15 +34,25 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	character() {
 		return this.byte()
 	}
+
+	binary(): Uint8Array {
+		if (this.nextByteIs(Byte.reference)) return this.recall() as Uint8Array
+		const length = this.integer()
+		return this.bytes(length)
+	}
+
 	boolean() {
 		return this.byte() == 0 ? false : true
 	}
+
 	regularExpression() {
 		new RegExp(this.string(), this.string())
 	}
+
 	date() {
 		new Date(this.integer())
 	}
+
 	any() {
 		this.schema()()
 	}
@@ -107,7 +119,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	string() {
 		if (this.nextByteIs(Byte.stringReference)) return this.stringMemory[this.positiveInteger()]
-		const decoded = this.decodeString(this.bytes(0))
+		const decoded = this.decodeString(this.bytesUntil(0))
 		if (decoded.length > 1) this.stringMemory.push(decoded)
 		return decoded
 	}
@@ -212,6 +224,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			case Byte.any: return this.any
 			case Byte.boolean: return this.boolean
 			case Byte.character: return this.character
+			case Byte.binary: return this.binary
 			case Byte.integer: return this.integer
 			case Byte.positiveInteger: return this.positiveInteger
 			case Byte.bigInteger: return this.bigInteger

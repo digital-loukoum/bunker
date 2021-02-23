@@ -50,6 +50,12 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	character(value: number) {
 		this.byte(value)
 	}
+
+	binary(value: Uint8Array) {
+		if (this.inMemory(value)) return
+		this.integer(value.byteLength)
+		this.bytes(value)
+	}
 	
 	boolean(value: boolean) {
 		this.byte(value ? 1 : 0)
@@ -261,7 +267,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		else switch (dispatcher) {
 			case this.unknown: return this.byte(Byte.unknown)
 			case this.character: return this.byte(Byte.character)
-			case this.bytes: return this.byte(Byte.bytes)
+			case this.binary: return this.byte(Byte.binary)
 			case this.boolean: return this.byte(Byte.boolean)
 			case this.integer: return this.byte(Byte.integer)
 			case this.positiveInteger: return this.byte(Byte.positiveInteger)

@@ -8,11 +8,21 @@ export default class BufferDecoder extends Decoder {
 		private cursor = 0,
 	) { super() }
 
+	reset() {
+		this.cursor = 0
+	}
+
 	byte(): number {
 		return this.buffer[this.cursor++]
 	}
 
-	bytes(stopAtByte: number) {
+	bytes(length: number) {
+		const start = this.cursor
+		this.cursor += length
+		return new Uint8Array(this.buffer, start, length)
+	}
+
+	bytesUntil(stopAtByte: number) {
 		const start = this.cursor
 		while (this.buffer[this.cursor++] != stopAtByte);
 		return new Uint8Array(this.buffer, start, this.cursor - start - 1)

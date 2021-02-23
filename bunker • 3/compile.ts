@@ -61,7 +61,7 @@ function compileDecoder(schema: EncoderDispatcher): DecoderDispatcher {
 	else switch (schema) {
 		case encoder.unknown: return decoder.unknown
 		case encoder.character: return decoder.character
-		case encoder.bytes: return decoder.bytes
+		case encoder.binary: return decoder.binary
 		case encoder.boolean: return decoder.boolean
 		case encoder.integer: return decoder.integer
 		case encoder.positiveInteger: return decoder.positiveInteger

@@ -6,6 +6,7 @@ import { Augmented } from './augment'
 type Coder<Dispatcher extends Function> = {
 	unknown: Dispatcher
 	character: Dispatcher
+	binary: Dispatcher
 	boolean: Dispatcher
 	integer: Dispatcher
 	positiveInteger: Dispatcher
