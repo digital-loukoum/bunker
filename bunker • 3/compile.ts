@@ -24,13 +24,12 @@ export default function compile(schema: EncoderDispatcher) {
 		 */
 		get decode() {
 			if (!decoderDispatcher) decoderDispatcher = compileDecoder(schema)
-			return function decode(data: Uint8Array, decoderConstructor: (new (data: Uint8Array) => Decoder) = BufferDecoder) {
-				const decoder = new decoderConstructor(data)
+			return function decode(decoder: Decoder | Uint8Array) {
+				if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
 				const encodedSchema = decoder.bytes(schemaData.byteLength)
 				for (let i = 0; i < schemaData.byteLength; i++) {
 					if (schemaData[i] != encodedSchema[i]) {
-						console.log("[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema")
-						decoder.reset()
+						console.log("[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema before decoding")
 						return decoder.decode()
 					}
 				}

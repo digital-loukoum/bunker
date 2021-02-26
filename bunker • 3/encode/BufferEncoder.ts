@@ -1,12 +1,11 @@
-import EncoderDispatcher from './EncoderDispatcher'
+import Encoder from './Encoder'
 
-export default class BufferEncoder extends EncoderDispatcher {
+export default class BufferEncoder extends Encoder {
 	size = 0
 
 	constructor(
 		public capacity = 64,
-		public buffer = new Uint8Array(capacity),
-		public view = new DataView(buffer.buffer),
+		public buffer = new Uint8Array(capacity)
 	) { super() }
 
 	get data() {
@@ -15,7 +14,7 @@ export default class BufferEncoder extends EncoderDispatcher {
 
 	byte(value: number) {  // write a single byte
 		this.incrementSizeBy(1)
-		this.view.setUint8(this.size++, value)
+		this.buffer[this.size++] = value
 	}
 	
 	bytes(value: Uint8Array) {  // write an array of bytes
@@ -37,9 +36,7 @@ export default class BufferEncoder extends EncoderDispatcher {
 			this.capacity *= 2
 		const newBuffer = new ArrayBuffer(this.capacity)
 		const newBytes = new Uint8Array(newBuffer)
-		const newView = new DataView(newBuffer)
 		newBytes.set(this.buffer)
-		this.view = newView
 		this.buffer = newBytes
 	}
 }

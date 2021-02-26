@@ -5,7 +5,6 @@ export type Dispatcher = () => any
 export type DispatcherRecord = Record<string, Dispatcher>
 
 const infinity = 4096
-const minusInfinity = -infinity
 const nan = 2048
 
 export default abstract class Decoder implements Coder<Dispatcher> {
@@ -13,7 +12,6 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	memory: object[] = []  // array of all objects encountered
 	stringMemory: string[] = []  // array of all strings encountered
 
-	abstract reset(): void
 	abstract byte(): number  // read a single byte
 	abstract bytes(length: number): Uint8Array  // read bytes
 	abstract bytesUntil(stopAtByte: number): Uint8Array  // read bytes until a stop byte value
