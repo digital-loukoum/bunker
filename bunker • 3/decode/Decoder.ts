@@ -44,11 +44,11 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	regularExpression() {
-		new RegExp(this.string(), this.string())
+		return new RegExp(this.string(), this.string())
 	}
 
 	date() {
-		new Date(this.integer())
+		return new Date(this.integer())
 	}
 
 	any() {
@@ -127,7 +127,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	 * --- Constructibles
 	 */
 	nullable(dispatch: Dispatcher = this.unknown) {
-		return () => {
+		return function(this: Decoder) {
 			switch (this.byte()) {
 				case Byte.null: return null
 				case Byte.undefined: return undefined
@@ -137,7 +137,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	tuple(dispatchers: Dispatcher[]) {
-		return () => {
+		return function(this: Decoder) {
 			const tuple: Array<any> = []
 			for (let i = 0; i < dispatchers.length; i++) {
 				tuple[i] = dispatchers[i].call(this)
