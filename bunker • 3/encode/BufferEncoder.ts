@@ -12,6 +12,11 @@ export default class BufferEncoder extends Encoder {
 		return new Uint8Array(this.buffer.buffer, 0, this.size)
 	}
 
+	reset() {
+		super.reset()
+		this.size = 0
+	}
+
 	byte(value: number) {  // write a single byte
 		this.incrementSizeBy(1)
 		this.buffer[this.size++] = value

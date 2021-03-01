@@ -8,8 +8,13 @@ export default class BufferDecoder extends Decoder {
 		super()
 	}
 
-	decode() {
+	reset() {
+		super.reset()
 		this.cursor = 0
+	}
+
+	decode() {
+		this.reset()
 		return super.decode()
 	}
 

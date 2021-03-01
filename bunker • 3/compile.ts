@@ -7,12 +7,15 @@ import { isAugmented } from './augment'
 export default function compile(schema: EncoderDispatcher) {
 	const schemaEncoder = new BufferEncoder
 	schemaEncoder.schema(schema)  // write the schema
-	const schemaData = schemaEncoder.data
+	const { data, memory, stringMemory } = schemaEncoder
 	let decoderDispatcher: null | DecoderDispatcher = null
 
 	return {
 		encode(value: any, encoder = new BufferEncoder) {
-			encoder.bytes(schemaData)
+			encoder.reset()
+			encoder.bytes(data)
+			encoder.memory = Array<object>().concat(memory)
+			encoder.stringMemory = Array<string>().concat(stringMemory)
 			schema.call(encoder, value)
 			return encoder.data
 		},
@@ -26,14 +29,17 @@ export default function compile(schema: EncoderDispatcher) {
 			if (!decoderDispatcher) decoderDispatcher = compileDecoder(schema)
 			return function decode(decoder: Decoder | Uint8Array) {
 				if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
-				const encodedSchema = decoder.bytes(schemaData.byteLength)
-				for (let i = 0; i < schemaData.byteLength; i++) {
-					if (schemaData[i] != encodedSchema[i]) {
+				decoder.reset()
+				const encodedSchema = decoder.bytes(data.byteLength)
+				for (let i = 0; i < data.byteLength; i++) {
+					if (data[i] != encodedSchema[i]) {
 						console.log("[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema before decoding")
 						return decoder.decode()
 					}
 				}
 				// if the schema is the same, we can use the compiled dispatcher
+				decoder.memory = Array<object>().concat(memory)
+				decoder.stringMemory = Array<string>().concat(stringMemory)
 				return (decoderDispatcher as DecoderDispatcher).call(decoder)
 			}
 		}

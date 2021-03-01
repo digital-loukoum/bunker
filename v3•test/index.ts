@@ -1,16 +1,9 @@
 import start from 'fartest'
 import sample from './sample'
 import samples from '../samples'
-import { bunker, debunker } from '../bunker • 3'
+import { bunker, debunker, guessSchema } from '../bunker • 3'
 
 start(function({stage, same}) {
-	// stage("Debug string")
-	// {
-	// 	const value = "Hello"
-	// 	const data = bunker(value)
-	// 	same(value, debunker(data))
-	// }
-
 	stage('Sample')
 	{
 		const data = bunker(sample)
@@ -22,5 +15,14 @@ start(function({stage, same}) {
 		const value = samples[sample]
 		const data = bunker(value)
 		same(value, debunker(data), sample)
+	}
+
+	stage('Precompile')
+	{
+		const value = sample
+		const { encode, decode } = bunker.compile(guessSchema(sample))
+		const data = encode(value)
+		const decoded = decode(data)
+		same(value, decoded)
 	}
 })

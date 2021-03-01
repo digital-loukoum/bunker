@@ -21,7 +21,13 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	abstract byte(value: number): void  // write a single byte
 	abstract bytes(value: Uint8Array): void  // write an array of bytes
 
+	reset() {
+		this.memory.length = 0
+		this.stringMemory.length = 0
+	}
+
 	encode(value: any): Uint8Array {
+		this.reset()
 		this.any(value)
 		return this.data
 	}
@@ -223,70 +229,6 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		}, this.map, dispatch, properties)
 	}
 
-	/**
-	 * --- Schema
-	 * Encode the given dispatcher's schema
-	 */
-	schema(dispatcher: Dispatcher) {
-		if (isAugmented(dispatcher)) switch (dispatcher.target) {
-			case this.nullable:
-				this.byte(Byte.nullable)
-				this.schema(dispatcher['0'])
-				return
-			case this.tuple:
-				this.byte(Byte.tuple)
-				dispatcher['0'].forEach((type: Dispatcher) => this.schema(type))
-				return
-			case this.object:
-				this.byte(Byte.object)
-				this.schemaProperties(dispatcher['0'])
-				return
-			case this.array:
-				this.byte(Byte.array)
-				this.schema(dispatcher['0'])
-				this.schemaProperties(dispatcher['1'])
-				return
-			case this.set:
-				this.byte(Byte.set)
-				this.schema(dispatcher['0'])
-				this.schemaProperties(dispatcher['1'])
-				return
-			case this.map:
-				this.byte(Byte.map)
-				this.schema(dispatcher['0'])
-				this.schemaProperties(dispatcher['1'])
-				return
-			case this.record:
-				this.byte(Byte.record)
-				this.schema(dispatcher['0'])
-				return
-		}
-		else switch (dispatcher) {
-			case this.unknown: return this.byte(Byte.unknown)
-			case this.character: return this.byte(Byte.character)
-			case this.binary: return this.byte(Byte.binary)
-			case this.boolean: return this.byte(Byte.boolean)
-			case this.integer: return this.byte(Byte.integer)
-			case this.positiveInteger: return this.byte(Byte.positiveInteger)
-			case this.bigInteger: return this.byte(Byte.bigInteger)
-			case this.number: return this.byte(Byte.number)
-			case this.string: return this.byte(Byte.string)
-			case this.regularExpression: return this.byte(Byte.regularExpression)
-			case this.date: return this.byte(Byte.date)
-			case this.any: return this.byte(Byte.any)
-		}
-		console.error('Unknown dispatcher type:', dispatcher)
-		throw Error(`Unknown dispatcher type`)
-	}
-
-	private schemaProperties(properties: DispatcherRecord) {
-		for (const key in properties) {
-			this.string(key)
-			this.schema(properties[key])
-		}
-		this.byte(Byte.stop)
-	}
-
 
 	/**
 	 * Guess dispatcher
@@ -406,5 +348,69 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			if (!(key in a))  // key exists in b but not in a
 				dispatcher[key] = this.nullable(b[key])
 		return dispatcher
+	}
+
+
+	/**
+	 * Encode the given dispatcher's schema
+	 */
+	schema(dispatcher: Dispatcher) {
+		if (isAugmented(dispatcher)) switch (dispatcher.target) {
+			case this.nullable:
+				this.byte(Byte.nullable)
+				this.schema(dispatcher['0'])
+				return
+			case this.tuple:
+				this.byte(Byte.tuple)
+				dispatcher['0'].forEach((type: Dispatcher) => this.schema(type))
+				return
+			case this.object:
+				this.byte(Byte.object)
+				this.schemaProperties(dispatcher['0'])
+				return
+			case this.array:
+				this.byte(Byte.array)
+				this.schema(dispatcher['0'])
+				this.schemaProperties(dispatcher['1'])
+				return
+			case this.set:
+				this.byte(Byte.set)
+				this.schema(dispatcher['0'])
+				this.schemaProperties(dispatcher['1'])
+				return
+			case this.map:
+				this.byte(Byte.map)
+				this.schema(dispatcher['0'])
+				this.schemaProperties(dispatcher['1'])
+				return
+			case this.record:
+				this.byte(Byte.record)
+				this.schema(dispatcher['0'])
+				return
+		}
+		else switch (dispatcher) {
+			case this.unknown: return this.byte(Byte.unknown)
+			case this.character: return this.byte(Byte.character)
+			case this.binary: return this.byte(Byte.binary)
+			case this.boolean: return this.byte(Byte.boolean)
+			case this.integer: return this.byte(Byte.integer)
+			case this.positiveInteger: return this.byte(Byte.positiveInteger)
+			case this.bigInteger: return this.byte(Byte.bigInteger)
+			case this.number: return this.byte(Byte.number)
+			case this.string: return this.byte(Byte.string)
+			case this.regularExpression: return this.byte(Byte.regularExpression)
+			case this.date: return this.byte(Byte.date)
+			case this.any: return this.byte(Byte.any)
+		}
+		console.error('Unknown dispatcher type:', dispatcher)
+		throw Error(`Unknown dispatcher type`)
+	}
+
+	private schemaProperties(properties: DispatcherRecord) {
+		for (const key in properties) {
+			this.string(key)
+			this.schema(properties[key])
+		}
+		this.byte(Byte.stop)
 	}
 }

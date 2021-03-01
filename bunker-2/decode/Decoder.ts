@@ -207,7 +207,7 @@ export default abstract class Decoder {
 			case Type.date: return this.date.bind(this)
 			case Type.reference: return this.reference.bind(this)
 
-			case Type.nullable: return this.nullable.bind(this, this.compile())  // TODO: can be 'unknown'
+			case Type.nullable: return this.nullable.bind(this, this.compile())
 			case Type.object: return this.object.bind(this, this.compileProperties())
 			case Type.array: return this.array.bind(this, this.compile(), this.compileProperties())
 			case Type.set: return this.set.bind(this, this.compile(), this.compileProperties())

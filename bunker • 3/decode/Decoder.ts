@@ -1,5 +1,5 @@
-import Coder from '../Coder'
-import Byte from '../Byte'
+import Coder from "../Coder"
+import Byte from "../Byte"
 
 export type Dispatcher = () => any
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -18,7 +18,13 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	abstract nextByteIs(byte: number): boolean  // check if next byte has a value; increment the cursor if true
 	abstract error(message: string): Error  // display an error message
 
+	reset() {
+		this.memory.length = 0
+		this.stringMemory.length = 0
+	}
+
 	decode(): any {
+		this.reset()
 		return this.any()
 	}
 
@@ -213,8 +219,8 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		}
 	}
 
+
 	/**
-	 * --- Schema
 	 * Read the schema's bytes and return a dispatcher
 	 */
 	schema(): Dispatcher {
@@ -233,7 +239,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			case Byte.date: return this.date
 			// case Byte.reference: return this.reference
 
-			case Byte.nullable: return this.nullable(this.schema())  // TODO: can be 'unknown'
+			case Byte.nullable: return this.nullable(this.schema())
 			case Byte.object: return this.object(this.schemaProperties())
 			case Byte.array: return this.array(this.schema(), this.schemaProperties())
 			case Byte.set: return this.set(this.schema(), this.schemaProperties())
