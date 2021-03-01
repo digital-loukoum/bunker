@@ -52,7 +52,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	any() {
-		this.schema()()
+		return this.schema().call(this)
 	}
 
 	integer() {
@@ -117,7 +117,8 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	string() {
 		if (this.nextByteIs(Byte.stringReference)) return this.stringMemory[this.positiveInteger()]
-		const decoded = this.decodeString(this.bytesUntil(0))
+		const encoded = this.bytesUntil(0)
+		const decoded = this.decodeString(encoded)
 		if (decoded.length > 1) this.stringMemory.push(decoded)
 		return decoded
 	}

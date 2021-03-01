@@ -4,6 +4,13 @@ import samples from '../samples'
 import { bunker, debunker } from '../bunker • 3'
 
 start(function({stage, same}) {
+	// stage("Debug string")
+	// {
+	// 	const value = "Hello"
+	// 	const data = bunker(value)
+	// 	same(value, debunker(data))
+	// }
+
 	stage('Sample')
 	{
 		const data = bunker(sample)

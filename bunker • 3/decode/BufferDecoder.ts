@@ -10,7 +10,7 @@ export default class BufferDecoder extends Decoder {
 
 	decode() {
 		this.cursor = 0
-		super.decode()
+		return super.decode()
 	}
 
 	byte(): number {
@@ -20,13 +20,13 @@ export default class BufferDecoder extends Decoder {
 	bytes(length: number) {
 		const start = this.cursor
 		this.cursor += length
-		return new Uint8Array(this.data, start, length)
+		return new Uint8Array(this.data.buffer, start, length)
 	}
 
 	bytesUntil(stopAtByte: number) {
 		const start = this.cursor
 		while (this.data[this.cursor++] != stopAtByte);
-		return new Uint8Array(this.data, start, this.cursor - start - 1)
+		return new Uint8Array(this.data.buffer, start, this.cursor - start - 1)
 	}
 
 	nextByteIs(byte: number): boolean {

@@ -276,7 +276,6 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			case this.any: return this.byte(Byte.any)
 		}
 		console.error('Unknown dispatcher type:', dispatcher)
-		console.log("this.nullable", this.nullable, this.nullable == dispatcher)
 		throw Error(`Unknown dispatcher type`)
 	}
 
