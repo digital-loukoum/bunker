@@ -8,7 +8,6 @@ const infinity = 4096
 const nan = 2048
 
 export default abstract class Decoder implements Coder<Dispatcher> {
-	decodeString = TextDecoder.prototype.decode.bind(new TextDecoder)
 	memory: object[] = []  // array of all objects encountered
 	stringMemory: string[] = []  // array of all strings encountered
 
@@ -121,10 +120,42 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		return +`${this.integer()}e${exponent}`
 	}
 
-	string() {
+	string(): string {
 		if (this.nextByteIs(Byte.stringReference)) return this.stringMemory[this.positiveInteger()]
-		const encoded = this.bytesUntil(0)
-		const decoded = this.decodeString(encoded)
+		const characters: number[] = []
+		let byte1, byte2, byte3, byte4
+	
+		while (byte1 = this.byte()) {
+			if ((byte1 & 0x80) === 0) {
+				characters.push(byte1)
+			}
+			else if ((byte1 & 0xe0) === 0xc0) {
+				byte2 = this.byte() & 0x3f
+				characters.push(((byte1 & 0x1f) << 6) | byte2)
+			}
+			else if ((byte1 & 0xf0) === 0xe0) {
+				byte2 = this.byte() & 0x3f
+				byte3 = this.byte() & 0x3f
+				characters.push(((byte1 & 0x1f) << 12) | (byte2 << 6) | byte3)
+			}
+			else if ((byte1 & 0xf8) === 0xf0) {
+				byte2 = this.byte() & 0x3f
+				byte3 = this.byte() & 0x3f
+				byte4 = this.byte() & 0x3f
+				let unit = ((byte1 & 0x07) << 0x12) | (byte2 << 0x0c) | (byte3 << 0x06) | byte4
+				if (unit > 0xffff) {
+					unit -= 0x10000
+					characters.push(((unit >>> 10) & 0x3ff) | 0xd800)
+					unit = 0xdc00 | (unit & 0x3ff)
+				}
+				characters.push(unit)
+			}
+			else {
+				characters.push(byte1)
+			}
+		}
+		
+		const decoded = String.fromCharCode.apply(null, characters)
 		if (decoded.length > 1) this.stringMemory.push(decoded)
 		return decoded
 	}

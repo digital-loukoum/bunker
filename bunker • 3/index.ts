@@ -3,8 +3,8 @@ import BufferDecoder from './decode/BufferDecoder'
 import compile from './compile'
 import Encoder from './encode/Encoder'
 
-export function bunker(value: any, encoder = new BufferEncoder) {
-	return encoder.encode(value)
+export function bunker(value: any, schema = guessSchema(value), encoder = new BufferEncoder) {
+	return encoder.encode(value, schema)
 }
 bunker.compile = compile
 

@@ -1,15 +1,9 @@
 import {
 	guessSchema,
 	bunker,
-	bunkerSchema,
 	debunker,
-	debunkerSchema
 } from '../src'
-import {
-	bunkerFile,
-} from '../src/node'
-import { formatSize, formatTime } from './formatters'
-import { bunker as bunker3, debunker as debunker3 } from '../bunker • 3'
+import { bunker as bunker3, debunker as debunker3, guessSchema as guessSchema3 } from '../bunker • 3'
 import Table from 'cli-table'
 // import zlib from 'zlib'
 // import { inflate, deflate } from 'pako'
@@ -139,7 +133,7 @@ async function benchmark(fn: Function, iterations = 10000) {
 	const inputs = {}
 	for (const [sample, value] of Object.entries(samples)) {
 		const name = sample.replace(/\.[^/.]+$/, "")
-		inputs[name] = [value, guessSchema(value)]
+		inputs[name] = [value, guessSchema(value), bunker3.compile(guessSchema3(value)), guessSchema3(value)]
 	}
 	
 	const encoders = {
@@ -148,15 +142,17 @@ async function benchmark(fn: Function, iterations = 10000) {
 		'bunker': ([value]: any) => bunker(value),
 		'bunker•3': ([value]: any) => bunker3(value),
 		'msgpack': ([value]: any) => msgpack.encode(value),
+		'notepack': ([value]: any) => notepack.encode(value),
 	}
 	
 	const encoded = {}
 	for (const trial in inputs) {
 		encoded[trial] = {}
 		for (const encoder in encoders) {
-			encoded[trial][encoder] = await encoders[encoder](trial)
+			encoded[trial][encoder] = [await encoders[encoder](inputs[trial]), inputs[trial][2].decode]
 		}
 	}
+	// console.log("Encoded", encoded)
 	
 	compare({
 		title: "Output size",
@@ -166,6 +162,7 @@ async function benchmark(fn: Function, iterations = 10000) {
 		format: (value: number) => Intl.NumberFormat().format(value) + ' o',
 		sort: (a, b) => a > b,
 	})
+
 	
 	compare({
 		title: "Encoding speed",
@@ -176,23 +173,26 @@ async function benchmark(fn: Function, iterations = 10000) {
 			'bunker': ([value]: any) => bunker(value),
 			'bunker (with schema)': ([value, schema]: [any, Schema]) => bunker(value, schema),
 			'bunker•3': ([value]: any) => bunker3(value),
+			'bunker•3 (with schema)': ([value, , , schema]: any) => bunker3(value, schema),
+			'bunker•3 (compiled)': ([value, , compiled]: any) => compiled.encode(value),
 			'notepack': ([value]: any) => notepack.encode(value),
 			'msgpack': ([value]: any) => msgpack.encode(value),
 		},
 		format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
 		apply: benchmark,
 	})
-	
+
 	compare({
 		title: "Decoding speed",
 		inputs: encoded,
 		challengers: {
-			'json': (encoded: any) => JSON.parse(encoded.json.toString()),
-			'zipped json': async (encoded: any) => JSON.parse((await unzip(encoded['zipped json'])).toString()),
-			'bunker': (encoded: any) => debunker(encoded.bunker),
-			'bunker•3': (encoded: any) => bunker3(encoded['bunker•3']),
-			'notepack': (encoded: any) => notepack.decode(encoded.msgpack),
-			'msgpack': (encoded: any) => msgpack.decode(encoded.msgpack),
+			'json': (encoded: any) => JSON.parse(encoded.json[0].toString()),
+			'zipped json': async (encoded: any) => JSON.parse((await unzip(encoded['zipped json'][0])).toString()),
+			'bunker': (encoded: any) => debunker(encoded.bunker[0]),
+			'bunker•3 (compiled)': (encoded: any) => encoded['bunker•3'][1](encoded['bunker•3'][0]),
+			'bunker•3': (encoded: any) => debunker3(encoded['bunker•3'][0]),
+			'notepack': (encoded: any) => notepack.decode(encoded.notepack[0]),
+			'msgpack': (encoded: any) => msgpack.decode(encoded.msgpack[0]),
 		},
 		format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
 		apply: benchmark,

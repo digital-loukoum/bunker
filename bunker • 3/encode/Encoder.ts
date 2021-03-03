@@ -8,7 +8,6 @@ export type DispatcherRecord = Record<string, Dispatcher>
 const infinity = new Uint8Array([64, 64])
 const minusInfinity = new Uint8Array([192, 64])
 const nan = new Uint8Array([64, 32])
-const encodeString = TextEncoder.prototype.encode.bind(new TextEncoder)
 
 /**
  * The Encoder abstract class implements the encoding logic without the details.
@@ -26,9 +25,11 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.stringMemory.length = 0
 	}
 
-	encode(value: any): Uint8Array {
+	encode(value: any, dispatch?: Dispatcher): Uint8Array {
 		this.reset()
-		this.any(value)
+		if (!dispatch) dispatch = this.dispatcher(value)
+		this.schema(dispatch)
+		dispatch.call(this, value)
 		return this.data
 	}
 
@@ -121,7 +122,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	}
 
 	string(value: string) {
-		if (value.length > 1) {
+		const { length } = value
+		if (length > 1) {
 			const index = this.stringMemory.indexOf(value)
 			if (~index) {
 				this.byte(Byte.stringReference)
@@ -130,7 +132,48 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			}
 			this.stringMemory.push(value)
 		}
-		this.bytes(encodeString(value))
+		
+		let cursor = 0
+		while (cursor < length) {
+			let byte = value.charCodeAt(cursor++)
+	
+			if ((byte & 0xffffff80) === 0) {
+				// 1-byte
+				this.byte(byte)
+				continue
+			}
+			else if ((byte & 0xfffff800) === 0) {
+				// 2-byte
+				this.byte(((byte >> 6) & 0x1f) | 0xc0)
+			}
+			else {
+				// handle surrogate pair
+				if (byte >= 0xd800 && byte <= 0xdbff) {
+					// high surrogate
+					if (cursor < length) {
+						const extra = value.charCodeAt(cursor)
+						if ((extra & 0xfc00) === 0xdc00) {
+							cursor++
+							byte = ((byte & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000
+						}
+					}
+				}
+	
+				if ((byte & 0xffff0000) === 0) {
+					// 3-byte
+					this.byte(((byte >> 12) & 0x0f) | 0xe0)
+					this.byte(((byte >> 6) & 0x3f) | 0x80)
+				}
+				else {
+					// 4-byte
+					this.byte(((byte >> 18) & 0x07) | 0xf0)
+					this.byte(((byte >> 12) & 0x3f) | 0x80)
+					this.byte(((byte >> 6) & 0x3f) | 0x80)
+				}
+			}
+	
+			this.byte((byte & 0x3f) | 0x80)
+		}
 		this.byte(0)
 	}
 
