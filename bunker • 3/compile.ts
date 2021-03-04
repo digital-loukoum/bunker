@@ -31,12 +31,12 @@ export default function compile(schema: EncoderDispatcher) {
 				if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
 				decoder.reset()
 				const encodedSchema = decoder.bytes(data.byteLength)
-				// for (let i = 0; i < data.byteLength; i++) {
-				// 	if (data[i] != encodedSchema[i]) {
-				// 		console.log("[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema before decoding")
-				// 		return decoder.decode()
-				// 	}
-				// }
+				for (let i = 0; i < data.byteLength; i++) {
+					if (data[i] != encodedSchema[i]) {
+						console.log("[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema before decoding")
+						return decoder.decode()
+					}
+				}
 				// if the schema is the same, we can use the compiled dispatcher
 				decoder.memory = Array<object>().concat(memory)
 				decoder.stringMemory = Array<string>().concat(stringMemory)
