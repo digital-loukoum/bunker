@@ -1,48 +1,8 @@
 import Decoder from './Decoder'
+import DataBuffer from '../DataBuffer'
 
 export default class BufferDecoder extends Decoder {
-	constructor(
-		public data: Uint8Array,
-		public cursor = 0
-	) {
-		super()
-	}
-
-	reset() {
-		super.reset()
-		this.cursor = 0
-	}
-
-	decode() {
-		this.reset()
-		return super.decode()
-	}
-
-	byte(): number {
-		return this.data[this.cursor++]
-	}
-
-	bytes(length: number) {
-		const start = this.cursor
-		this.cursor += length
-		return new Uint8Array(this.data.buffer, start, length)
-	}
-
-	bytesUntil(stopAtByte: number) {
-		const start = this.cursor
-		while (this.data[this.cursor++] != stopAtByte);
-		return new Uint8Array(this.data.buffer, start, this.cursor - start - 1)
-	}
-
-	nextByteIs(byte: number): boolean {
-		if (this.data[this.cursor] == byte) {
-			this.cursor++
-			return true
-		}
-		return false
-	}
-
-	error(message: string) {
-		return new Error(`${message} at position: ${this.cursor - 1}. Byte value: '${this.data[this.cursor - 1]}'.`)
+	constructor(data: Uint8Array | Buffer, cursor = 0) {
+		super(DataBuffer.new(data), cursor)
 	}
 }

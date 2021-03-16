@@ -1,5 +1,6 @@
 import Coder from "../Coder"
 import Byte from "../Byte"
+import DataBuffer from '../DataBuffer'
 
 export type Dispatcher = () => any
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -11,15 +12,15 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	memory: object[] = []  // array of all objects encountered
 	stringMemory: string[] = []  // array of all strings encountered
 
-	abstract byte(): number  // read a single byte
-	abstract bytes(length: number): Uint8Array  // read bytes
-	abstract bytesUntil(stopAtByte: number): Uint8Array  // read bytes until a stop byte value
-	abstract nextByteIs(byte: number): boolean  // check if next byte has a value; increment the cursor if true
-	abstract error(message: string): Error  // display an error message
+	constructor(
+		public buffer = DataBuffer.new(0),
+		public cursor = 0,
+	) {}
 
 	reset() {
 		this.memory.length = 0
 		this.stringMemory.length = 0
+		this.cursor = 0
 	}
 
 	decode(): any {
@@ -27,9 +28,37 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		return this.any()
 	}
 
+	error(message: string) {
+		return new Error(`${message} at position: ${this.cursor - 1}. Byte value: '${this.buffer[this.cursor - 1]}'.`)
+	}
+
 	/**
 	 * --- Primitives
 	 */
+ 	byte(): number {
+ 		return this.buffer[this.cursor++]
+ 	}
+
+ 	bytes(length: number) {
+ 		const start = this.cursor
+ 		this.cursor += length
+ 		return this.buffer.slice(start, this.cursor)
+ 	}
+
+	nextByteIs(byte: number): boolean {
+ 		if (this.buffer[this.cursor] == byte) {
+ 			this.cursor++
+ 			return true
+ 		}
+ 		return false
+ 	}
+
+ 	bytesUntil(stopAtByte: number) {
+ 		const start = this.cursor
+ 		while (this.byte() != stopAtByte);
+ 		return this.buffer.slice(start, this.cursor - 1)
+ 	}
+
 	unknown() {
 		throw Error(`Call to Encoder::unknown`)
 	}
@@ -80,6 +109,12 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		return sign * integer
 	}
 
+	integer32() {
+		const value = this.buffer.getInt32(this.cursor)
+		this.cursor += 4
+		return value
+	}
+
 	positiveInteger() {
 		let base = 1
 		let byte: number
@@ -120,11 +155,35 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		return +`${this.integer()}e${exponent}`
 	}
 
+	number32() {
+		const value = this.buffer.getFloat32(this.cursor)
+		this.cursor += 4
+		return value
+	}
+
+	number64() {
+		const value = this.buffer.getFloat64(this.cursor)
+		this.cursor += 8
+		return value
+	}
+
 	string(): string {
-		if (this.nextByteIs(Byte.stringReference)) return this.stringMemory[this.positiveInteger()]
+		if (this.nextByteIs(Byte.stringReference)) {
+			return this.stringMemory[this.positiveInteger()]
+		}
+		else if (this.buffer instanceof Buffer) {
+			const encoded = this.bytesUntil(0)
+			return encoded.toString('utf8', )
+		}
+		else {
+			return this.decodeString()
+		}
+	}
+
+	decodeString(): string {
 		const characters: number[] = []
 		let byte1, byte2, byte3, byte4
-	
+
 		while (byte1 = this.byte()) {
 			if ((byte1 & 0x80) === 0) {
 				characters.push(byte1)
@@ -154,7 +213,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 				characters.push(byte1)
 			}
 		}
-		
+
 		const decoded = String.fromCharCode.apply(null, characters)
 		if (decoded.length > 1) this.stringMemory.push(decoded)
 		return decoded

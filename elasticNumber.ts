@@ -2,7 +2,7 @@
 console.log(encodeNumber(1))
 
 function encodeNumber(value: number) {
-	if (value == 0) return new Uint8Array([0])
+	if (value == 0) return Uint8Array.of(0)
 	const input = new DataView(new ArrayBuffer(8))
 	const output = new DataView(new ArrayBuffer(9))
 	input.setFloat64(0, value)
@@ -43,7 +43,7 @@ function encodeNumber(value: number) {
 		if (outputBitOffset < bitOffset) byteToWrite <<= (bitOffset - outputBitOffset)
 		else byteToWrite >>= (outputBitOffset - bitOffset)
 		outputCurrentByte |= byteToWrite
-		
+
 		bitOffset += bitChunkSize
 		outputBitOffset += bitChunkSize
 		copiedBits += bitChunkSize

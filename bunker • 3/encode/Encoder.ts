@@ -1,13 +1,14 @@
 import Coder from '../Coder'
 import Byte from '../Byte'
 import augment, { isAugmented } from '../augment'
+import DataBuffer from '../DataBuffer'
 
 export type Dispatcher = (value: any) => void
 export type DispatcherRecord = Record<string, Dispatcher>
 
-const infinity = new Uint8Array([64, 64])
-const minusInfinity = new Uint8Array([192, 64])
-const nan = new Uint8Array([64, 32])
+const infinity = Uint8Array.of(64, 64)
+const minusInfinity = Uint8Array.of(192, 64)
+const nan = Uint8Array.of(64, 32)
 
 /**
  * The Encoder abstract class implements the encoding logic without the details.
@@ -15,10 +16,35 @@ const nan = new Uint8Array([64, 32])
 export default abstract class Encoder implements Coder<Dispatcher> {
 	memory: object[] = []
 	stringMemory: string[] = []  // array of all strings encountered
+	size = 0
 
-	abstract data: Uint8Array
-	abstract byte(value: number): void  // write a single byte
-	abstract bytes(value: Uint8Array): void  // write an array of bytes
+	abstract onCapacityFull(demandedSize: number): void
+
+	constructor(
+		public capacity = 64,
+		public buffer = DataBuffer.new(capacity)
+	) {}
+
+	get data() {
+		return this.buffer.subarray(0, this.size)
+	}
+
+	byte(value: number) {  // write a single byte
+		this.incrementSizeBy(1)
+		this.buffer[this.size++] = value
+	}
+
+	bytes(value: Uint8Array) {  // write an array of bytes
+		this.incrementSizeBy(value.byteLength)
+		this.buffer.set(value, this.size)
+		this.size += value.byteLength
+	}
+
+	incrementSizeBy(value: number) {
+		const demandedSize = this.size + value
+		if (this.capacity < demandedSize)
+			this.onCapacityFull(demandedSize)
+	}
 
 	reset() {
 		this.memory.length = 0
@@ -60,7 +86,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.integer(value.byteLength)
 		this.bytes(value)
 	}
-	
+
 	boolean(value: boolean) {
 		this.byte(value ? 1 : 0)
 	}
@@ -106,22 +132,49 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		if (value == Infinity) return this.bytes(infinity)
 		else if (value == -Infinity) return this.bytes(minusInfinity)
 		else if (isNaN(value)) return this.bytes(nan)
-		let [integer, decimals] = value.toString().split('.')
-		let mantissa = 0
+		const stringified = '' + value
+		const indexOfDot = stringified.indexOf('.')
+		let base = value
 		let exponent = 0
-		if (decimals) {
-			mantissa = +(integer + decimals)
-			exponent = -(decimals.length)
+		if (~indexOfDot) {
+			const decimals = stringified.length - indexOfDot
+			base *= 10 ** decimals
+			exponent = -decimals
 		}
 		else {
-			while (integer[integer.length - exponent - 1] == '0') exponent++;
-			mantissa = +(integer.slice(0, -exponent))
+			value /= 10
+			while (Number.isInteger(value)) {
+				base = value
+				exponent++
+				value /= 10
+			}
+			// while (stringified[stringified.length - exponent - 1] == '0') exponent++;
+			// base = +(stringified.slice(0, -exponent))
 		}
 		this.integer(exponent)
-		this.integer(mantissa)
+		this.integer(base)
+	}
+
+	integer32() {
+		this.incrementSizeBy(4)
+		this.buffer.setInt32(this.size)
+		this.size += 4
+	}
+
+	number32() {
+		this.incrementSizeBy(4)
+		this.buffer.setFloat32(this.size)
+		this.size += 4
+	}
+
+	number64() {
+		this.incrementSizeBy(8)
+		this.buffer.setFloat64(this.size)
+		this.size += 8
 	}
 
 	string(value: string) {
+		// we check if the string is in memory
 		const { length } = value
 		if (length > 1) {
 			const index = this.stringMemory.indexOf(value)
@@ -132,11 +185,23 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			}
 			this.stringMemory.push(value)
 		}
-		
+
+		// we write the string either using Buffer::write or a custom js function
+		if ('write' in this.buffer) {  // node
+			this.incrementSizeBy(Buffer.byteLength(value))
+			this.size += this.buffer.write(value, this.size)
+		}
+		else {  // custom js function
+			this.encodeString(value)
+		}
+		this.byte(0)
+	}
+
+	encodeString(value: string) {
 		let cursor = 0
 		while (cursor < length) {
 			let byte = value.charCodeAt(cursor++)
-	
+
 			if ((byte & 0xffffff80) === 0) {
 				// 1-byte
 				this.byte(byte)
@@ -158,7 +223,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 						}
 					}
 				}
-	
+
 				if ((byte & 0xffff0000) === 0) {
 					// 3-byte
 					this.byte(((byte >> 12) & 0x0f) | 0xe0)
@@ -171,10 +236,9 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 					this.byte(((byte >> 6) & 0x3f) | 0x80)
 				}
 			}
-	
+
 			this.byte((byte & 0x3f) | 0x80)
 		}
-		this.byte(0)
 	}
 
 	regularExpression(value: RegExp) {
@@ -207,7 +271,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			}
 		}, this.nullable, dispatch)
 	}
-	
+
 	tuple(dispatchers: Dispatcher[] = []) {
 		return augment(function(this: Encoder, value: any[]) {
 			for (let i = 0; i < dispatchers.length; i++)
@@ -288,7 +352,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 				if (value == null) return this.nullable()
 				if (value instanceof Date) return this.date
 				if (value instanceof RegExp) return this.regularExpression
-	
+
 				// new object
 				if (value instanceof Array) return this.arrayDispatcher(value)
 				if (value instanceof Set) return this.setDispatcher(value)
@@ -327,7 +391,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	private mapDispatcher(value: Map<string, any>) {
 		let type: Dispatcher = this.unknown
 		for (const element of value.values()) type = this.joinDispatchers(type, this.dispatcher(element))
-		return this.map(type, this.propertiesDispatcher(value))	
+		return this.map(type, this.propertiesDispatcher(value))
 	}
 
 	private joinDispatchers(a: Dispatcher, b: Dispatcher): Dispatcher {
@@ -341,11 +405,13 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			nullable = true
 			b = b['0']
 		}
-	
+
 		if (a == this.unknown) joint = b
 		else if (b == this.unknown) joint = a
 		else if (!isAugmented(a) || !isAugmented(b)) {
-			joint = a == b ? a : this.any
+			if (a == b) joint = a
+			else if (a == this.integer && b == this.number || a == this.number && b == this.integer) joint = this.number
+			else joint = this.any
 		}
 		else {  // -- join objects
 			if (a.target != b.target) {
@@ -379,10 +445,10 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 				joint = this.any
 			}
 		}
-		
+
 		return nullable ? this.nullable(joint) : joint
 	}
-	
+
 	private joinDispatcherRecords(a: DispatcherRecord, b: DispatcherRecord): DispatcherRecord {
 		const dispatcher: DispatcherRecord = {}
 		for (const key in a)

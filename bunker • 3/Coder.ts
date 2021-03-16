@@ -1,5 +1,3 @@
-import { Augmented } from './augment'
-
 /**
  * Base interface used by Encoder and Decoder
  */
