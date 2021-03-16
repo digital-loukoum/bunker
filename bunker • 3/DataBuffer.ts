@@ -6,7 +6,7 @@ type DataBufferInterface = {
    setInt32(value: number, offset: number): void
    setFloat32(value: number, offset: number): void
    setFloat64(value: number, offset: number): void
-}
+};
 
 export default typeof Buffer == 'undefined' ?
    /**
@@ -15,7 +15,7 @@ export default typeof Buffer == 'undefined' ?
     * of node's Buffer methods.
     */
    class DataBuffer extends Uint8Array implements DataBufferInterface {
-      private view!: DataView
+      public view!: DataView
 
       constructor(value: number | Uint8Array) {
          super(value as any)
@@ -24,6 +24,10 @@ export default typeof Buffer == 'undefined' ?
 
       static new(value: number | Uint8Array) {
          return new DataBuffer(value)
+      }
+
+      slice(begin = 0, end = this.byteLength) {
+         return new DataBuffer(this.subarray(begin, end))
       }
 
       getInt32(offset = 0) { return this.view.getInt32(offset, true) }
@@ -43,14 +47,21 @@ export default typeof Buffer == 'undefined' ?
     * That may change in the future if the speed of DataView catch up with Buffer.
     */
    class DataBuffer extends Buffer implements DataBufferInterface {
-      static new(value: number | Uint8Array) {
-         const buffer: Buffer = typeof value == 'number' ?
+      static new(value: number | Uint8Array | Buffer | DataBuffer) {
+         const buffer = typeof value == 'number' ?
             Buffer.allocUnsafe(value)
             :
             Buffer.from(value)
          // @ts-ignore [this way of extending Buffer cannot be understood by TS compiler]
          buffer.__proto__ = DataBuffer.prototype
          return buffer as unknown as DataBuffer
+      }
+
+      slice(begin = 0, end = this.byteLength): DataBuffer {
+         const slice = super.slice(begin, end)
+         // @ts-ignore [this way of extending Buffer cannot be understood by TS compiler]
+         slice.__proto__ = DataBuffer.prototype
+         return slice as DataBuffer
       }
 
       getInt32(offset = 0) { return this.readInt32LE(offset) }
