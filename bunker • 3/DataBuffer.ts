@@ -27,7 +27,12 @@ export default typeof Buffer == 'undefined' ?
       }
 
       slice(begin = 0, end = this.byteLength) {
-         return new DataBuffer(this.subarray(begin, end))
+         console.log("SLICE!", begin, end)
+         const slice: DataBuffer = new Uint8Array(this.buffer, begin, end - begin) as any
+         // @ts-ignore [this way of extending Buffer cannot be understood by TS compiler]
+         slice.__proto__ = DataBuffer.prototype
+         slice.view = new DataView(this.buffer, begin, end - begin)
+         return slice
       }
 
       getInt32(offset = 0) { return this.view.getInt32(offset, true) }
