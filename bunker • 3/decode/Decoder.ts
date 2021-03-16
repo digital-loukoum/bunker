@@ -168,16 +168,15 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	string(): string {
-		if (this.nextByteIs(Byte.stringReference)) {
+		if (this.nextByteIs(Byte.stringReference))
 			return this.stringMemory[this.positiveInteger()]
-		}
-		else if (this.buffer instanceof Buffer) {
-			const encoded = this.bytesUntil(0)
-			return encoded.toString('utf8', )
-		}
-		else {
-			return this.decodeString()
-		}
+		let decoded
+		if (this.buffer instanceof Buffer)
+			decoded = this.bytesUntil(0).toString('utf8')
+		else
+			decoded = this.decodeString()
+		if (decoded.length > 1) this.stringMemory.push(decoded)
+		return decoded
 	}
 
 	decodeString(): string {
@@ -215,7 +214,6 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		}
 
 		const decoded = String.fromCharCode.apply(null, characters)
-		if (decoded.length > 1) this.stringMemory.push(decoded)
 		return decoded
 	}
 
