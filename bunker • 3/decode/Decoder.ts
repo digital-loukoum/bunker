@@ -179,15 +179,6 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			const decoded = this.stringMemory[this.positiveInteger()]
 			return decoded
 		}
-		let decoded
-		if (this.buffer instanceof Buffer)
-			decoded = this.bytesUntil(0).toString('utf8')
-		else decoded = this.decodeString()
-		if (decoded.length > 1) this.stringMemory.push(decoded)
-		return decoded
-	}
-
-	decodeString(): string {
 		const characters: number[] = []
 		let byte1, byte2, byte3, byte4
 
@@ -221,7 +212,9 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			}
 		}
 
-		return String.fromCharCode.apply(null, characters)
+		const decoded = String.fromCharCode.apply(null, characters)
+		if (decoded.length > 1) this.stringMemory.push(decoded)
+		return decoded
 	}
 
 	/**

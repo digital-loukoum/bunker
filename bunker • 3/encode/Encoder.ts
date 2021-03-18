@@ -195,54 +195,46 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			}
 			this.stringMemory.push(value)
 		}
+		let cursor = 0
+		while (cursor < length) {
+			let byte = value.charCodeAt(cursor++)
 
-		// we write the string either using Buffer::write or a custom js function
-		if ('write' in this.buffer) {  // node
-			this.incrementSizeBy(Buffer.byteLength(value))
-			this.size += this.buffer.write(value, this.size)
-		}
-		else {  // custom js function
-			let cursor = 0
-			while (cursor < length) {
-				let byte = value.charCodeAt(cursor++)
-
-				if ((byte & 0xffffff80) === 0) {
-					// 1-byte
-					this.byte(byte)
-					continue
-				}
-				else if ((byte & 0xfffff800) === 0) {
-					// 2-byte
-					this.byte(((byte >> 6) & 0x1f) | 0xc0)
-				}
-				else {
-					// handle surrogate pair
-					if (byte >= 0xd800 && byte <= 0xdbff) {
-						// high surrogate
-						if (cursor < length) {
-							const extra = value.charCodeAt(cursor)
-							if ((extra & 0xfc00) === 0xdc00) {
-								cursor++
-								byte = ((byte & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000
-							}
+			if ((byte & 0xffffff80) === 0) {
+				// 1-byte
+				this.byte(byte)
+				continue
+			}
+			else if ((byte & 0xfffff800) === 0) {
+				// 2-byte
+				this.byte(((byte >> 6) & 0x1f) | 0xc0)
+			}
+			else {
+				// handle surrogate pair
+				if (byte >= 0xd800 && byte <= 0xdbff) {
+					// high surrogate
+					if (cursor < length) {
+						const extra = value.charCodeAt(cursor)
+						if ((extra & 0xfc00) === 0xdc00) {
+							cursor++
+							byte = ((byte & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000
 						}
 					}
-
-					if ((byte & 0xffff0000) === 0) {
-						// 3-byte
-						this.byte(((byte >> 12) & 0x0f) | 0xe0)
-						this.byte(((byte >> 6) & 0x3f) | 0x80)
-					}
-					else {
-						// 4-byte
-						this.byte(((byte >> 18) & 0x07) | 0xf0)
-						this.byte(((byte >> 12) & 0x3f) | 0x80)
-						this.byte(((byte >> 6) & 0x3f) | 0x80)
-					}
 				}
 
-				this.byte((byte & 0x3f) | 0x80)
+				if ((byte & 0xffff0000) === 0) {
+					// 3-byte
+					this.byte(((byte >> 12) & 0x0f) | 0xe0)
+					this.byte(((byte >> 6) & 0x3f) | 0x80)
+				}
+				else {
+					// 4-byte
+					this.byte(((byte >> 18) & 0x07) | 0xf0)
+					this.byte(((byte >> 12) & 0x3f) | 0x80)
+					this.byte(((byte >> 6) & 0x3f) | 0x80)
+				}
 			}
+
+			this.byte((byte & 0x3f) | 0x80)
 		}
 		this.byte(0)
 	}
