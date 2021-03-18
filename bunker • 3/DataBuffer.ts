@@ -11,7 +11,7 @@ type DataBufferInterface = {
    setFloat64(value: number, offset: number): void
 };
 
-export default typeof Buffer == 'undefined' ?
+export default typeof Buffer != 'undefined' ?
    /**
     * On a non-node environment we create a class DataBuffer that emulates the
     * node environment. Internally, this class use the DataView method instead
@@ -30,7 +30,6 @@ export default typeof Buffer == 'undefined' ?
       }
 
       slice(begin = 0, end = this.byteLength) {
-         console.log("SLICE!", begin, end)
          const slice: DataBuffer = new Uint8Array(this.buffer, begin, end - begin) as any
          // @ts-ignore [this way of extending Buffer cannot be understood by TS compiler]
          slice.__proto__ = DataBuffer.prototype

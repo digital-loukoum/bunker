@@ -20,6 +20,12 @@ export default function compile(schema: EncoderDispatcher) {
 			return encoder.data
 		},
 
+		encodeNaked(value: any, encoder = new BufferEncoder) {
+			encoder.reset()
+			schema.call(encoder, value)
+			return encoder.data
+		},
+
 		/**
 		 * The decoder needs a special treatment so we distribute it as a getter
 		 * so that the treatment is never done if the user only needs to compile
@@ -40,6 +46,15 @@ export default function compile(schema: EncoderDispatcher) {
 				// if the schema is the same, we can use the compiled dispatcher
 				decoder.memory = Array<object>().concat(memory)
 				decoder.stringMemory = Array<string>().concat(stringMemory)
+				return (decoderDispatcher as DecoderDispatcher).call(decoder)
+			}
+		},
+
+		get decodeNaked() {
+			if (!decoderDispatcher) decoderDispatcher = compileDecoder(schema)
+			return function decodeNaked(decoder: Decoder | Uint8Array) {
+				if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
+				decoder.reset()
 				return (decoderDispatcher as DecoderDispatcher).call(decoder)
 			}
 		}
