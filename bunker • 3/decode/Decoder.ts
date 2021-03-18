@@ -1,6 +1,7 @@
 import Coder from "../Coder"
 import Byte from "../Byte"
 import DataBuffer from '../DataBuffer'
+import { isAugmented } from "../augment"
 
 export type Dispatcher = () => any
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -174,13 +175,14 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	string(): string {
-		if (this.nextByteIs(Byte.stringReference))
-			return this.stringMemory[this.positiveInteger()]
+		if (this.nextByteIs(Byte.stringReference)) {
+			const decoded = this.stringMemory[this.positiveInteger()]
+			return decoded
+		}
 		let decoded
 		if (this.buffer instanceof Buffer)
 			decoded = this.bytesUntil(0).toString('utf8')
-		else
-			decoded = this.decodeString()
+		else decoded = this.decodeString()
 		if (decoded.length > 1) this.stringMemory.push(decoded)
 		return decoded
 	}
@@ -219,8 +221,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			}
 		}
 
-		const decoded = String.fromCharCode.apply(null, characters)
-		return decoded
+		return String.fromCharCode.apply(null, characters)
 	}
 
 	/**
@@ -253,7 +254,9 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		return this.nextByteIs(Byte.reference)
 	}
 	private properties(object: any, dispatch: DispatcherRecord) {
-		for (const key in dispatch) object[key] = dispatch[key].call(this)
+		for (const key in dispatch) {
+			object[key] = dispatch[key].call(this)
+		}
 		return object
 	}
 	private recall() {
@@ -262,7 +265,8 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	object(properties: DispatcherRecord = {}) {
 		return function(this: Decoder) {
-			if (this.isReference()) return this.recall() as Record<string, any>
+			if (this.byte() == Byte.reference)
+				return this.recall() as Record<string, any>
 			const object: Record<string, any> = {}
 			this.memory.push(object)
 			return this.properties(object, properties)
@@ -326,6 +330,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			case Byte.binary: return this.binary
 			case Byte.integer: return this.integer
 			case Byte.integer32: return this.integer32
+			case Byte.integer64: return this.integer64
 			case Byte.positiveInteger: return this.positiveInteger
 			case Byte.bigInteger: return this.bigInteger
 			case Byte.number: return this.number
@@ -334,7 +339,6 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			case Byte.string: return this.string
 			case Byte.regularExpression: return this.regularExpression
 			case Byte.date: return this.date
-			// case Byte.reference: return this.reference
 
 			case Byte.nullable: return this.nullable(this.schema())
 			case Byte.object: return this.object(this.schemaProperties())
@@ -343,7 +347,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			case Byte.map: return this.map(this.schema(), this.schemaProperties())
 			case Byte.record: return this.record(this.schema())
 
-			default: throw this.error(`unknown byte`)
+			default: throw this.error(`Unknown byte`)
 		}
 	}
 

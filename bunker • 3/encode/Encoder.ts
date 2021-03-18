@@ -99,6 +99,10 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		} while (value)
 	}
 
+	smallInteger(value: number) {
+		return this.integer(value)
+	}
+
 	integer(value: number) {
 		let sign = 0
 		if (value < 0 ||( value == 0 && Object.is(value, -0))) {
@@ -169,13 +173,13 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 	number32(value: number) {
 		this.incrementSizeBy(4)
-		this.buffer.setFloat32(value)
+		this.buffer.setFloat32(value, this.size)
 		this.size += 4
 	}
 
 	number64(value: number) {
 		this.incrementSizeBy(8)
-		this.buffer.setFloat64(value)
+		this.buffer.setFloat64(value, this.size)
 		this.size += 8
 	}
 
@@ -198,53 +202,49 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			this.size += this.buffer.write(value, this.size)
 		}
 		else {  // custom js function
-			this.encodeString(value)
-		}
-		this.byte(0)
-	}
+			let cursor = 0
+			while (cursor < length) {
+				let byte = value.charCodeAt(cursor++)
 
-	encodeString(value: string) {
-		let cursor = 0
-		while (cursor < length) {
-			let byte = value.charCodeAt(cursor++)
-
-			if ((byte & 0xffffff80) === 0) {
-				// 1-byte
-				this.byte(byte)
-				continue
-			}
-			else if ((byte & 0xfffff800) === 0) {
-				// 2-byte
-				this.byte(((byte >> 6) & 0x1f) | 0xc0)
-			}
-			else {
-				// handle surrogate pair
-				if (byte >= 0xd800 && byte <= 0xdbff) {
-					// high surrogate
-					if (cursor < length) {
-						const extra = value.charCodeAt(cursor)
-						if ((extra & 0xfc00) === 0xdc00) {
-							cursor++
-							byte = ((byte & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000
+				if ((byte & 0xffffff80) === 0) {
+					// 1-byte
+					this.byte(byte)
+					continue
+				}
+				else if ((byte & 0xfffff800) === 0) {
+					// 2-byte
+					this.byte(((byte >> 6) & 0x1f) | 0xc0)
+				}
+				else {
+					// handle surrogate pair
+					if (byte >= 0xd800 && byte <= 0xdbff) {
+						// high surrogate
+						if (cursor < length) {
+							const extra = value.charCodeAt(cursor)
+							if ((extra & 0xfc00) === 0xdc00) {
+								cursor++
+								byte = ((byte & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000
+							}
 						}
+					}
+
+					if ((byte & 0xffff0000) === 0) {
+						// 3-byte
+						this.byte(((byte >> 12) & 0x0f) | 0xe0)
+						this.byte(((byte >> 6) & 0x3f) | 0x80)
+					}
+					else {
+						// 4-byte
+						this.byte(((byte >> 18) & 0x07) | 0xf0)
+						this.byte(((byte >> 12) & 0x3f) | 0x80)
+						this.byte(((byte >> 6) & 0x3f) | 0x80)
 					}
 				}
 
-				if ((byte & 0xffff0000) === 0) {
-					// 3-byte
-					this.byte(((byte >> 12) & 0x0f) | 0xe0)
-					this.byte(((byte >> 6) & 0x3f) | 0x80)
-				}
-				else {
-					// 4-byte
-					this.byte(((byte >> 18) & 0x07) | 0xf0)
-					this.byte(((byte >> 12) & 0x3f) | 0x80)
-					this.byte(((byte >> 6) & 0x3f) | 0x80)
-				}
+				this.byte((byte & 0x3f) | 0x80)
 			}
-
-			this.byte((byte & 0x3f) | 0x80)
 		}
+		this.byte(0)
 	}
 
 	regularExpression(value: RegExp) {
@@ -295,6 +295,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	object(properties: DispatcherRecord = {}) {
 		return augment(function(this: Encoder, value: Record<string, any>) {
 			if (this.inMemory(value)) return
+			this.byte(Byte.object)  // first byte
 			this.properties(properties, value)
 		}, this.object, properties)
 	}
@@ -349,8 +350,11 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	dispatcher(value: any): (value: any) => void {
 		switch (typeof value) {
 			case 'undefined': return this.nullable()
-			case 'number': return Number.isInteger(value) ? this.integer
-				: Math.fround(value) == value ? this.number32 : this.number64
+			case 'number': {
+				const isSmall = (Math.fround(value) == value)
+				if (Number.isInteger(value)) return isSmall ? this.smallInteger : this.integer
+				else return isSmall ? this.number32 : this.number64
+			}
 			case 'bigint': return this.bigInteger
 			case 'string': return this.string
 			case 'boolean': return this.boolean
@@ -463,12 +467,12 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 	private joinPrimitives(a: Dispatcher, b: Dispatcher) {
 		if (a == b) return a
-		const numbers = [this.integer, this.number32, this.number64]
-		const aNumberIndex = numbers.indexOf(a)
-		if (aNumberIndex == -1) return this.any
-		const bNumberIndex = numbers.indexOf(b)
-		if (bNumberIndex == -1) return this.any
-		return numbers[Math.max(aNumberIndex, bNumberIndex)]
+		const numbers = [this.smallInteger, this.integer, this.number32, this.number64]
+		const indexA = numbers.indexOf(a); if (indexA == -1) return this.any
+		const indexB = numbers.indexOf(b); if (indexB == -1) return this.any
+		const max = Math.max(indexA, indexB)
+		if (max == 2 && (indexA == 1 || indexB == 1)) return this.number64
+		return numbers[max]
 	}
 
 
@@ -514,6 +518,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			case this.character: return this.byte(Byte.character)
 			case this.binary: return this.byte(Byte.binary)
 			case this.boolean: return this.byte(Byte.boolean)
+			case this.smallInteger:
 			case this.integer: return this.byte(Byte.integer)
 			case this.positiveInteger: return this.byte(Byte.positiveInteger)
 			case this.integer32: return this.byte(Byte.integer32)

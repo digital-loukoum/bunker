@@ -68,10 +68,15 @@ function compileDecoder(schema: EncoderDispatcher): DecoderDispatcher {
 		case encoder.character: return decoder.character
 		case encoder.binary: return decoder.binary
 		case encoder.boolean: return decoder.boolean
+		case encoder.smallInteger:
 		case encoder.integer: return decoder.integer
+		case encoder.integer32: return decoder.integer32
+		case encoder.integer64: return decoder.integer64
 		case encoder.positiveInteger: return decoder.positiveInteger
 		case encoder.bigInteger: return decoder.bigInteger
 		case encoder.number: return decoder.number
+		case encoder.number32: return decoder.number32
+		case encoder.number64: return decoder.number64
 		case encoder.string: return decoder.string
 		case encoder.regularExpression: return decoder.regularExpression
 		case encoder.date: return decoder.date

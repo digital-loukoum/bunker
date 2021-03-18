@@ -44,7 +44,7 @@ export default abstract class Decoder {
 	}
 
 	stringReference() {
-		return 
+		return
 	}
 
 	number() {
@@ -167,7 +167,7 @@ export default abstract class Decoder {
 		for (let i = 0; i < length; i++) array[i] = dispatch()
 		return dispatchProperties(array, properties)
 	}
-	
+
 	set(dispatch: Dispatcher, properties: ObjectDispatcher): Set<any> {
 		if (this.nextByteIs(Byte.reference)) return this.recall() as Set<any>
 		const length = this.integer()
@@ -176,7 +176,7 @@ export default abstract class Decoder {
 		for (let i = 0; i < length; i++) set.add(dispatch())
 		return dispatchProperties(set, properties)
 	}
-	
+
 	map(dispatch: Dispatcher, properties: ObjectDispatcher): Map<string, any> {
 		if (this.nextByteIs(Byte.reference)) return this.recall() as Map<string, any>
 		const length = this.integer()

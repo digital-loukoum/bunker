@@ -11,11 +11,16 @@ start(function({stage, same}) {
 	}
 
 	stage('Random samples')
-	for (const sample in samples) {
-		const value = samples[sample]
-		const data = bunker(value)
-		same(value, debunker(data), sample)
+	try {
+		for (const sample in samples) {
+			const value = samples[sample]
+			const data = bunker(value)
+			same(value, debunker(data), sample)
+		}
+	} catch(error) {
+		console.error(error)
 	}
+
 
 	stage('Precompile')
 	{
