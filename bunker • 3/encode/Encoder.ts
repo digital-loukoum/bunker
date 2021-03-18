@@ -26,7 +26,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	) {}
 
 	get data() {
-		return this.buffer.subarray(0, this.size)
+		return this.buffer.slice(0, this.size)
 	}
 
 	byte(value: number) {  // write a single byte

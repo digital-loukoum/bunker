@@ -11,7 +11,7 @@ type DataBufferInterface = {
    setFloat64(value: number, offset: number): void
 };
 
-export default typeof Buffer != 'undefined' ?
+export default typeof Buffer == 'undefined' ?
    /**
     * On a non-node environment we create a class DataBuffer that emulates the
     * node environment. Internally, this class use the DataView method instead

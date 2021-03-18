@@ -11,6 +11,8 @@ export default function compile(schema: EncoderDispatcher) {
 	let decoderDispatcher: null | DecoderDispatcher = null
 
 	return {
+		schemaBytes: data,
+
 		encode(value: any, encoder = new BufferEncoder) {
 			encoder.reset()
 			encoder.bytes(data)
