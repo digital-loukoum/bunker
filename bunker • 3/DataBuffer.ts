@@ -1,10 +1,12 @@
 
 type DataBufferInterface = {
    getInt32(offset: number): number
+   getInt64(offset: number): bigint
    getFloat32(offset: number): number
    getFloat64(offset: number): number
 
    setInt32(value: number, offset: number): void
+   setInt64(value: number | bigint, offset: number): void
    setFloat32(value: number, offset: number): void
    setFloat64(value: number, offset: number): void
 };
@@ -37,10 +39,12 @@ export default typeof Buffer == 'undefined' ?
       }
 
       getInt32(offset = 0) { return this.view.getInt32(offset, true) }
+      getInt64(offset = 0) { return this.view.getBigInt64(offset, true) }
       getFloat32(offset = 0) { return this.view.getFloat32(offset, true) }
       getFloat64(offset = 0) { return this.view.getFloat64(offset, true) }
 
       setInt32(value: number, offset = 0) { this.view.setInt32(offset, value, true) }
+      setInt64(value: number | bigint, offset = 0) { this.view.setBigInt64(offset, BigInt(value), true) }
       setFloat32(value: number, offset = 0) { this.view.setFloat32(offset, value, true) }
       setFloat64(value: number, offset = 0) { this.view.setFloat64(offset, value, true) }
    }
@@ -71,10 +75,12 @@ export default typeof Buffer == 'undefined' ?
       }
 
       getInt32(offset = 0) { return this.readInt32LE(offset) }
+      getInt64(offset = 0) { return this.readBigInt64LE(offset) }
       getFloat32(offset = 0) { return this.readFloatLE(offset) }
       getFloat64(offset = 0) { return this.readDoubleLE(offset) }
 
       setInt32(value: number, offset = 0) { this.writeInt32LE(value, offset) }
+      setInt64(value: number | bigint, offset = 0) { this.writeBigInt64LE(BigInt(value), offset) }
       setFloat32(value: number, offset = 0) { this.writeFloatLE(value, offset) }
       setFloat64(value: number, offset = 0) { this.writeDoubleLE(value, offset) }
    }

@@ -4,9 +4,13 @@ enum Byte {
 	character,
 	binary,
 	boolean,
-	integer,
 	positiveInteger,
+	integer32,
+	integer64,
+	integer,
 	bigInteger,
+	number32,
+	number64,
 	number,
 	string,
 	regularExpression,
@@ -16,7 +20,7 @@ enum Byte {
 	// composed
 	nullable,
 	tuple,
-	
+
 	// objects
 	object,
 	array,

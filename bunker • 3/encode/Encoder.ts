@@ -91,6 +91,14 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.byte(value ? 1 : 0)
 	}
 
+	positiveInteger(value: number) {
+		do {
+			const nextValue = Math.floor(value / 128)
+			this.byte(value % 128 + (nextValue ? 128 : 0))
+			value = nextValue
+		} while (value)
+	}
+
 	integer(value: number) {
 		let sign = 0
 		if (value < 0 ||( value == 0 && Object.is(value, -0))) {
@@ -102,12 +110,16 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		if (nextValue) this.positiveInteger(nextValue)
 	}
 
-	positiveInteger(value: number) {
-		do {
-			const nextValue = Math.floor(value / 128)
-			this.byte(value % 128 + (nextValue ? 128 : 0))
-			value = nextValue
-		} while (value)
+	integer32(value: number) {
+		this.incrementSizeBy(4)
+		this.buffer.setInt32(value)
+		this.size += 4
+	}
+
+	integer64(value: number | bigint) {
+		this.incrementSizeBy(8)
+		this.buffer.setInt64(value)
+		this.size += 8
 	}
 
 	bigInteger(value: bigint) {
@@ -155,21 +167,15 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.integer(base)
 	}
 
-	integer32() {
+	number32(value: number) {
 		this.incrementSizeBy(4)
-		this.buffer.setInt32(this.size)
+		this.buffer.setFloat32(value)
 		this.size += 4
 	}
 
-	number32() {
-		this.incrementSizeBy(4)
-		this.buffer.setFloat32(this.size)
-		this.size += 4
-	}
-
-	number64() {
+	number64(value: number) {
 		this.incrementSizeBy(8)
-		this.buffer.setFloat64(this.size)
+		this.buffer.setFloat64(value)
 		this.size += 8
 	}
 
@@ -343,7 +349,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	dispatcher(value: any): (value: any) => void {
 		switch (typeof value) {
 			case 'undefined': return this.nullable()
-			case 'number': return Number.isInteger(value) ? this.integer : this.number
+			case 'number': return Number.isInteger(value) ? this.integer
+				: Math.fround(value) == value ? this.number32 : this.number64
 			case 'bigint': return this.bigInteger
 			case 'string': return this.string
 			case 'boolean': return this.boolean
@@ -408,11 +415,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 		if (a == this.unknown) joint = b
 		else if (b == this.unknown) joint = a
-		else if (!isAugmented(a) || !isAugmented(b)) {
-			if (a == b) joint = a
-			else if (a == this.integer && b == this.number || a == this.number && b == this.integer) joint = this.number
-			else joint = this.any
-		}
+		else if (!isAugmented(a) || !isAugmented(b))
+			joint = this.joinPrimitives(a, b)
 		else {  // -- join objects
 			if (a.target != b.target) {
 				joint = this.any
@@ -441,9 +445,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			else if (a.target == this.record) {
 				joint = this.record(this.joinDispatchers(a['0'], b['0']))
 			}
-			else {
-				joint = this.any
-			}
+			else joint = this.any
 		}
 
 		return nullable ? this.nullable(joint) : joint
@@ -457,6 +459,16 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			if (!(key in a))  // key exists in b but not in a
 				dispatcher[key] = this.nullable(b[key])
 		return dispatcher
+	}
+
+	private joinPrimitives(a: Dispatcher, b: Dispatcher) {
+		if (a == b) return a
+		const numbers = [this.integer, this.number32, this.number64]
+		const aNumberIndex = numbers.indexOf(a)
+		if (aNumberIndex == -1) return this.any
+		const bNumberIndex = numbers.indexOf(b)
+		if (bNumberIndex == -1) return this.any
+		return numbers[Math.max(aNumberIndex, bNumberIndex)]
 	}
 
 
@@ -504,8 +516,11 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			case this.boolean: return this.byte(Byte.boolean)
 			case this.integer: return this.byte(Byte.integer)
 			case this.positiveInteger: return this.byte(Byte.positiveInteger)
+			case this.integer32: return this.byte(Byte.integer32)
 			case this.bigInteger: return this.byte(Byte.bigInteger)
 			case this.number: return this.byte(Byte.number)
+			case this.number32: return this.byte(Byte.number32)
+			case this.number64: return this.byte(Byte.number64)
 			case this.string: return this.byte(Byte.string)
 			case this.regularExpression: return this.byte(Byte.regularExpression)
 			case this.date: return this.byte(Byte.date)
