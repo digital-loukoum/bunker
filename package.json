@@ -1,6 +1,6 @@
 {
   "name": "bunker",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "A fast and compact JSON alternative to store, pass or retrieve data",
   "type": "module",
   "main": "lib/index.js",
