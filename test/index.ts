@@ -1,7 +1,7 @@
 import start from 'fartest'
 import sample from './sample'
 import samples from '../samples'
-import { bunker, debunker, guessSchema } from '../bunker • 3'
+import { bunker, debunker, guessSchema } from '../src'
 
 start(function({stage, same}) {
 	// stage('Sample')

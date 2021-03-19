@@ -1,17 +1,11 @@
-import {
-	guessSchema,
-	bunker,
-	debunker,
-} from '../src'
-import { bunker as bunker3, debunker as debunker3, guessSchema as guessSchema3 } from '../bunker • 3'
+import { bunker, debunker, guessSchema } from '../src'
 import Table from 'cli-table'
 // import zlib from 'zlib'
 // import { inflate, deflate } from 'pako'
 import * as msgpack from '@msgpack/msgpack'
 import notepack from 'notepack.io'
 import { performance } from 'perf_hooks'
-import Schema from '../src/Schema'
-import chalk from 'chalk'
+import * as chalk from 'chalk'
 import { deflate, unzip as inflate } from 'zlib'
 import { promisify } from 'util'
 const zip = promisify(deflate)
@@ -133,15 +127,14 @@ async function benchmark(fn: Function, iterations = 10000) {
 	const inputs = {}
 	for (const [sample, value] of Object.entries(samples)) {
 		const name = sample.replace(/\.[^/.]+$/, "")
-		inputs[name] = [value, guessSchema(value), bunker3.compile(guessSchema3(value)), guessSchema3(value)]
+		inputs[name] = [value, guessSchema(value), bunker.compile(guessSchema(value))]
 	}
 
 	const encoders = {
 		'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
 		'zipped json': async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
 		'bunker': ([value]: any) => bunker(value),
-		'bunker•3': ([value]: any) => bunker3(value),
-		'bunker•3 (naked)': ([value]: any) => bunker3.compile(guessSchema3(value)).encodeNaked(value),
+		'bunker (naked)': ([value]: any) => bunker.compile(guessSchema(value)).encodeNaked(value),
 		'msgpack': ([value]: any) => msgpack.encode(value),
 		'notepack': ([value]: any) => notepack.encode(value),
 	}
@@ -153,7 +146,6 @@ async function benchmark(fn: Function, iterations = 10000) {
 			encoded[trial][encoder] = [await encoders[encoder](inputs[trial]), inputs[trial][2].decode, inputs[trial][2].decodeNaked]
 		}
 	}
-	// console.log("Encoded", encoded)
 
 	compare({
 		title: "Output size",
@@ -172,11 +164,9 @@ async function benchmark(fn: Function, iterations = 10000) {
 			'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
 			'zipped json': async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
 			'bunker': ([value]: any) => bunker(value),
-			'bunker (with schema)': ([value, schema]: [any, Schema]) => bunker(value, schema),
-			'bunker•3': ([value]: any) => bunker3(value),
-			// 'bunker•3 (with schema)': ([value, , , schema]: any) => bunker3(value, schema),
-			'bunker•3 (compiled)': ([value, , compiled]: any) => compiled.encode(value),
-			'bunker•3 (naked)': ([value, , compiled]: any) => compiled.encodeNaked(value),
+			// 'bunker (with schema)': ([value, schema]: any) => bunker(value, schema),
+			'bunker (compiled)': ([value, , compiled]: any) => compiled.encode(value),
+			'bunker (naked)': ([value, , compiled]: any) => compiled.encodeNaked(value),
 			'notepack': ([value]: any) => notepack.encode(value),
 			'msgpack': ([value]: any) => msgpack.encode(value),
 		},
@@ -190,10 +180,9 @@ async function benchmark(fn: Function, iterations = 10000) {
 		challengers: {
 			'json': (encoded: any) => JSON.parse(encoded.json[0].toString()),
 			'zipped json': async (encoded: any) => JSON.parse((await unzip(encoded['zipped json'][0])).toString()),
-			'bunker': (encoded: any) => debunker(encoded.bunker[0]),
-			'bunker•3': (encoded: any) => debunker3(encoded['bunker•3'][0]),
-			'bunker•3 (compiled)': (encoded: any) => encoded['bunker•3'][1](encoded['bunker•3'][0]),
-			'bunker•3 (naked)': (encoded: any) => encoded['bunker•3'][2](encoded['bunker•3 (naked)'][0]),
+			'bunker': (encoded: any) => debunker(encoded['bunker'][0]),
+			'bunker (compiled)': (encoded: any) => encoded['bunker'][1](encoded['bunker'][0]),
+			'bunker (naked)': (encoded: any) => encoded['bunker'][2](encoded['bunker (naked)'][0]),
 			'notepack': (encoded: any) => notepack.decode(encoded.notepack[0]),
 			'msgpack': (encoded: any) => msgpack.decode(encoded.msgpack[0]),
 		},
