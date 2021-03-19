@@ -22,7 +22,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 	constructor(
 		public capacity = 64,
-		public buffer = DataBuffer.new(capacity)
+		public buffer = new DataBuffer(capacity)
 	) {}
 
 	get data() {
@@ -116,13 +116,13 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 	integer32(value: number) {
 		this.incrementSizeBy(4)
-		this.buffer.setInt32(value)
+		this.buffer.view.setInt32(this.size, value)
 		this.size += 4
 	}
 
 	integer64(value: number | bigint) {
 		this.incrementSizeBy(8)
-		this.buffer.setInt64(value)
+		this.buffer.view.setBigInt64(this.size, BigInt(value))
 		this.size += 8
 	}
 
@@ -173,13 +173,13 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 	number32(value: number) {
 		this.incrementSizeBy(4)
-		this.buffer.setFloat32(value, this.size)
+		this.buffer.view.setFloat32(this.size, value)
 		this.size += 4
 	}
 
 	number64(value: number) {
 		this.incrementSizeBy(8)
-		this.buffer.setFloat64(value, this.size)
+		this.buffer.view.setFloat64(this.size, value)
 		this.size += 8
 	}
 

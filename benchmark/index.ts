@@ -35,7 +35,7 @@ async function compare(comparison: Comparison) {
 	let { title, challengers, inputs, sort, format, apply } = comparison
 	sort ??= (a: number, b: number) => a < b
 	const results: Record<string, Record<string, number> & { bestChallenger?: string }> = {}
-	
+
 	// we collect the results
 	for (const trial in inputs) {
 		results[trial] = {}
@@ -108,7 +108,7 @@ async function compare(comparison: Comparison) {
 		averageRow[bestChallengerIndex + 1] = chalk.bold.green(averageRow[bestChallengerIndex + 1])
 		table.push(averageRow)
 	}
-	
+
 	console.log(table.toString())
 }
 
@@ -125,7 +125,7 @@ async function benchmark(fn: Function, iterations = 10000) {
 		operations++
 		time = performance.now()
 	} while (operations < 500)
-	
+
 	return operations / (time - start) * 1000
 }
 
@@ -135,25 +135,26 @@ async function benchmark(fn: Function, iterations = 10000) {
 		const name = sample.replace(/\.[^/.]+$/, "")
 		inputs[name] = [value, guessSchema(value), bunker3.compile(guessSchema3(value)), guessSchema3(value)]
 	}
-	
+
 	const encoders = {
 		'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
 		'zipped json': async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
 		'bunker': ([value]: any) => bunker(value),
 		'bunker•3': ([value]: any) => bunker3(value),
+		'bunker•3 (naked)': ([value]: any) => bunker3.compile(guessSchema3(value)).encodeNaked(value),
 		'msgpack': ([value]: any) => msgpack.encode(value),
 		'notepack': ([value]: any) => notepack.encode(value),
 	}
-	
+
 	const encoded = {}
 	for (const trial in inputs) {
 		encoded[trial] = {}
 		for (const encoder in encoders) {
-			encoded[trial][encoder] = [await encoders[encoder](inputs[trial]), inputs[trial][2].decode]
+			encoded[trial][encoder] = [await encoders[encoder](inputs[trial]), inputs[trial][2].decode, inputs[trial][2].decodeNaked]
 		}
 	}
 	// console.log("Encoded", encoded)
-	
+
 	compare({
 		title: "Output size",
 		inputs,
@@ -163,7 +164,7 @@ async function benchmark(fn: Function, iterations = 10000) {
 		sort: (a, b) => a > b,
 	})
 
-	
+
 	compare({
 		title: "Encoding speed",
 		inputs,
@@ -173,8 +174,9 @@ async function benchmark(fn: Function, iterations = 10000) {
 			'bunker': ([value]: any) => bunker(value),
 			'bunker (with schema)': ([value, schema]: [any, Schema]) => bunker(value, schema),
 			'bunker•3': ([value]: any) => bunker3(value),
+			// 'bunker•3 (with schema)': ([value, , , schema]: any) => bunker3(value, schema),
 			'bunker•3 (compiled)': ([value, , compiled]: any) => compiled.encode(value),
-			'bunker•3 (with schema)': ([value, , , schema]: any) => bunker3(value, schema),
+			'bunker•3 (naked)': ([value, , compiled]: any) => compiled.encodeNaked(value),
 			'notepack': ([value]: any) => notepack.encode(value),
 			'msgpack': ([value]: any) => msgpack.encode(value),
 		},
@@ -189,8 +191,9 @@ async function benchmark(fn: Function, iterations = 10000) {
 			'json': (encoded: any) => JSON.parse(encoded.json[0].toString()),
 			'zipped json': async (encoded: any) => JSON.parse((await unzip(encoded['zipped json'][0])).toString()),
 			'bunker': (encoded: any) => debunker(encoded.bunker[0]),
-			// 'bunker•3': (encoded: any) => debunker3(encoded['bunker•3'][0]),
+			'bunker•3': (encoded: any) => debunker3(encoded['bunker•3'][0]),
 			'bunker•3 (compiled)': (encoded: any) => encoded['bunker•3'][1](encoded['bunker•3'][0]),
+			'bunker•3 (naked)': (encoded: any) => encoded['bunker•3'][2](encoded['bunker•3 (naked)'][0]),
 			'notepack': (encoded: any) => notepack.decode(encoded.notepack[0]),
 			'msgpack': (encoded: any) => msgpack.decode(encoded.msgpack[0]),
 		},

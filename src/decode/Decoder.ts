@@ -1,7 +1,6 @@
 import Coder from "../Coder"
 import Byte from "../Byte"
 import DataBuffer from '../DataBuffer'
-import { isAugmented } from "../augment"
 
 export type Dispatcher = () => any
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -14,7 +13,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	stringMemory: string[] = []  // array of all strings encountered
 
 	constructor(
-		public buffer = DataBuffer.new(0),
+		public buffer = new DataBuffer,
 		public cursor = 0,
 	) {}
 
@@ -111,13 +110,13 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	integer32() {
-		const value = this.buffer.getInt32(this.cursor)
+		const value = this.buffer.view.getInt32(this.cursor)
 		this.cursor += 4
 		return value
 	}
 
 	integer64() {
-		const value = this.buffer.getInt64(this.cursor)
+		const value = this.buffer.view.getBigInt64(this.cursor)
 		this.cursor += 8
 		return value
 	}
@@ -163,13 +162,13 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	number32() {
-		const value = this.buffer.getFloat32(this.cursor)
+		const value = this.buffer.view.getFloat32(this.cursor)
 		this.cursor += 4
 		return value
 	}
 
 	number64() {
-		const value = this.buffer.getFloat64(this.cursor)
+		const value = this.buffer.view.getFloat64(this.cursor)
 		this.cursor += 8
 		return value
 	}

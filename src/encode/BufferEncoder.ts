@@ -7,7 +7,7 @@ export default class BufferEncoder extends Encoder {
 			this.capacity = 4096
 		while (this.capacity < demandedSize)
 			this.capacity *= 2
-		const newBuffer = DataBuffer.new(this.capacity)
+		const newBuffer = new DataBuffer(this.capacity)
 		newBuffer.set(this.buffer)
 		this.buffer = newBuffer
 	}

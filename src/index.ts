@@ -1,21 +1,17 @@
-import Type from './Type.js'
-import Schema from './Schema.js'
-import guessSchema from './guessSchema.js'
+import BufferEncoder from './encode/BufferEncoder'
+import BufferDecoder from './decode/BufferDecoder'
+import compile from './compile'
+import Encoder from './encode/Encoder'
 
-import toBuffer from './write/toBuffer.js'
-import toSchema from './write/toSchema.js'
+export function bunker(value: any, schema = guessSchema(value), encoder = new BufferEncoder) {
+	return encoder.encode(value, schema)
+}
+bunker.compile = compile
 
-import fromSchema from './read/fromSchema.js'
-import fromBuffer from './read/fromBuffer.js'
+export function debunker(data: Uint8Array) {
+	return new BufferDecoder(data).decode()
+}
 
-export {
-	Type as BunkerType,
-	Schema,
-	guessSchema,
-	
-	toBuffer as bunker,
-	toSchema as bunkerSchema,
-
-	fromBuffer as debunker,
-	fromSchema as debunkerSchema,
+export function guessSchema(value: any) {
+	return Encoder.prototype.dispatcher(value)
 }
