@@ -109,7 +109,7 @@ async function compare(comparison: Comparison) {
 /**
  * Execute a function repeatedly and return the number of operations per second
  */
-async function benchmark(fn: Function, iterations = 10000) {
+async function benchmark(fn: Function, iterations = 500) {
 	let operations = 0
 	let start = performance.now()
 	let time: number
@@ -118,7 +118,7 @@ async function benchmark(fn: Function, iterations = 10000) {
 		await fn()
 		operations++
 		time = performance.now()
-	} while (operations < 500)
+	} while (operations < iterations)
 
 	return operations / (time - start) * 1000
 }
