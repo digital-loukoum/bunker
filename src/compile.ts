@@ -1,3 +1,4 @@
+import { Memory } from './Coder'
 import Encoder, { Dispatcher as EncoderDispatcher, DispatcherRecord as EncoderDispatcherRecord } from './encode/Encoder'
 import Decoder, { Dispatcher as DecoderDispatcher, DispatcherRecord as DecoderDispatcherRecord } from './decode/Decoder'
 import BufferEncoder from './encode/BufferEncoder'
@@ -7,8 +8,11 @@ import { isAugmented } from './augment'
 export default function compile(schema: EncoderDispatcher) {
 	const schemaEncoder = new BufferEncoder
 	schemaEncoder.schema(schema)  // write the schema
-	const { data, memory, stringMemory } = schemaEncoder
-	let decoderDispatcher: null | DecoderDispatcher = null
+	const { data, memory } = schemaEncoder
+	const decoderDispatcher = encoderToDecoder(schema)
+	const encoderMemory = memory.clone()
+	const decoderMemory = memory.clone() as Memory<DecoderDispatcher>
+	decoderMemory.schema.dispatchers = decoderMemory.schema.dispatchers.map(dispatcher => encoderToDecoder(dispatcher))
 
 	return {
 		schemaBytes: data,
@@ -16,8 +20,7 @@ export default function compile(schema: EncoderDispatcher) {
 		encode(value: any, encoder = new BufferEncoder) {
 			encoder.reset()
 			encoder.bytes(data)
-			encoder.memory = Array<object>().concat(memory)
-			encoder.stringMemory = Array<string>().concat(stringMemory)
+			encoder.memory = encoderMemory.clone()
 			schema.call(encoder, value)
 			return encoder.data
 		},
@@ -33,32 +36,25 @@ export default function compile(schema: EncoderDispatcher) {
 		 * so that the treatment is never done if the user only needs to compile
 		 * the encoder.
 		 */
-		get decode() {
-			if (!decoderDispatcher) decoderDispatcher = compileDecoder(schema)
-			return function decode(decoder: Decoder | Uint8Array) {
-				if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
-				decoder.reset()
-				const encodedSchema = decoder.bytes(data.byteLength)
-				for (let i = 0; i < data.byteLength; i++) {
-					if (data[i] != encodedSchema[i]) {
-						console.log("[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema before decoding")
-						return decoder.decode()
-					}
+		decode(decoder: Decoder | Uint8Array) {
+			if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
+			decoder.reset()
+			const encodedSchema = decoder.bytes(data.byteLength)
+			for (let i = 0; i < data.byteLength; i++) {
+				if (data[i] != encodedSchema[i]) {
+					console.log("[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema before decoding")
+					return decoder.decode()
 				}
-				// if the schema is the same, we can use the compiled dispatcher
-				decoder.memory = Array<object>().concat(memory)
-				decoder.stringMemory = Array<string>().concat(stringMemory)
-				return (decoderDispatcher as DecoderDispatcher).call(decoder)
 			}
+			// if the schema is the same, we can use the compiled dispatcher
+			decoder.memory = decoderMemory.clone()
+			return (decoderDispatcher as DecoderDispatcher).call(decoder)
 		},
 
-		get decodeNaked() {
-			if (!decoderDispatcher) decoderDispatcher = compileDecoder(schema)
-			return function decodeNaked(decoder: Decoder | Uint8Array) {
-				if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
-				decoder.reset()
-				return (decoderDispatcher as DecoderDispatcher).call(decoder)
-			}
+		decodeNaked(decoder: Decoder | Uint8Array) {
+			if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
+			decoder.reset()
+			return (decoderDispatcher as DecoderDispatcher).call(decoder)
 		}
 	}
 }
@@ -66,19 +62,20 @@ export default function compile(schema: EncoderDispatcher) {
 /**
  * Transform a EncoderDispatcher into a DecoderDispatcher
  */
-function compileDecoder(schema: EncoderDispatcher): DecoderDispatcher {
+function encoderToDecoder(schema: EncoderDispatcher): DecoderDispatcher {
 	const encoder = Encoder.prototype
 	const decoder = Decoder.prototype
 
 	if (isAugmented(schema)) switch (schema.target) {
-		case encoder.nullable: return decoder.nullable(compileDecoder(schema['0']))
-		case encoder.tuple: return decoder.tuple(schema['0'].map((dispatcher: EncoderDispatcher) => compileDecoder(dispatcher)))
-		case encoder.object: return decoder.object(compileDecoderProperties(schema['0']))
-		case encoder.array: return decoder.array(compileDecoder(schema['0']), compileDecoderProperties(schema['1']))
-		case encoder.set: return decoder.set(compileDecoder(schema['0']), compileDecoderProperties(schema['1']))
-		case encoder.map: return decoder.map(compileDecoder(schema['0']), compileDecoderProperties(schema['1']))
-		case encoder.record: return decoder.record(compileDecoder(schema['0']))
-		default: throw `[compileDecoder] Unknown schema ${schema.target.name}`
+		case encoder.recall: return decoder.recall(schema['0'])
+		case encoder.nullable: return decoder.nullable(encoderToDecoder(schema['0']))
+		case encoder.tuple: return decoder.tuple(schema['0'].map((dispatcher: EncoderDispatcher) => encoderToDecoder(dispatcher)))
+		case encoder.object: return decoder.object(encoderToDecoderProperties(schema['0']))
+		case encoder.array: return decoder.array(encoderToDecoder(schema['0']), encoderToDecoderProperties(schema['1']))
+		case encoder.set: return decoder.set(encoderToDecoder(schema['0']), encoderToDecoderProperties(schema['1']))
+		case encoder.map: return decoder.map(encoderToDecoder(schema['0']), encoderToDecoderProperties(schema['1']))
+		case encoder.record: return decoder.record(encoderToDecoder(schema['0']))
+		default: throw `[encoderToDecoder] Unknown schema ${schema.target.name}`
 	}
 	else switch (schema) {
 		case encoder.unknown: return decoder.unknown
@@ -98,13 +95,13 @@ function compileDecoder(schema: EncoderDispatcher): DecoderDispatcher {
 		case encoder.regularExpression: return decoder.regularExpression
 		case encoder.date: return decoder.date
 		case encoder.any: return decoder.any
-		default: throw `[compileDecoder] Unknown schema ${schema.name}`
+		default: throw `[encoderToDecoder] Unknown schema ${schema.name}`
 	}
 }
 
 
-function compileDecoderProperties(encoderProperties: EncoderDispatcherRecord) {
+function encoderToDecoderProperties(encoderProperties: EncoderDispatcherRecord) {
 	const decoderProperties: DecoderDispatcherRecord = {}
-	for (const key in encoderProperties) decoderProperties[key] = compileDecoder(encoderProperties[key])
+	for (const key in encoderProperties) decoderProperties[key] = encoderToDecoder(encoderProperties[key])
 	return decoderProperties
 }

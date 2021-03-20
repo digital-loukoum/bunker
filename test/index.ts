@@ -4,6 +4,7 @@ import samples from '../samples'
 import { bunker, debunker, guessSchema } from '../src'
 
 start(function({stage, same}) {
+	try {
 	// stage('Sample')
 	// {
 	// 	const data = bunker(sample)
@@ -177,4 +178,9 @@ start(function({stage, same}) {
 	// 	const result = debunker(buffer)
 	// 	same(value, result, name)
 	// }
+	}
+	catch (error) {
+		console.error(error)
+		throw error
+	}
 })

@@ -1,9 +1,11 @@
 import BufferEncoder from './encode/BufferEncoder'
 import BufferDecoder from './decode/BufferDecoder'
 import compile from './compile'
-import Encoder from './encode/Encoder'
+import Encoder, { Dispatcher as Schema } from './encode/Encoder'
+export { Schema }
 
-export function bunker(value: any, schema = guessSchema(value), encoder = new BufferEncoder) {
+export function bunker(value: any, schema?: Schema, encoder = new BufferEncoder) {
+	if (!schema) schema = encoder.dispatcher(value)
 	return encoder.encode(value, schema)
 }
 bunker.compile = compile

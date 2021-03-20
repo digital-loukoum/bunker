@@ -1,4 +1,4 @@
-import Coder from '../Coder'
+import Coder, { Memory } from '../Coder'
 import Byte from '../Byte'
 import augment, { isAugmented } from '../augment'
 import DataBuffer from '../DataBuffer'
@@ -14,9 +14,8 @@ const nan = Uint8Array.of(64, 32)
  * The Encoder abstract class implements the encoding logic without the details.
  */
 export default abstract class Encoder implements Coder<Dispatcher> {
-	memory: object[] = []
-	stringMemory: string[] = []  // array of all strings encountered
 	size = 0
+	memory = new Memory<Dispatcher>()
 
 	abstract onCapacityFull(demandedSize: number): void
 
@@ -26,7 +25,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	) {}
 
 	get data() {
-		return this.buffer.slice(0, this.size)
+		return new Uint8Array(this.buffer.buffer, 0, this.size)
 	}
 
 	byte(value: number) {  // write a single byte
@@ -47,8 +46,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	}
 
 	reset() {
-		this.memory.length = 0
-		this.stringMemory.length = 0
+		this.memory.objects.length = 0
+		this.memory.strings.length = 0
 	}
 
 	encode(value: any, dispatch?: Dispatcher): Uint8Array {
@@ -60,13 +59,13 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	}
 
 	inMemory(object: object) {
-		const index = this.memory.indexOf(object)
+		const index = this.memory.objects.indexOf(object)
 		if (~index) {
 			this.byte(Byte.reference)
 			this.positiveInteger(index)
 			return true
 		}
-		this.memory.push(object)
+		this.memory.objects.push(object)
 		return false
 	}
 
@@ -187,13 +186,13 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		// we check if the string is in memory
 		const { length } = value
 		if (length > 1) {
-			const index = this.stringMemory.indexOf(value)
+			const index = this.memory.strings.indexOf(value)
 			if (~index) {
 				this.byte(Byte.stringReference)
 				this.positiveInteger(index)
 				return
 			}
-			this.stringMemory.push(value)
+			this.memory.strings.push(value)
 		}
 		let cursor = 0
 		while (cursor < length) {
@@ -277,6 +276,12 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		}, this.tuple, dispatchers)
 	}
 
+	recall(index: number) {  // recall a previous dispatcher
+		return augment(function(this: Encoder, value: object) {
+			this.memory.schema.dispatchers[index].call(this, value)
+		}, this.recall, index)
+	}
+
 	/**
 	 * --- Objects
 	 */
@@ -337,7 +342,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 
 	/**
-	 * Guess dispatcher
+	 * Return the default dispatcher of a value (ie guess its schema)
 	 */
 	dispatcher(value: any): (value: any) => void {
 		switch (typeof value) {
@@ -351,16 +356,25 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			case 'string': return this.string
 			case 'boolean': return this.boolean
 			case 'function': throw `Cannot encode a function into bunker data`
-			default:
+			default: {
 				if (value == null) return this.nullable()
 				if (value instanceof Date) return this.date
 				if (value instanceof RegExp) return this.regularExpression
 
 				// new object
-				if (value instanceof Array) return this.arrayDispatcher(value)
-				if (value instanceof Set) return this.setDispatcher(value)
-				if (value instanceof Map) return this.mapDispatcher(value)
-				else return this.object(this.propertiesDispatcher(value))
+				let index = this.memory.schema.objects.indexOf(value)
+				if (~index) return this.recall(index)
+				index = this.memory.schema.objects.length
+				this.memory.schema.objects.push(value)
+
+				let dispatcher: Dispatcher
+				if (value instanceof Array) dispatcher = this.arrayDispatcher(value)
+				if (value instanceof Set) dispatcher = this.setDispatcher(value)
+				if (value instanceof Map) dispatcher = this.mapDispatcher(value)
+				else dispatcher = this.object(this.propertiesDispatcher(value))
+
+				return (this.memory.schema.dispatchers[index] = dispatcher)
+			}
 		}
 	}
 
@@ -479,7 +493,12 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 				return
 			case this.tuple:
 				this.byte(Byte.tuple)
+				this.positiveInteger(dispatcher['0'].length)
 				dispatcher['0'].forEach((type: Dispatcher) => this.schema(type))
+				return
+			case this.recall:
+				this.byte(Byte.recall)
+				this.positiveInteger(dispatcher['0'])
 				return
 			case this.object:
 				this.byte(Byte.object)

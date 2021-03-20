@@ -1,4 +1,4 @@
-import Coder from "../Coder"
+import Coder, { Memory } from "../Coder"
 import Byte from "../Byte"
 import DataBuffer from '../DataBuffer'
 
@@ -9,8 +9,7 @@ const infinity = 4096
 const nan = 2048
 
 export default abstract class Decoder implements Coder<Dispatcher> {
-	memory: object[] = []  // array of all objects encountered
-	stringMemory: string[] = []  // array of all strings encountered
+	memory = new Memory<Dispatcher>()
 
 	constructor(
 		public buffer = new DataBuffer,
@@ -18,8 +17,8 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	) {}
 
 	reset() {
-		this.memory.length = 0
-		this.stringMemory.length = 0
+		this.memory.objects.length = 0
+		this.memory.strings.length = 0
 		this.cursor = 0
 	}
 
@@ -60,7 +59,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
  	}
 
 	unknown() {
-		throw Error(`Call to Encoder::unknown`)
+		throw Error(`Call to Decoder::unknown`)
 	}
 
 	character() {
@@ -68,7 +67,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	binary(): Uint8Array {
-		if (this.nextByteIs(Byte.reference)) return this.recall() as Uint8Array
+		if (this.nextByteIs(Byte.reference)) return this.reference() as Uint8Array
 		const length = this.integer()
 		return this.bytes(length)
 	}
@@ -175,7 +174,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	string(): string {
 		if (this.nextByteIs(Byte.stringReference)) {
-			const decoded = this.stringMemory[this.positiveInteger()]
+			const decoded = this.memory.strings[this.positiveInteger()]
 			return decoded
 		}
 		const characters: number[] = []
@@ -212,7 +211,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		}
 
 		const decoded = String.fromCharCode.apply(null, characters)
-		if (decoded.length > 1) this.stringMemory.push(decoded)
+		if (decoded.length > 1) this.memory.strings.push(decoded)
 		return decoded
 	}
 
@@ -239,6 +238,12 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		}
 	}
 
+	recall(index: number) {
+		return function(this: Decoder) {
+			return this.memory.schema.dispatchers[index].call(this)
+		}
+	}
+
 	/**
 	 * --- Objects
 	 */
@@ -251,26 +256,26 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		}
 		return object
 	}
-	private recall() {
-		return this.memory[this.positiveInteger()] as unknown
+	private reference() {
+		return this.memory.objects[this.positiveInteger()] as unknown
 	}
 
 	object(properties: DispatcherRecord = {}) {
 		return function(this: Decoder) {
 			if (this.byte() == Byte.reference)
-				return this.recall() as Record<string, any>
+				return this.reference() as Record<string, any>
 			const object: Record<string, any> = {}
-			this.memory.push(object)
+			this.memory.objects.push(object)
 			return this.properties(object, properties)
 		}
 	}
 
 	array(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
 		return function(this: Decoder) {
-			if (this.isReference()) return this.recall() as any[]
+			if (this.isReference()) return this.reference() as any[]
 			const length = this.integer()
 			const array = Array<any>(length)
-			this.memory.push(array)
+			this.memory.objects.push(array)
 			for (let i = 0; i < length; i++) array[i] = dispatch.call(this)
 			return this.properties(array, properties)
 		}
@@ -278,10 +283,10 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	set(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
 		return function(this: Decoder) {
-			if (this.isReference()) return this.recall() as Set<any>
+			if (this.isReference()) return this.reference() as Set<any>
 			const length = this.integer()
 			const set = new Set<any>()
-			this.memory.push(set)
+			this.memory.objects.push(set)
 			for (let i = 0; i < length; i++) set.add(dispatch.call(this))
 			return this.properties(set, properties)
 		}
@@ -289,10 +294,10 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	record(dispatch: Dispatcher = this.unknown) {
 		return function(this: Decoder) {
-			if (this.isReference()) return this.recall() as Record<string, any>
+			if (this.isReference()) return this.reference() as Record<string, any>
 			const length = this.integer()
 			const record: Record<string, any> = {}
-			this.memory.push(record)
+			this.memory.objects.push(record)
 			for (let i = 0; i < length; i++) record[this.string()] = dispatch.call(this)
 			return record
 		}
@@ -300,10 +305,10 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	map(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
 		return function(this: Decoder) {
-			if (this.isReference()) return this.recall() as Map<string, any>
+			if (this.isReference()) return this.reference() as Map<string, any>
 			const length = this.integer()
 			const map = new Map<string, any>()
-			this.memory.push(map)
+			this.memory.objects.push(map)
 			for (let i = 0; i < length; i++) map.set(this.string(), dispatch.call(this))
 			return this.properties(map, properties)
 		}
@@ -314,7 +319,8 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	 * Read the schema's bytes and return a dispatcher
 	 */
 	schema(): Dispatcher {
-		switch (this.byte()) {
+		const byte = this.byte()
+		switch (byte) {
 			case Byte.unknown: return this.unknown
 			case Byte.any: return this.any
 			case Byte.boolean: return this.boolean
@@ -331,15 +337,32 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			case Byte.string: return this.string
 			case Byte.regularExpression: return this.regularExpression
 			case Byte.date: return this.date
-
 			case Byte.nullable: return this.nullable(this.schema())
-			case Byte.object: return this.object(this.schemaProperties())
-			case Byte.array: return this.array(this.schema(), this.schemaProperties())
-			case Byte.set: return this.set(this.schema(), this.schemaProperties())
-			case Byte.map: return this.map(this.schema(), this.schemaProperties())
-			case Byte.record: return this.record(this.schema())
+			case Byte.recall: return this.recall(this.positiveInteger())
+			case Byte.tuple: {
+				const length = this.positiveInteger()
+				const dispatchers: Dispatcher[] = []
+				for (let i = 0; i < length; i++)
+					dispatchers[i] = this.schema()
+				return this.tuple(dispatchers)
+			}
 
-			default: throw this.error(`Unknown byte`)
+			default: {
+				// if we have an object we add it to the dispatchers memory so that we can recall it
+				let dispatcher: Dispatcher
+				const index = this.memory.schema.dispatchers.length++
+
+				switch (byte) {
+					case Byte.object: dispatcher = this.object(this.schemaProperties()); break
+					case Byte.array: dispatcher = this.array(this.schema(), this.schemaProperties()); break
+					case Byte.set: dispatcher = this.set(this.schema(), this.schemaProperties()); break
+					case Byte.map: dispatcher = this.map(this.schema(), this.schemaProperties()); break
+					case Byte.record: dispatcher = this.record(this.schema()); break
+					default: throw this.error(`Unknown byte`)
+				}
+
+				return (this.memory.schema.dispatchers[index] = dispatcher)
+			}
 		}
 	}
 

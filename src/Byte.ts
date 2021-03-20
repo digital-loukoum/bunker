@@ -20,6 +20,7 @@ enum Byte {
 	// composed
 	nullable,
 	tuple,
+	recall,
 
 	// objects
 	object,
