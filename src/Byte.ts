@@ -16,14 +16,10 @@ enum Byte {
 	regularExpression,
 	date,
 	any,
-
-	// composed
-	nullable,
+	nullable,  // ... composed
 	tuple,
 	recall,
-
-	// objects
-	object,
+	object,  // ... objects
 	array,
 	set,
 	record,

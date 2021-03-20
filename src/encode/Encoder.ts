@@ -369,8 +369,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 				let dispatcher: Dispatcher
 				if (value instanceof Array) dispatcher = this.arrayDispatcher(value)
-				if (value instanceof Set) dispatcher = this.setDispatcher(value)
-				if (value instanceof Map) dispatcher = this.mapDispatcher(value)
+				else if (value instanceof Set) dispatcher = this.setDispatcher(value)
+				else if (value instanceof Map) dispatcher = this.mapDispatcher(value)
 				else dispatcher = this.object(this.propertiesDispatcher(value))
 
 				return (this.memory.schema.dispatchers[index] = dispatcher)
@@ -414,13 +414,27 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	private joinDispatchers(a: Dispatcher, b: Dispatcher): Dispatcher {
 		let nullable = false
 		let joint: Dispatcher
-		if (isAugmented(a) && a.target == this.nullable) {
-			nullable = true
-			a = a['0']
+		if (isAugmented(a)) {
+			if (a.target == this.nullable) {
+				nullable = true
+				a = a['0']
+			}
+			else if (a.target == this.recall) {
+				if (isAugmented(b) && b.target == this.recall && b['0'] == a['0'])
+					return a  // a & b recall the same dispatcher
+				a = this.memory.schema.dispatchers[a['0']]
+				if (!a) return this.any  // recursive type deduction ; we don't know the type of a yet
+			}
 		}
-		if (isAugmented(b) && b.target == this.nullable) {
-			nullable = true
-			b = b['0']
+		if (isAugmented(b)) {
+			if (b.target == this.nullable) {
+				nullable = true
+				b = b['0']
+			}
+			else if (b.target == this.recall) {
+				b = this.memory.schema.dispatchers[b['0']]
+				if (!b) return this.any
+			}
 		}
 
 		if (a == this.unknown) joint = b
@@ -432,24 +446,28 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 				joint = this.any
 			}
 			else if (a.target == this.object) {
-				joint = this.object(this.joinDispatcherRecords(a['0'], b['0']))
+				joint = this.object(this.joinDispatcherProperties(a['0'], b['0']))
 			}
 			else if (a.target == this.array) {
 				joint = this.array(
 					this.joinDispatchers(a['0'], b['0']),
-					this.joinDispatcherRecords(a['1'], b['1'])
+					this.joinDispatcherProperties(a['1'], b['1'])
 				)
+			}
+			else if (a.target == this.recall) {
+				if (a['0'] == b['0']) joint = a  // same reference
+				else joint = this.any  // different references
 			}
 			else if (a.target == this.set) {
 				joint = this.set(
 					this.joinDispatchers(a['0'], b['0']),
-					this.joinDispatcherRecords(a['1'], b['1'])
+					this.joinDispatcherProperties(a['1'], b['1'])
 				)
 			}
 			else if (a.target == this.map) {
 				joint = this.map(
 					this.joinDispatchers(a['0'], b['0']),
-					this.joinDispatcherRecords(a['1'], b['1'])
+					this.joinDispatcherProperties(a['1'], b['1'])
 				)
 			}
 			else if (a.target == this.record) {
@@ -461,7 +479,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		return nullable ? this.nullable(joint) : joint
 	}
 
-	private joinDispatcherRecords(a: DispatcherRecord, b: DispatcherRecord): DispatcherRecord {
+	private joinDispatcherProperties(a: DispatcherRecord, b: DispatcherRecord): DispatcherRecord {
 		const dispatcher: DispatcherRecord = {}
 		for (const key in a)
 			dispatcher[key] = key in b ? this.joinDispatchers(a[key], b[key]) : this.nullable(a[key])

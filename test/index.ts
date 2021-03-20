@@ -3,109 +3,99 @@ import sample from './sample'
 import samples from '../samples'
 import { bunker, debunker, guessSchema } from '../src'
 
-start(function({stage, same}) {
+start(function Bunker({stage, same}) {
 	try {
-	// stage('Sample')
-	// {
-	// 	const data = bunker(sample)
-	// 	same(sample, debunker(data), "Sample")
-	// }
+	stage('Sample')
+	{
+		const data = bunker(sample)
+		same(sample, debunker(data), "Sample")
+	}
+
+	stage('Random samples')
+	try {
+		for (const sample in samples) {
+			const value = samples[sample]
+			const data = bunker(value)
+			same(value, debunker(data), sample)
+		}
+	} catch(error) {
+		console.error(error)
+	}
+
+	stage('Numbers')
+	for (const [name, value] of Object.entries({
+		"Max safe integer": Number.MAX_SAFE_INTEGER,
+		"Min safe integer": -Number.MAX_SAFE_INTEGER,
+		"Infinity": Infinity,
+		"-Infinity": Infinity,
+		"Negative value": -6546,
+		"Zero": 0,
+		"Negative zero": -0,
+		"One": 1,
+		"Negative one": -1,
+		"Random positive integer": 7826348,
+		"Random negative integer": -98712,
+		"BigInt": BigInt("1287236482634982736482736498726987632487"),
+		"Float": 123.32424,
+		"Negative float": -1.23456789,
+	})) {
+		const buffer = bunker(value)
+		const result = debunker(buffer)
+		same(value, result, name)
+	}
 	//
-	// stage('Random samples')
-	// try {
-	// 	for (const sample in samples) {
-	// 		const value = samples[sample]
-	// 		const data = bunker(value)
-	// 		same(value, debunker(data), sample)
-	// 	}
-	// } catch(error) {
-	// 	console.error(error)
-	// }
-	//
-	//
-	// stage('Precompile')
-	// {
-	// 	const value = sample
-	// 	const { encode, decode } = bunker.compile(guessSchema(sample))
-	// 	const data = encode(value)
-	// 	const decoded = decode(data)
-	// 	same(value, decoded)
-	// }
-	//
-	// stage('Numbers')
-	// for (const [name, value] of Object.entries({
-	// 	"Max safe integer": Number.MAX_SAFE_INTEGER,
-	// 	"Min safe integer": -Number.MAX_SAFE_INTEGER,
-	// 	"Infinity": Infinity,
-	// 	"-Infinity": Infinity,
-	// 	"Negative value": -6546,
-	// 	"Zero": 0,
-	// 	"Negative zero": -0,
-	// 	"One": 1,
-	// 	"Negative one": -1,
-	// 	"Random positive integer": 7826348,
-	// 	"Random negative integer": -98712,
-	// 	"BigInt": BigInt("1287236482634982736482736498726987632487"),
-	// 	"Float": 123.32424,
-	// 	"Negative float": -1.23456789,
-	// })) {
-	// 	const buffer = bunker(value)
-	// 	const result = debunker(buffer)
-	// 	same(value, result, name)
-	// }
-	//
-	// stage('Strings')
-	// for (const [name, value] of Object.entries({
-	// 	"Foo": "foo",
-	// 	"Bar": "bar",
-	// 	"Empty string": "",
-	// 	"Very large string": "jqhfhqksjhdfgkzjqshdkfjhgcqzkbjefghbquhsdfg vbksjdhcfnkqizefhgkqjchssgdncjsdf",
-	// 	"String with special values": "@&!éà'è&àçé'è!(§çé",
-	// })) {
-	// 	const buffer = bunker(value)
-	// 	const result = debunker(buffer)
-	// 	same(value, result, name)
-	// }
-	//
-	// stage('Objects')
-	// for (const [name, value] of Object.entries({
-	// 	"Standard object": { x: 12, y: 121},
-	// 	"Nested": { x: { y: { z: "foo" } }, t: "bar" },
-	// })) {
-	// 	const buffer = bunker(value)
-	// 	const result = debunker(buffer)
-	// 	same(value, result, name)
-	// }
-	//
-	// stage('Arrays')
-	// for (const [name, value] of Object.entries({
-	// 	"Array of objects": [{ x: 1, y: 2}, { x: 10, y: 20}],
-	// })) {
-	// 	const buffer = bunker(value)
-	// 	const result = debunker(buffer)
-	// 	same(value, result, name)
-	// }
-	//
-	// stage('Sets')
-	// for (const [name, value] of Object.entries({
-	// 	"Set of numbers": new Set([1, 2, 3, 4, 5, 6]),
-	// 	"Set of strings": new Set(["banana", "orange", "apple"]),
-	// 	"Set of mixed type": new Set(["banana", 12, "apple"]),
-	// 	"Set of nullable": new Set(["banana", null, "apple", null, undefined]),
-	// })) {
-	// 	const buffer = bunker(value)
-	// 	const result = debunker(buffer)
-	// 	same(value, result, name)
-	// }
-	//
-	// stage('Maps')
-	// for (const [name, value] of Object.entries({
-	// 	"Standard map": new Map([ ["x", 12], ["y", 121]]),
-	// })) {
-	// 	const buffer = bunker(value)
-	// 	const result = debunker(buffer)
-	// 	same(value, result, name)
-	// }
+	stage('Strings')
+	for (const [name, value] of Object.entries({
+		"Foo": "foo",
+		"Bar": "bar",
+		"Empty string": "",
+		"Very large string": "jqhfhqksjhdfgkzjqshdkfjhgcqzkbjefghbquhsdfg vbksjdhcfnkqizefhgkqjchssgdncjsdf",
+		"String with special values": "@&!éà'è&àçé'è!(§çé",
+	})) {
+		const buffer = bunker(value)
+		const result = debunker(buffer)
+		same(value, result, name)
+	}
+
+	stage('Objects')
+	for (const [name, value] of Object.entries({
+		"Standard object": { x: 12, y: 121},
+		"Nested": { x: { y: { z: "foo" } }, t: "bar" },
+	})) {
+		const buffer = bunker(value)
+		const result = debunker(buffer)
+		same(value, result, name)
+	}
+
+	stage('Arrays')
+	for (const [name, value] of Object.entries({
+		"Array of objects": [{ x: 1, y: 2}, { x: 10, y: 20}],
+	})) {
+		const buffer = bunker(value)
+		const result = debunker(buffer)
+		same(value, result, name)
+	}
+
+	stage('Sets')
+	for (const [name, value] of Object.entries({
+		"Set of numbers": new Set([1, 2, 3, 4, 5, 6]),
+		"Set of strings": new Set(["banana", "orange", "apple"]),
+		"Set of mixed type": new Set(["banana", 12, "apple"]),
+		"Set of nullable": new Set(["banana", null, "apple", null, undefined]),
+	})) {
+		const buffer = bunker(value)
+		const result = debunker(buffer)
+		same(value, result, name)
+	}
+
+	stage('Maps')
+	for (const [name, value] of Object.entries({
+		"Standard map": new Map([ ["x", 12], ["y", 121]]),
+	})) {
+		const buffer = bunker(value)
+		const result = debunker(buffer)
+		same(value, result, name)
+	}
 
 	// stage('Records')
 	// {
@@ -133,13 +123,13 @@ start(function({stage, same}) {
 		const c = {} as any
 		c.c = c
 		for (const [name, value] of Object.entries({
-			// "Reference in object": {a: o, b: o},
-			// "Reference in array": [o, {x: 13}, o],
-			// "Reference in set": { o, set: new Set([o, {x: 14}]) },
+			"Reference in object": {a: o, b: o},
+			"Reference in array": [o, o],
+			"Reference in set": { o, set: new Set([o, {x: 14}]) },
 			"Circular reference": c,
 		})) {
 			const buffer = bunker(value)
-			console.log("encoded", buffer)
+			// console.log("encoded", buffer)
 			const result = debunker(buffer)
 			if (!same(value, result, name)) {
 				console.log(`------ ${name} ------`)
@@ -171,16 +161,21 @@ start(function({stage, same}) {
 // 		const result = debunker(buffer)
 // 		same(value, result, "Basic tuple test")
 // }
-
-	// stage('Samples')
-	// for (const [name, value] of Object.entries(samples)) {
-	// 	const buffer = bunker(value)
-	// 	const result = debunker(buffer)
-	// 	same(value, result, name)
-	// }
 	}
 	catch (error) {
 		console.error(error)
 		throw error
+	}
+})
+
+
+start(function BunkerCompile({stage, same}) {
+	stage('Precompile')
+	{
+		const value = sample
+		const { encode, decode } = bunker.compile(guessSchema(sample))
+		const data = encode(value)
+		const decoded = decode(data)
+		same(value, decoded)
 	}
 })
