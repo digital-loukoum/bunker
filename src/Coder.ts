@@ -18,7 +18,7 @@ type Coder<Dispatcher extends Function> = {
 	any: Dispatcher
 
 	nullable(dispatch: Dispatcher): Dispatcher
-	tuple(dispatch: Dispatcher[]): Dispatcher
+	tuple(...dispatch: Dispatcher[]): Dispatcher
 
 	object(dispatch: Record<string, Dispatcher>): Dispatcher
 	array(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Dispatcher
@@ -28,14 +28,13 @@ type Coder<Dispatcher extends Function> = {
 }
 export default Coder
 
-
 export class Memory<Dispatcher extends Function> {
 	constructor(
 		public objects: object[] = [],
 		public strings: string[] = [],
 		public schema = {
 			objects: [] as object[],
-			dispatchers: [] as Dispatcher[]
+			dispatchers: [] as Dispatcher[],
 		}
 	) {}
 
@@ -45,7 +44,7 @@ export class Memory<Dispatcher extends Function> {
 			Array<string>().concat(this.strings),
 			{
 				objects: Array<object>().concat(this.schema.objects),
-				dispatchers: Array<Dispatcher>().concat(this.schema.dispatchers)
+				dispatchers: Array<Dispatcher>().concat(this.schema.dispatchers),
 			}
 		)
 	}
