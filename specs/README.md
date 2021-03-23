@@ -69,7 +69,7 @@ Then if we would write this same data using Bunker in a Json-way, it would be so
 
 We can easily understand why the longer and the longer the array becomes, the better Bunker will compare to Json (or MessagePack). The keys "name", "company" and "phone" are not be repeated over and over (only once in the schema), which leads to a huge size improvement.
 
-It's the same way as Csv or Sql works - except Csv can only handle arrays of objects, while Bunker can handle any type of data. 
+It's the same way as Csv or Sql works - except Csv can only handle arrays of objects, while Bunker can handle any type of data.
 
 
 ### Base enumerations
@@ -213,13 +213,13 @@ Three arrays are needed: one for object references in schema, one for object ref
 ### Schema specifications
 
 - `Primitive`
-  
+
   The type of the primitive is written as a byte.
 
   Primitive types are: unknown, null, any, boolean, character, integer, positiveInteger, bigInteger, number, string, regExp, date and reference.
-  
+
   Example: for a boolean, write `Type.boolean` - which is equal to `3`. For a character, write `Type.character`, etc...
-  
+
   Size (in bytes): `1`
 
 
@@ -264,7 +264,7 @@ Three arrays are needed: one for object references in schema, one for object ref
   ```
 
 - `Nullable<T>`
-  
+
   A nullable is value is a value that can be null or undefined.
 
   `Type.nullable` is written as a byte, then T's schema is written.
@@ -392,7 +392,7 @@ After the schema comes the encoded data. You no longer encode the type of the da
 - `RegularExpression`
 
   Write the expression as a string, then the flags as a string.
-  
+
   Size: `2+`
 
 - `Date`
