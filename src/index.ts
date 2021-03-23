@@ -3,7 +3,8 @@ import BufferDecoder from "./decode/BufferDecoder"
 import compile from "./compile"
 import Encoder, { Dispatcher as Schema } from "./encode/Encoder"
 import schemaOf, { DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
-export { schemaOf, Schema }
+import registry, { register } from "./registry"
+export { schemaOf, Schema, compile, registry, register }
 
 export function bunker(
 	value: any,
@@ -14,6 +15,7 @@ export function bunker(
 	return encoder.encode(value, schema)
 }
 bunker.compile = compile
+bunker.register = register
 
 export function debunker(data: Uint8Array) {
 	return new BufferDecoder(data).decode()
