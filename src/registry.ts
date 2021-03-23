@@ -31,8 +31,11 @@ export function register(entries: Record<string, RegistryEntryInput>) {
 
 		let { schema, constructor } = entries[name]
 		let encode = schema || schemaOf(new constructor())
-		if (hasMemory(encode))
-			throw new Error(`Circular value in default schema of '${name}'`)
+		if (hasMemory(encode)) {
+			console.log("Schema memory!... What to do with this?")
+			const { memory } = encode
+			encode = encode.dispatcher
+		}
 
 		registry[name] = {
 			constructor,
