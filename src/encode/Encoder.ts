@@ -6,10 +6,6 @@ import DataBuffer from "../DataBuffer"
 export type Dispatcher = (value: any) => void
 export type DispatcherRecord = Record<string, Dispatcher>
 
-const infinity = Uint8Array.of(64, 64)
-const minusInfinity = Uint8Array.of(192, 64)
-const nan = Uint8Array.of(64, 32)
-
 /**
  * The Encoder abstract class implements the encoding logic without the details.
  */
