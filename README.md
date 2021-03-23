@@ -143,7 +143,7 @@ const schema = createSchema({
   nullable: Nullable(Integer),
 
   tuple: [Integer, String],
-  
+
   object: {
     nestedInteger: Integer,
     nestedString: String,
@@ -165,7 +165,7 @@ const schema = createSchema({
   }),
 
   set: SetOf(String),
-  
+
   map: MapOf({ firstname: String, lastname: String }),
 })
 ```
@@ -223,7 +223,7 @@ import { bunker } from 'bunker'
 
 http.createServer((request, response) => {
   const bunkered = bunker(12)
-  
+
     response.writeHead(200, {
         'Content-Type': 'application/octet-stream',
         'Content-Length': bunkered.length,
@@ -235,4 +235,3 @@ http.createServer((request, response) => {
 
 
 ## <a name="benchmarks"></a>Benchmarks
-

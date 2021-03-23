@@ -2,11 +2,11 @@
 	"compilerOptions": {
 		"moduleResolution": "node",
 		"target": "es2020",
-		"lib": [ "es2020", "dom" ],
+		"lib": ["es2020", "dom"],
 		"module": "esnext",
 		"strict": true,
 		"outDir": "dist",
 		"declaration": true
 	},
-	"include": [ "src", "bunker • 3" ]
+	"include": ["src", "bunker • 3"]
 }
