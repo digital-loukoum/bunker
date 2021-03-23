@@ -149,7 +149,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	 * Those semi-bytes are finally concatenated into a Uint8Array.
 	 * Since we naturally write numbers in their base-10 representation, it's often
 	 * shorter to store decimal numbers in this format.
-	 * @enhancement This function would be much faster if compiled to wasm because
+	 * @enhancement this function would be much faster if compiled to wasm because
 	 * we could omit the intermediate conversion to UTF-16 string.
 	 */
 	number(value: number) {

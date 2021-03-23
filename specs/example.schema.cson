@@ -1,0 +1,7 @@
+{
+   x: integer
+   z: string
+   coco: array(string)
+   zabu: tuple(string, integer)
+   coco: Hero
+}
