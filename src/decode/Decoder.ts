@@ -23,7 +23,9 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	error(message: string) {
 		return new Error(
-			`${message} at position: ${this.cursor - 1}. Byte value: '${this.buffer[this.cursor - 1]}'.`
+			`${message} at position: ${this.cursor - 1}. Byte value: '${
+				this.buffer[this.cursor - 1]
+			}'.`
 		)
 	}
 

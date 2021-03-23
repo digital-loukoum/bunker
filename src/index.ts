@@ -1,10 +1,10 @@
-import BufferEncoder from './encode/BufferEncoder'
-import BufferDecoder from './decode/BufferDecoder'
-import compile from './compile'
-import Encoder, { Dispatcher as Schema } from './encode/Encoder'
+import BufferEncoder from "./encode/BufferEncoder"
+import BufferDecoder from "./decode/BufferDecoder"
+import compile from "./compile"
+import Encoder, { Dispatcher as Schema } from "./encode/Encoder"
 export { Schema }
 
-export function bunker(value: any, schema?: Schema, encoder = new BufferEncoder) {
+export function bunker(value: any, schema?: Schema, encoder = new BufferEncoder()) {
 	if (!schema) schema = encoder.dispatcher(value)
 	return encoder.encode(value, schema)
 }
@@ -41,7 +41,7 @@ export const {
 	array,
 	set,
 	record,
-	map
+	map,
 } = Encoder.prototype
 bunker.character = character
 bunker.binary = binary

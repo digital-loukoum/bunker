@@ -1,19 +1,14 @@
-import Decoder from './Decoder'
+import Decoder from "./Decoder"
 // import DataBuffer from '../DataBuffer'
 
 export default class BufferDecoder extends Decoder {
+	constructor(public filename: string, public chunkSize = 4096) {
+		super()
+	}
 
-	constructor(
-      public filename: string,
-      public chunkSize = 4096,
-   ) {
-      super()
-   }
-
-   requestBytes(value: number) {
+	requestBytes(value: number) {
 		const requiredSize = this.cursor + value
-		if (requiredSize > this.buffer.byteLength)
-			this.loadData(requiredSize)
+		if (requiredSize > this.buffer.byteLength) this.loadData(requiredSize)
 	}
 
 	loadData(requiredSize: number) {
@@ -23,17 +18,17 @@ export default class BufferDecoder extends Decoder {
 	byte(): number {
 		this.requestBytes(1)
 		return super.byte()
- 	}
+	}
 
- 	bytes(length: number) {
+	bytes(length: number) {
 		this.requestBytes(length)
 		return super.bytes(length)
- 	}
+	}
 
 	nextByteIs(byte: number): boolean {
 		this.requestBytes(1)
 		return super.nextByteIs(byte)
- 	}
+	}
 
 	integer32() {
 		this.requestBytes(4)

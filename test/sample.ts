@@ -1,6 +1,6 @@
 const o = { foo: 0, bar: 1 }
 
-export default new class {
+export default new (class {
 	// zero = 0
 	// negativeZero = -0
 	// one = 1
@@ -44,4 +44,4 @@ export default new class {
 	// 	name: "Zabu",
 	// 	strength: 12,
 	// }
-}
+})()

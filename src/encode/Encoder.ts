@@ -468,7 +468,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 	private setDispatcher(value: Set<any>) {
 		let type: Dispatcher = this.unknown
-		for (const element of value) type = this.joinDispatchers(type, this.dispatcher(element))
+		for (const element of value)
+			type = this.joinDispatchers(type, this.dispatcher(element))
 		return this.set(type, this.propertiesDispatcher(value))
 	}
 
@@ -538,10 +539,14 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		return nullable ? this.nullable(joint) : joint
 	}
 
-	private joinDispatcherProperties(a: DispatcherRecord, b: DispatcherRecord): DispatcherRecord {
+	private joinDispatcherProperties(
+		a: DispatcherRecord,
+		b: DispatcherRecord
+	): DispatcherRecord {
 		const dispatcher: DispatcherRecord = {}
 		for (const key in a)
-			dispatcher[key] = key in b ? this.joinDispatchers(a[key], b[key]) : this.nullable(a[key])
+			dispatcher[key] =
+				key in b ? this.joinDispatchers(a[key], b[key]) : this.nullable(a[key])
 		for (const key in b)
 			if (!(key in a))
 				// key exists in b but not in a

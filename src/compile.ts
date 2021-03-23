@@ -1,23 +1,31 @@
-import { Memory } from './Coder'
-import Encoder, { Dispatcher as EncoderDispatcher, DispatcherRecord as EncoderDispatcherRecord } from './encode/Encoder'
-import Decoder, { Dispatcher as DecoderDispatcher, DispatcherRecord as DecoderDispatcherRecord } from './decode/Decoder'
-import BufferEncoder from './encode/BufferEncoder'
-import BufferDecoder from './decode/BufferDecoder'
-import { isAugmented } from './augment'
+import { Memory } from "./Coder"
+import Encoder, {
+	Dispatcher as EncoderDispatcher,
+	DispatcherRecord as EncoderDispatcherRecord,
+} from "./encode/Encoder"
+import Decoder, {
+	Dispatcher as DecoderDispatcher,
+	DispatcherRecord as DecoderDispatcherRecord,
+} from "./decode/Decoder"
+import BufferEncoder from "./encode/BufferEncoder"
+import BufferDecoder from "./decode/BufferDecoder"
+import { isAugmented } from "./augment"
 
 export default function compile(schema: EncoderDispatcher) {
-	const schemaEncoder = new BufferEncoder
-	schemaEncoder.schema(schema)  // write the schema
+	const schemaEncoder = new BufferEncoder()
+	schemaEncoder.schema(schema) // write the schema
 	const { data, memory } = schemaEncoder
 	const decoderDispatcher = encoderToDecoder(schema)
 	const encoderMemory = memory.clone()
 	const decoderMemory = memory.clone() as Memory<DecoderDispatcher>
-	decoderMemory.schema.dispatchers = decoderMemory.schema.dispatchers.map(dispatcher => encoderToDecoder(dispatcher))
+	decoderMemory.schema.dispatchers = decoderMemory.schema.dispatchers.map((dispatcher) =>
+		encoderToDecoder(dispatcher)
+	)
 
 	return {
 		schemaBytes: data,
 
-		encode(value: any, encoder = new BufferEncoder) {
+		encode(value: any, encoder = new BufferEncoder()) {
 			encoder.reset()
 			encoder.bytes(data)
 			encoder.memory = encoderMemory.clone()
@@ -25,7 +33,7 @@ export default function compile(schema: EncoderDispatcher) {
 			return encoder.data
 		},
 
-		encodeNaked(value: any, encoder = new BufferEncoder) {
+		encodeNaked(value: any, encoder = new BufferEncoder()) {
 			encoder.reset()
 			schema.call(encoder, value)
 			return encoder.data
@@ -42,7 +50,9 @@ export default function compile(schema: EncoderDispatcher) {
 			const encodedSchema = decoder.bytes(data.byteLength)
 			for (let i = 0; i < data.byteLength; i++) {
 				if (data[i] != encodedSchema[i]) {
-					console.log("[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema before decoding")
+					console.log(
+						"[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema before decoding"
+					)
 					return decoder.decode()
 				}
 			}
@@ -55,53 +65,92 @@ export default function compile(schema: EncoderDispatcher) {
 			if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
 			decoder.reset()
 			return (decoderDispatcher as DecoderDispatcher).call(decoder)
-		}
+		},
 	}
 }
 
 /**
  * Transform a EncoderDispatcher into a DecoderDispatcher
  */
-function encoderToDecoder(schema: EncoderDispatcher): DecoderDispatcher {
+function encoderToDecoder(schema: EncoderDispatcher): DecoderDispatcher {
 	const encoder = Encoder.prototype
 	const decoder = Decoder.prototype
 
-	if (isAugmented(schema)) switch (schema.target) {
-		case encoder.recall: return decoder.recall(schema['0'])
-		case encoder.nullable: return decoder.nullable(encoderToDecoder(schema['0']))
-		case encoder.tuple: return decoder.tuple(schema['0'].map((dispatcher: EncoderDispatcher) => encoderToDecoder(dispatcher)))
-		case encoder.object: return decoder.object(encoderToDecoderProperties(schema['0']))
-		case encoder.array: return decoder.array(encoderToDecoder(schema['0']), encoderToDecoderProperties(schema['1']))
-		case encoder.set: return decoder.set(encoderToDecoder(schema['0']), encoderToDecoderProperties(schema['1']))
-		case encoder.map: return decoder.map(encoderToDecoder(schema['0']), encoderToDecoderProperties(schema['1']))
-		case encoder.record: return decoder.record(encoderToDecoder(schema['0']))
-		default: throw `[encoderToDecoder] Unknown schema ${schema.target.name}`
-	}
-	else switch (schema) {
-		case encoder.unknown: return decoder.unknown
-		case encoder.character: return decoder.character
-		case encoder.binary: return decoder.binary
-		case encoder.boolean: return decoder.boolean
-		case encoder.smallInteger:
-		case encoder.integer: return decoder.integer
-		case encoder.integer32: return decoder.integer32
-		case encoder.integer64: return decoder.integer64
-		case encoder.positiveInteger: return decoder.positiveInteger
-		case encoder.bigInteger: return decoder.bigInteger
-		case encoder.number: return decoder.number
-		case encoder.number32: return decoder.number32
-		case encoder.number64: return decoder.number64
-		case encoder.string: return decoder.string
-		case encoder.regularExpression: return decoder.regularExpression
-		case encoder.date: return decoder.date
-		case encoder.any: return decoder.any
-		default: throw `[encoderToDecoder] Unknown schema ${schema.name}`
-	}
+	if (isAugmented(schema))
+		switch (schema.target) {
+			case encoder.recall:
+				return decoder.recall(schema["0"])
+			case encoder.nullable:
+				return decoder.nullable(encoderToDecoder(schema["0"]))
+			case encoder.tuple:
+				return decoder.tuple(
+					schema["0"].map((dispatcher: EncoderDispatcher) => encoderToDecoder(dispatcher))
+				)
+			case encoder.object:
+				return decoder.object(encoderToDecoderProperties(schema["0"]))
+			case encoder.array:
+				return decoder.array(
+					encoderToDecoder(schema["0"]),
+					encoderToDecoderProperties(schema["1"])
+				)
+			case encoder.set:
+				return decoder.set(
+					encoderToDecoder(schema["0"]),
+					encoderToDecoderProperties(schema["1"])
+				)
+			case encoder.map:
+				return decoder.map(
+					encoderToDecoder(schema["0"]),
+					encoderToDecoderProperties(schema["1"])
+				)
+			case encoder.record:
+				return decoder.record(encoderToDecoder(schema["0"]))
+			default:
+				throw `[encoderToDecoder] Unknown schema ${schema.target.name}`
+		}
+	else
+		switch (schema) {
+			case encoder.unknown:
+				return decoder.unknown
+			case encoder.character:
+				return decoder.character
+			case encoder.binary:
+				return decoder.binary
+			case encoder.boolean:
+				return decoder.boolean
+			case encoder.smallInteger:
+			case encoder.integer:
+				return decoder.integer
+			case encoder.integer32:
+				return decoder.integer32
+			case encoder.integer64:
+				return decoder.integer64
+			case encoder.positiveInteger:
+				return decoder.positiveInteger
+			case encoder.bigInteger:
+				return decoder.bigInteger
+			case encoder.number:
+				return decoder.number
+			case encoder.number32:
+				return decoder.number32
+			case encoder.number64:
+				return decoder.number64
+			case encoder.string:
+				return decoder.string
+			case encoder.regularExpression:
+				return decoder.regularExpression
+			case encoder.date:
+				return decoder.date
+			case encoder.any:
+				return decoder.any
+			default:
+				throw `[encoderToDecoder] Unknown schema ${schema.name}`
+		}
 }
-
 
 function encoderToDecoderProperties(encoderProperties: EncoderDispatcherRecord) {
 	const decoderProperties: DecoderDispatcherRecord = {}
-	for (const key in encoderProperties) decoderProperties[key] = encoderToDecoder(encoderProperties[key])
+	for (const key in encoderProperties)
+		decoderProperties[key] = encoderToDecoder(encoderProperties[key])
 	return decoderProperties
 }
