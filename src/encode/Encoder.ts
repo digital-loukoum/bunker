@@ -143,31 +143,54 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		}
 	}
 
+	/**
+	 * The Bunker's number format converts a number to a base 10 representation,
+	 * Then every digit is converted to a semi-byte number going from 0 to 9.
+	 * Those semi-bytes are finally concatenated into a Uint8Array.
+	 * Since we naturally write numbers in their base-10 representation, it's often
+	 * shorter to store decimal numbers in this format.
+	 * @enhancement This function would be much faster if compiled to wasm because
+	 * we could omit the intermediate conversion to UTF-16 string.
+	 */
 	number(value: number) {
-		if (value == Infinity) return this.bytes(infinity)
-		else if (value == -Infinity) return this.bytes(minusInfinity)
-		else if (isNaN(value)) return this.bytes(nan)
+		if (value == Infinity) return this.byte(206)
+		else if (value == -Infinity) return this.byte(222)
+		else if (isNaN(value)) return this.byte(238)
 		const stringified = '' + value
-		const indexOfDot = stringified.indexOf('.')
-		let base = value
-		let exponent = 0
-		if (~indexOfDot) {
-			const decimals = stringified.length - indexOfDot
-			base *= 10 ** decimals
-			exponent = -decimals
+		const bytes = new Uint8Array(Math.ceil((stringified.length + 1) / 2))
+
+		let offset = 0, index = 0
+		while (index < stringified.length) {
+			const value = this.numberCharacterSemiByte(stringified[index++])
+			if (index % 2) bytes[offset] = value * 16
+			else bytes[offset++] += value
 		}
-		else {
-			value /= 10
-			while (Number.isInteger(value)) {
-				base = value
-				exponent++
-				value /= 10
-			}
-			// while (stringified[stringified.length - exponent - 1] == '0') exponent++;
-			// base = +(stringified.slice(0, -exponent))
+
+		// we add the stop semi-byte (15)
+		if (index % 2) bytes[offset] += 15
+		else bytes[offset] = 15 * 16
+		this.bytes(bytes)
+	}
+
+	private numberCharacterSemiByte(character: string) {
+		switch (character) {
+			case '0': return 0
+			case '1': return 1
+			case '2': return 2
+			case '3': return 3
+			case '4': return 4
+			case '5': return 5
+			case '6': return 6
+			case '7': return 7
+			case '8': return 8
+			case '9': return 9
+			case '.': return 10
+			case '+': return 11
+			case '-': return 12
+			case 'e': return 13
+			case 'i': return 14  // should not happen ; infinity is a special case
+			default: throw `Unexpected character in number: '${character}'`
 		}
-		this.integer(exponent)
-		this.integer(base)
 	}
 
 	number32(value: number) {
