@@ -1,17 +1,17 @@
-import { bunker, debunker, guessSchema } from '../src'
-import Table from 'cli-table'
+import { bunker, debunker, guessSchema } from "../src"
+import Table from "cli-table"
 // import zlib from 'zlib'
 // import { inflate, deflate } from 'pako'
-import * as msgpack from '@msgpack/msgpack'
-import notepack from 'notepack.io'
-import { performance } from 'perf_hooks'
-import * as chalk from 'chalk'
-import { deflate, unzip as inflate } from 'zlib'
-import { promisify } from 'util'
+import * as msgpack from "@msgpack/msgpack"
+import notepack from "notepack.io"
+import { performance } from "perf_hooks"
+import * as chalk from "chalk"
+import { deflate, unzip as inflate } from "zlib"
+import { promisify } from "util"
 const zip = promisify(deflate)
 const unzip = promisify(inflate)
 
-import samples from '../samples'
+import samples from "../samples"
 
 export type Comparison = {
 	title?: string
@@ -27,7 +27,7 @@ export type Comparison = {
  */
 async function compare(comparison: Comparison) {
 	let { title, challengers, inputs, sort, format, apply } = comparison
-	sort ??= (a: number, b: number) => a < b
+	if (!sort) sort = (a: number, b: number) => a < b
 	const results: Record<string, Record<string, number> & { bestChallenger?: string }> = {}
 
 	// we collect the results
@@ -46,7 +46,7 @@ async function compare(comparison: Comparison) {
 			}
 			results[trial][challenger] = result
 		}
-		Object.defineProperty(results[trial], 'bestChallenger', {
+		Object.defineProperty(results[trial], "bestChallenger", {
 			enumerable: false,
 			value: bestChallenger,
 		})
@@ -54,15 +54,14 @@ async function compare(comparison: Comparison) {
 
 	// we create the result table
 	const table = new Table({
-		head: [title || '', ...Object.keys(challengers)]
+		head: [title || "", ...Object.keys(challengers)],
 	})
 	for (const trial in results) {
 		const row = [trial.replace(/\.[^/.]+$/, "")]
 
 		for (const challenger in results[trial]) {
-			let result = (format || String)(results[trial][challenger])
-			if (challenger == results[trial].bestChallenger)
-				result = chalk.bold.green(result)
+			let result = (format || String)(results[trial][challenger])
+			if (challenger == results[trial].bestChallenger) result = chalk.bold.green(result)
 			row.push(result)
 		}
 		table.push(row)
@@ -70,13 +69,16 @@ async function compare(comparison: Comparison) {
 
 	// we add the average row
 	{
-		const averageRow = [chalk.bold.blue('Average')]
+		const averageRow = [chalk.bold.blue("Average")]
 		const trialsCount = Object.keys(results).length
-		const format = (value: number) => chalk.bold((value >= 0 ? '+' : '') + Intl.NumberFormat().format(~~(value * 100)) + '%')
+		const format = (value: number) =>
+			chalk.bold(
+				(value >= 0 ? "+" : "") + Intl.NumberFormat().format(~~(value * 100)) + "%"
+			)
 		let bestChallengerIndex = 0
 		let challengerIndex = 1
 		let bestAverage = 0
-		let firstChallenger: undefined | string = undefined
+		let firstChallenger: undefined | string = undefined
 
 		for (const challenger in challengers) {
 			if (firstChallenger === undefined) {
@@ -99,7 +101,9 @@ async function compare(comparison: Comparison) {
 			challengerIndex++
 		}
 
-		averageRow[bestChallengerIndex + 1] = chalk.bold.green(averageRow[bestChallengerIndex + 1])
+		averageRow[bestChallengerIndex + 1] = chalk.bold.green(
+			averageRow[bestChallengerIndex + 1]
+		)
 		table.push(averageRow)
 	}
 
@@ -120,10 +124,10 @@ async function benchmark(fn: Function, iterations = 500) {
 		time = performance.now()
 	} while (operations < iterations)
 
-	return operations / (time - start) * 1000
+	return (operations / (time - start)) * 1000
 }
 
-+async function() {
+;+(async function () {
 	const inputs = {}
 	for (const [sample, value] of Object.entries(samples)) {
 		const name = sample.replace(/\.[^/.]+$/, "")
@@ -131,19 +135,24 @@ async function benchmark(fn: Function, iterations = 500) {
 	}
 
 	const encoders = {
-		'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
-		'zipped json': async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
-		'bunker': ([value]: any) => bunker(value),
-		'bunker (naked)': ([value]: any) => bunker.compile(guessSchema(value)).encodeNaked(value),
-		'msgpack': ([value]: any) => msgpack.encode(value),
-		'notepack': ([value]: any) => notepack.encode(value),
+		json: ([value]: any) => Buffer.from(JSON.stringify(value)),
+		"zipped json": async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
+		bunker: ([value]: any) => bunker(value),
+		"bunker (naked)": ([value]: any) =>
+			bunker.compile(guessSchema(value)).encodeNaked(value),
+		msgpack: ([value]: any) => msgpack.encode(value),
+		notepack: ([value]: any) => notepack.encode(value),
 	}
 
 	const encoded = {}
 	for (const trial in inputs) {
 		encoded[trial] = {}
 		for (const encoder in encoders) {
-			encoded[trial][encoder] = [await encoders[encoder](inputs[trial]), inputs[trial][2].decode, inputs[trial][2].decodeNaked]
+			encoded[trial][encoder] = [
+				await encoders[encoder](inputs[trial]),
+				inputs[trial][2].decode,
+				inputs[trial][2].decodeNaked,
+			]
 		}
 	}
 
@@ -152,25 +161,25 @@ async function benchmark(fn: Function, iterations = 500) {
 		inputs,
 		challengers: encoders,
 		apply: async (run: Function) => (await run()).length,
-		format: (value: number) => Intl.NumberFormat().format(value) + ' o',
+		format: (value: number) => Intl.NumberFormat().format(value) + " o",
 		sort: (a, b) => a > b,
 	})
-
 
 	compare({
 		title: "Encoding speed",
 		inputs,
 		challengers: {
-			'json': ([value]: any) => Buffer.from(JSON.stringify(value)),
-			'zipped json': async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
-			'bunker': ([value]: any) => bunker(value),
+			json: ([value]: any) => Buffer.from(JSON.stringify(value)),
+			"zipped json": async ([value]: any) =>
+				await zip(Buffer.from(JSON.stringify(value))),
+			bunker: ([value]: any) => bunker(value),
 			// 'bunker (with schema)': ([value, schema]: any) => bunker(value, schema),
-			'bunker (compiled)': ([value, , compiled]: any) => compiled.encode(value),
-			'bunker (naked)': ([value, , compiled]: any) => compiled.encodeNaked(value),
-			'notepack': ([value]: any) => notepack.encode(value),
-			'msgpack': ([value]: any) => msgpack.encode(value),
+			"bunker (compiled)": ([value, , compiled]: any) => compiled.encode(value),
+			"bunker (naked)": ([value, , compiled]: any) => compiled.encodeNaked(value),
+			notepack: ([value]: any) => notepack.encode(value),
+			msgpack: ([value]: any) => msgpack.encode(value),
 		},
-		format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
+		format: (value: number) => Intl.NumberFormat().format(~~value) + " ops/s",
 		apply: benchmark,
 	})
 
@@ -178,15 +187,17 @@ async function benchmark(fn: Function, iterations = 500) {
 		title: "Decoding speed",
 		inputs: encoded,
 		challengers: {
-			'json': (encoded: any) => JSON.parse(encoded.json[0].toString()),
-			'zipped json': async (encoded: any) => JSON.parse((await unzip(encoded['zipped json'][0])).toString()),
-			'bunker': (encoded: any) => debunker(encoded['bunker'][0]),
-			'bunker (compiled)': (encoded: any) => encoded['bunker'][1](encoded['bunker'][0]),
-			'bunker (naked)': (encoded: any) => encoded['bunker'][2](encoded['bunker (naked)'][0]),
-			'notepack': (encoded: any) => notepack.decode(encoded.notepack[0]),
-			'msgpack': (encoded: any) => msgpack.decode(encoded.msgpack[0]),
+			json: (encoded: any) => JSON.parse(encoded.json[0].toString()),
+			"zipped json": async (encoded: any) =>
+				JSON.parse((await unzip(encoded["zipped json"][0])).toString()),
+			bunker: (encoded: any) => debunker(encoded["bunker"][0]),
+			"bunker (compiled)": (encoded: any) => encoded["bunker"][1](encoded["bunker"][0]),
+			"bunker (naked)": (encoded: any) =>
+				encoded["bunker"][2](encoded["bunker (naked)"][0]),
+			notepack: (encoded: any) => notepack.decode(encoded.notepack[0]),
+			msgpack: (encoded: any) => msgpack.decode(encoded.msgpack[0]),
 		},
-		format: (value: number) => Intl.NumberFormat().format(~~value) + ' ops/s',
+		format: (value: number) => Intl.NumberFormat().format(~~value) + " ops/s",
 		apply: benchmark,
 	})
-}()
+})()
