@@ -14,8 +14,15 @@ export function bunker(
 	if (!schema) schema = schemaOf(value)
 	return encoder.encode(value, schema)
 }
+
+export function encodeSchema(schema: Schema) {
+	const encoder = new BufferEncoder()
+	encoder.schema(schema)
+	return encoder.data
+}
 bunker.compile = compile
 bunker.register = register
+bunker.encodeSchema = encodeSchema
 
 export function debunker(data: Uint8Array) {
 	return new BufferDecoder(data).decode()

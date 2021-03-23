@@ -32,7 +32,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 	)
 
 	return {
-		schemaBytes: data,
+		encodedSchema: data,
 
 		encode(value: any, encoder = new BufferEncoder()) {
 			encoder.reset()
@@ -81,7 +81,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 /**
  * Transform a EncoderDispatcher into a DecoderDispatcher
  */
-function encoderToDecoder(schema: Schema): DecoderDispatcher {
+export function encoderToDecoder(schema: Schema): DecoderDispatcher {
 	const encoder = Encoder.prototype
 	const decoder = Decoder.prototype
 

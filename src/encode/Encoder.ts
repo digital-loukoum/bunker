@@ -338,7 +338,13 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	}
 
 	instance(name: string) {
-		return augment(registry[name].schema!, Encoder.prototype.instance, name)
+		return augment(
+			function (this: Encoder, value: object) {
+				registry[name].schema.call(this, value)
+			},
+			Encoder.prototype.instance,
+			name
+		)
 	}
 
 	/**
@@ -465,6 +471,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 				case this.instance:
 					this.byte(Byte.instance)
 					this.string(dispatcher["0"])
+					return
 			}
 		else
 			switch (dispatcher) {

@@ -1,8 +1,9 @@
 import Coder, { Memory } from "../Coder"
 import Byte from "../Byte"
 import DataBuffer from "../DataBuffer"
+import registry from "../registry"
 
-export type Dispatcher = () => any
+export type Dispatcher = (_?: any) => any
 export type DispatcherRecord = Record<string, Dispatcher>
 
 export default abstract class Decoder implements Coder<Dispatcher> {
@@ -275,8 +276,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	tuple(...dispatchers: Dispatcher[]) {
-		return function (this: Decoder) {
-			const tuple: Array<any> = []
+		return function (this: Decoder, tuple: Array<any> = []) {
 			for (let i = 0; i < dispatchers.length; i++) {
 				tuple[i] = dispatchers[i].call(this)
 			}
@@ -287,6 +287,12 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	recall(index: number) {
 		return function (this: Decoder) {
 			return this.memory.schema.dispatchers[index].call(this)
+		}
+	}
+
+	instance(name: string) {
+		return function (this: Decoder): unknown {
+			return registry[name].decode.call(this, new registry[name].constructor())
 		}
 	}
 
@@ -307,30 +313,27 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	object(properties: DispatcherRecord = {}) {
-		return function (this: Decoder) {
+		return function (this: Decoder, object: Record<string, any> = {}) {
 			if (this.byte() == Byte.reference) return this.reference() as Record<string, any>
-			const object: Record<string, any> = {}
 			this.memory.objects.push(object)
 			return this.properties(object, properties)
 		}
 	}
 
 	array(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
-		return function (this: Decoder) {
+		return function (this: Decoder, array = Array<any>()) {
 			if (this.isReference()) return this.reference() as any[]
-			const length = this.integer()
-			const array = Array<any>(length)
+			array.length = this.integer()
 			this.memory.objects.push(array)
-			for (let i = 0; i < length; i++) array[i] = dispatch.call(this)
+			for (let i = 0; i < array.length; i++) array[i] = dispatch.call(this)
 			return this.properties(array, properties)
 		}
 	}
 
 	set(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
-		return function (this: Decoder) {
+		return function (this: Decoder, set = new Set<any>()) {
 			if (this.isReference()) return this.reference() as Set<any>
 			const length = this.integer()
-			const set = new Set<any>()
 			this.memory.objects.push(set)
 			for (let i = 0; i < length; i++) set.add(dispatch.call(this))
 			return this.properties(set, properties)
@@ -338,10 +341,9 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	record(dispatch: Dispatcher = this.unknown) {
-		return function (this: Decoder) {
+		return function (this: Decoder, record: Record<string, any> = {}) {
 			if (this.isReference()) return this.reference() as Record<string, any>
 			const length = this.integer()
-			const record: Record<string, any> = {}
 			this.memory.objects.push(record)
 			for (let i = 0; i < length; i++) record[this.string()] = dispatch.call(this)
 			return record
@@ -349,10 +351,9 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	map(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
-		return function (this: Decoder) {
+		return function (this: Decoder, map = new Map<string, any>()) {
 			if (this.isReference()) return this.reference() as Map<string, any>
 			const length = this.integer()
-			const map = new Map<string, any>()
 			this.memory.objects.push(map)
 			for (let i = 0; i < length; i++) map.set(this.string(), dispatch.call(this))
 			return this.properties(map, properties)
@@ -414,6 +415,8 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 				const index = this.memory.schema.dispatchers.length++
 
 				switch (byte) {
+					case Byte.instance:
+						dispatcher = this.instance(this.string())
 					case Byte.object:
 						dispatcher = this.object(this.schemaProperties())
 						break
