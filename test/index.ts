@@ -4,7 +4,7 @@ import samples from "../samples"
 import {
 	bunker,
 	debunker,
-	guessSchema,
+	schemaOf,
 	record,
 	nullable,
 	integer,
@@ -186,13 +186,13 @@ start(function Bunker({ stage, same }) {
 	}
 })
 
-// start(function BunkerCompile({ stage, same }) {
-//   stage("Precompile")
-//   {
-//     const value = sample
-//     const { encode, decode } = bunker.compile(guessSchema(sample))
-//     const data = encode(value)
-//     const decoded = decode(data)
-//     same(value, decoded)
-//   }
-// })
+start(function BunkerCompile({ stage, same }) {
+	stage("Precompile")
+	{
+		const value = sample
+		const { encode, decode } = bunker.compile(schemaOf(sample))
+		const data = encode(value)
+		const decoded = decode(data)
+		same(value, decoded)
+	}
+})

@@ -1,6 +1,6 @@
 import { Memory } from "./Coder"
 import Encoder, {
-	Dispatcher as EncoderDispatcher,
+	Dispatcher as Schema,
 	DispatcherRecord as EncoderDispatcherRecord,
 } from "./encode/Encoder"
 import Decoder, {
@@ -10,12 +10,21 @@ import Decoder, {
 import BufferEncoder from "./encode/BufferEncoder"
 import BufferDecoder from "./decode/BufferDecoder"
 import { isAugmented } from "./augment"
+import { hasMemory, DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
 
-export default function compile(schema: EncoderDispatcher) {
+export default function compile(schema: Schema | SchemaWithMemory) {
 	const schemaEncoder = new BufferEncoder()
-	schemaEncoder.schema(schema) // write the schema
+	let dispatcher!: Schema
+	if (hasMemory(schema)) {
+		dispatcher = schema.dispatcher
+		schemaEncoder.memory.schema.concatenate(schema.memory)
+	} else dispatcher = schema
+
+	// let's pre-encode the schema
+	schemaEncoder.schema(dispatcher)
+
 	const { data, memory } = schemaEncoder
-	const decoderDispatcher = encoderToDecoder(schema)
+	const decoderDispatcher = encoderToDecoder(dispatcher)
 	const encoderMemory = memory.clone()
 	const decoderMemory = memory.clone() as Memory<DecoderDispatcher>
 	decoderMemory.schema.dispatchers = decoderMemory.schema.dispatchers.map((dispatcher) =>
@@ -29,13 +38,13 @@ export default function compile(schema: EncoderDispatcher) {
 			encoder.reset()
 			encoder.bytes(data)
 			encoder.memory = encoderMemory.clone()
-			schema.call(encoder, value)
+			dispatcher.call(encoder, value)
 			return encoder.data
 		},
 
 		encodeNaked(value: any, encoder = new BufferEncoder()) {
 			encoder.reset()
-			schema.call(encoder, value)
+			dispatcher.call(encoder, value)
 			return encoder.data
 		},
 
@@ -72,7 +81,7 @@ export default function compile(schema: EncoderDispatcher) {
 /**
  * Transform a EncoderDispatcher into a DecoderDispatcher
  */
-function encoderToDecoder(schema: EncoderDispatcher): DecoderDispatcher {
+function encoderToDecoder(schema: Schema): DecoderDispatcher {
 	const encoder = Encoder.prototype
 	const decoder = Decoder.prototype
 
@@ -84,7 +93,7 @@ function encoderToDecoder(schema: EncoderDispatcher): DecoderDispatcher {
 				return decoder.nullable(encoderToDecoder(schema["0"]))
 			case encoder.tuple:
 				return decoder.tuple(
-					schema["0"].map((dispatcher: EncoderDispatcher) => encoderToDecoder(dispatcher))
+					schema["0"].map((dispatcher: Schema) => encoderToDecoder(dispatcher))
 				)
 			case encoder.object:
 				return decoder.object(encoderToDecoderProperties(schema["0"]))

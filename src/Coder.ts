@@ -32,27 +32,41 @@ export class Memory<Dispatcher extends Function> {
 	constructor(
 		public objects: object[] = [],
 		public strings: string[] = [],
-		public schema = {
-			objects: [] as object[],
-			dispatchers: [] as Dispatcher[],
-		}
+		public schema = new SchemaMemory<Dispatcher>()
 	) {}
 
 	clone() {
 		return new Memory<Dispatcher>(
 			Array<object>().concat(this.objects),
 			Array<string>().concat(this.strings),
-			{
-				objects: Array<object>().concat(this.schema.objects),
-				dispatchers: Array<Dispatcher>().concat(this.schema.dispatchers),
-			}
+			this.schema.clone()
 		)
 	}
 
 	reset() {
 		this.objects.length = 0
 		this.strings.length = 0
-		this.schema.objects.length = 0
-		this.schema.dispatchers.length = 0
+		this.schema.reset()
+	}
+}
+
+export class SchemaMemory<Dispatcher extends Function> {
+	constructor(public objects: object[] = [], public dispatchers: Dispatcher[] = []) {}
+
+	clone() {
+		return new SchemaMemory<Dispatcher>(
+			Array<object>().concat(this.objects),
+			Array<Dispatcher>().concat(this.dispatchers)
+		)
+	}
+
+	reset() {
+		this.objects.length = 0
+		this.dispatchers.length = 0
+	}
+
+	concatenate(memory: SchemaMemory<Dispatcher>) {
+		this.objects = this.objects.concat(memory.objects)
+		this.dispatchers = this.dispatchers.concat(memory.dispatchers)
 	}
 }

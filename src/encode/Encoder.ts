@@ -2,6 +2,7 @@ import Coder, { Memory } from "../Coder"
 import Byte from "../Byte"
 import augment, { isAugmented } from "../augment"
 import DataBuffer from "../DataBuffer"
+import schemaOf, { DispatcherWithMemory, hasMemory } from "../schemaOf"
 
 export type Dispatcher = (value: any) => void
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -44,11 +45,17 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.memory.strings.length = 0
 	}
 
-	encode(value: any, dispatch?: Dispatcher): Uint8Array {
+	encode(value: any, schema?: Dispatcher | DispatcherWithMemory): Uint8Array {
 		this.reset()
-		if (!dispatch) dispatch = this.dispatcher(value)
-		this.schema(dispatch)
-		dispatch.call(this, value)
+		if (!schema) schema = schemaOf(value)
+		if (hasMemory(schema)) {
+			this.memory.schema = schema.memory.clone()
+			this.schema(schema.dispatcher)
+			schema.dispatcher.call(this, value)
+		} else {
+			this.schema(schema)
+			schema.call(this, value)
+		}
 		return this.data
 	}
 
@@ -279,9 +286,15 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	}
 
 	any(value: any) {
-		const dispatch = this.dispatcher(value)
-		this.schema(dispatch)
-		dispatch.call(this, value)
+		const schema = schemaOf(value)
+		if (hasMemory(schema)) {
+			this.memory.schema.concatenate(schema.memory)
+			this.schema(schema.dispatcher)
+			schema.dispatcher.call(this, value)
+		} else {
+			this.schema(schema)
+			schema.call(this, value)
+		}
 	}
 
 	/**
@@ -400,170 +413,6 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 			dispatch,
 			properties
 		)
-	}
-
-	/**
-	 * Return the default dispatcher of a value (ie guess its schema)
-	 */
-	dispatcher(value: any): (value: any) => void {
-		switch (typeof value) {
-			case "undefined":
-				return this.nullable()
-			case "number": {
-				const isSmall = Math.fround(value) == value
-				if (Number.isInteger(value)) return isSmall ? this.smallInteger : this.integer
-				else return isSmall ? this.number32 : this.number64
-			}
-			case "bigint":
-				return this.bigInteger
-			case "string":
-				return this.string
-			case "boolean":
-				return this.boolean
-			case "function":
-				throw `Cannot encode a function into bunker data`
-			default: {
-				if (value == null) return this.nullable()
-				if (value instanceof Date) return this.date
-				if (value instanceof RegExp) return this.regularExpression
-
-				// new object
-				let index = this.memory.schema.objects.indexOf(value)
-				if (~index) return this.recall(index)
-				index = this.memory.schema.objects.length
-				this.memory.schema.objects.push(value)
-
-				let dispatcher: Dispatcher
-				if (value instanceof Array) dispatcher = this.arrayDispatcher(value)
-				else if (value instanceof Set) dispatcher = this.setDispatcher(value)
-				else if (value instanceof Map) dispatcher = this.mapDispatcher(value)
-				else dispatcher = this.object(this.propertiesDispatcher(value))
-
-				return (this.memory.schema.dispatchers[index] = dispatcher)
-			}
-		}
-	}
-
-	private propertiesDispatcher(value: Record<string, any>) {
-		let properties: DispatcherRecord = {}
-		for (const key in value) properties[key] = this.dispatcher(value[key])
-		return properties
-	}
-
-	private arrayDispatcher(value: any[]) {
-		let dispatch: Dispatcher = this.unknown
-		let properties: DispatcherRecord = {}
-		let index = 0,
-			indexes = 0
-		for (let i = 0; i < value.length; i++) {
-			if (i in value) indexes++ // empty values are not indexed
-			dispatch = this.joinDispatchers(dispatch, this.dispatcher(value[i]))
-		}
-		for (const key in value) {
-			if (index++ < indexes) continue // the first keys are always the array values
-			properties[key] = this.dispatcher(value[key])
-		}
-		return this.array(dispatch, properties)
-	}
-
-	private setDispatcher(value: Set<any>) {
-		let type: Dispatcher = this.unknown
-		for (const element of value)
-			type = this.joinDispatchers(type, this.dispatcher(element))
-		return this.set(type, this.propertiesDispatcher(value))
-	}
-
-	private mapDispatcher(value: Map<string, any>) {
-		let type: Dispatcher = this.unknown
-		for (const element of value.values())
-			type = this.joinDispatchers(type, this.dispatcher(element))
-		return this.map(type, this.propertiesDispatcher(value))
-	}
-
-	private joinDispatchers(a: Dispatcher, b: Dispatcher): Dispatcher {
-		let nullable = false
-		let joint: Dispatcher
-		if (isAugmented(a)) {
-			if (a.target == this.nullable) {
-				nullable = true
-				a = a["0"]
-			} else if (a.target == this.recall) {
-				if (isAugmented(b) && b.target == this.recall && b["0"] == a["0"]) return a // a & b recall the same dispatcher
-				a = this.memory.schema.dispatchers[a["0"]]
-				if (!a) return this.any // recursive type deduction ; we don't know the type of a yet
-			}
-		}
-		if (isAugmented(b)) {
-			if (b.target == this.nullable) {
-				nullable = true
-				b = b["0"]
-			} else if (b.target == this.recall) {
-				b = this.memory.schema.dispatchers[b["0"]]
-				if (!b) return this.any
-			}
-		}
-
-		if (a == this.unknown) joint = b
-		else if (b == this.unknown) joint = a
-		else if (!isAugmented(a) || !isAugmented(b)) joint = this.joinPrimitives(a, b)
-		else {
-			// -- join objects
-			if (a.target != b.target) {
-				joint = this.any
-			} else if (a.target == this.object) {
-				joint = this.object(this.joinDispatcherProperties(a["0"], b["0"]))
-			} else if (a.target == this.array) {
-				joint = this.array(
-					this.joinDispatchers(a["0"], b["0"]),
-					this.joinDispatcherProperties(a["1"], b["1"])
-				)
-			} else if (a.target == this.recall) {
-				if (a["0"] == b["0"]) joint = a
-				// same reference
-				else joint = this.any // different references
-			} else if (a.target == this.set) {
-				joint = this.set(
-					this.joinDispatchers(a["0"], b["0"]),
-					this.joinDispatcherProperties(a["1"], b["1"])
-				)
-			} else if (a.target == this.map) {
-				joint = this.map(
-					this.joinDispatchers(a["0"], b["0"]),
-					this.joinDispatcherProperties(a["1"], b["1"])
-				)
-			} else if (a.target == this.record) {
-				joint = this.record(this.joinDispatchers(a["0"], b["0"]))
-			} else joint = this.any
-		}
-
-		return nullable ? this.nullable(joint) : joint
-	}
-
-	private joinDispatcherProperties(
-		a: DispatcherRecord,
-		b: DispatcherRecord
-	): DispatcherRecord {
-		const dispatcher: DispatcherRecord = {}
-		for (const key in a)
-			dispatcher[key] =
-				key in b ? this.joinDispatchers(a[key], b[key]) : this.nullable(a[key])
-		for (const key in b)
-			if (!(key in a))
-				// key exists in b but not in a
-				dispatcher[key] = this.nullable(b[key])
-		return dispatcher
-	}
-
-	private joinPrimitives(a: Dispatcher, b: Dispatcher) {
-		if (a == b) return a
-		const numbers = [this.smallInteger, this.integer, this.number32, this.number64]
-		const indexA = numbers.indexOf(a)
-		if (indexA == -1) return this.any
-		const indexB = numbers.indexOf(b)
-		if (indexB == -1) return this.any
-		const max = Math.max(indexA, indexB)
-		if (max == 2 && (indexA == 1 || indexB == 1)) return this.number64
-		return numbers[max]
 	}
 
 	/**
