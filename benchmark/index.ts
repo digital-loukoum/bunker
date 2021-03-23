@@ -1,4 +1,4 @@
-import { bunker, debunker, guessSchema } from "../src"
+import { bunker, debunker, schemaOf } from "../src"
 import Table from "cli-table"
 // import zlib from 'zlib'
 // import { inflate, deflate } from 'pako'
@@ -131,7 +131,7 @@ async function benchmark(fn: Function, iterations = 500) {
 	const inputs = {}
 	for (const [sample, value] of Object.entries(samples)) {
 		const name = sample.replace(/\.[^/.]+$/, "")
-		inputs[name] = [value, guessSchema(value), bunker.compile(guessSchema(value))]
+		inputs[name] = [value, schemaOf(value), bunker.compile(schemaOf(value))]
 	}
 
 	const encoders = {
@@ -139,7 +139,7 @@ async function benchmark(fn: Function, iterations = 500) {
 		"zipped json": async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
 		bunker: ([value]: any) => bunker(value),
 		"bunker (naked)": ([value]: any) =>
-			bunker.compile(guessSchema(value)).encodeNaked(value),
+			bunker.compile(schemaOf(value)).encodeNaked(value),
 		msgpack: ([value]: any) => msgpack.encode(value),
 		notepack: ([value]: any) => notepack.encode(value),
 	}
@@ -176,8 +176,8 @@ async function benchmark(fn: Function, iterations = 500) {
 			// 'bunker (with schema)': ([value, schema]: any) => bunker(value, schema),
 			"bunker (compiled)": ([value, , compiled]: any) => compiled.encode(value),
 			"bunker (naked)": ([value, , compiled]: any) => compiled.encodeNaked(value),
-			notepack: ([value]: any) => notepack.encode(value),
 			msgpack: ([value]: any) => msgpack.encode(value),
+			notepack: ([value]: any) => notepack.encode(value),
 		},
 		format: (value: number) => Intl.NumberFormat().format(~~value) + " ops/s",
 		apply: benchmark,
@@ -194,8 +194,8 @@ async function benchmark(fn: Function, iterations = 500) {
 			"bunker (compiled)": (encoded: any) => encoded["bunker"][1](encoded["bunker"][0]),
 			"bunker (naked)": (encoded: any) =>
 				encoded["bunker"][2](encoded["bunker (naked)"][0]),
-			notepack: (encoded: any) => notepack.decode(encoded.notepack[0]),
 			msgpack: (encoded: any) => msgpack.decode(encoded.msgpack[0]),
+			notepack: (encoded: any) => notepack.decode(encoded.notepack[0]),
 		},
 		format: (value: number) => Intl.NumberFormat().format(~~value) + " ops/s",
 		apply: benchmark,
