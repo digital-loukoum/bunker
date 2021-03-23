@@ -153,11 +153,45 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	number() {
-		const exponent = this.integer()
-		if (exponent == infinity) return Infinity
-		else if (exponent == -infinity) return -Infinity
-		else if (exponent == nan) return NaN
-		return +`${this.integer()}e${exponent}`
+		let byte = this.byte()
+		if (byte == 206) return Infinity
+		else if (byte == 222) return -Infinity
+		else if (byte == 238) return NaN
+
+		let offset = 0
+		let digit = byte >> 4
+		let stringified = ''
+		while (digit != 15) {
+			stringified += this.numberDigitCharacter(digit)
+			if ((++offset) % 2) {
+				byte = this.byte()
+				digit = byte >> 4
+			}
+			else digit = byte % 16
+		}
+
+		return +stringified
+	}
+
+	private numberDigitCharacter(digit: number) {
+		switch (digit) {
+			case 0: return '0'
+			case 1: return '1'
+			case 2: return '2'
+			case 3: return '3'
+			case 4: return '4'
+			case 5: return '5'
+			case 6: return '6'
+			case 7: return '7'
+			case 8: return '8'
+			case 9: return '9'
+			case 10: return '.'
+			case 11: return '+'
+			case 12: return '-'
+			case 13: return 'e'
+			case 14: return 'i'  // should not happen ; infinity is a special case
+			default: throw `Unexpected digit in number: '${digit}'`
+		}
 	}
 
 	number32() {

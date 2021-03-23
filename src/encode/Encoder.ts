@@ -161,7 +161,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 		let offset = 0, index = 0
 		while (index < stringified.length) {
-			const value = this.numberCharacterSemiByte(stringified[index++])
+			const value = this.numberDigitValue(stringified[index++])
 			if (index % 2) bytes[offset] = value * 16
 			else bytes[offset++] += value
 		}
@@ -172,7 +172,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.bytes(bytes)
 	}
 
-	private numberCharacterSemiByte(character: string) {
+	private numberDigitValue(character: string) {
 		switch (character) {
 			case '0': return 0
 			case '1': return 1
