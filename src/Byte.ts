@@ -24,6 +24,7 @@ enum Byte {
 	set,
 	record,
 	map,
+	instance,
 
 	// special bytes
 	reference = 0xf8, // used to indicate if the value is a reference to a previously encountered object

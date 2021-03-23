@@ -4,6 +4,7 @@ type Constructor = new (...args: any[]) => any
 export type RegistryEntry = {
 	constructor: new (...args: any[]) => any
 	schema?: Schema
+	encodedSchema?: Uint8Array
 }
 
 const registry = new (class Registry implements Record<string, RegistryEntry> {

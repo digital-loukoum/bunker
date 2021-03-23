@@ -3,6 +3,7 @@ import Byte from "../Byte"
 import augment, { isAugmented } from "../augment"
 import DataBuffer from "../DataBuffer"
 import schemaOf, { DispatcherWithMemory, hasMemory } from "../schemaOf"
+import registry from "../registry"
 
 export type Dispatcher = (value: any) => void
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -336,6 +337,10 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		)
 	}
 
+	instance(name: string) {
+		return augment(registry[name].schema!, Encoder.prototype.instance, name)
+	}
+
 	/**
 	 * --- Objects
 	 */
@@ -457,6 +462,9 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 					this.byte(Byte.record)
 					this.schema(dispatcher["0"])
 					return
+				case this.instance:
+					this.byte(Byte.instance)
+					this.string(dispatcher["0"])
 			}
 		else
 			switch (dispatcher) {

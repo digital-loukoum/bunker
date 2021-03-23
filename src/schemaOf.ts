@@ -1,6 +1,7 @@
 import { SchemaMemory } from "./Coder"
 import Encoder, { Dispatcher, DispatcherRecord } from "./encode/Encoder"
 import { isAugmented } from "./augment"
+import registry from "./registry"
 
 export class DispatcherWithMemory {
 	constructor(public dispatcher: Dispatcher, public memory: SchemaMemory<Dispatcher>) {}
