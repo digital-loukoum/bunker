@@ -8,30 +8,33 @@ import { encodeSchema } from "./index"
 type Constructor = new (...args: any[]) => any
 
 export type RegistryEntry = {
+	name: string
 	constructor: Constructor
 	encode: Schema
 	decode: DecoderDispatcher
 	encodedSchema: Uint8Array
 	memory: SchemaMemory<Schema>
 }
-export type RegistryEntryInput = {
-	constructor: Constructor
-	schema?: Schema
-}
+export type RegistryEntryInput =
+	| Constructor
+	| {
+			constructor: Constructor
+			schema?: Schema
+	  }
 
-const registry = new (class Registry implements Record<string, RegistryEntry> {
+export default new (class Registry implements Record<string, RegistryEntry> {
 	[_: string]: RegistryEntry
-})()
 
-export function register(entries: Record<string, RegistryEntryInput>) {
-	for (const name in entries) {
-		if (name in registry) {
-			if (entries[name].constructor !== registry[name].constructor)
+	// @ts-ignore (add a single entry)
+	entry(name: string, entry: RegistryEntryInput) {
+		if (typeof entry == "function") entry = { constructor: entry }
+		if (name in this) {
+			if (entry.constructor !== this[name].constructor)
 				throw new Error(`Trying to register another constructor with the name '${name}'`)
-			continue
+			return this
 		}
 
-		let { schema, constructor } = entries[name]
+		let { schema, constructor } = entry
 		let memory = new SchemaMemory<Schema>()
 		if (!schema) {
 			const guessedSchema = schemaOf(new constructor())
@@ -39,14 +42,33 @@ export function register(entries: Record<string, RegistryEntryInput>) {
 			schema = guessedSchema.dispatcher
 		}
 
-		registry[name] = {
+		this[name] = {
+			name,
 			constructor,
 			encode: schema,
 			decode: encoderToDecoder(schema),
 			encodedSchema: encodeSchema(schema),
 			memory,
 		}
+		return this
 	}
-}
 
-export default registry
+	// @ts-ignore (add multiple entry)
+	add(entries: Record<string, RegistryEntryInput>) {
+		for (const name in entries) this.entry(name, entries[name])
+		return this
+	}
+
+	// @ts-ignore (find entry from constructor)
+	findFromConstructor(constructor: Constructor) {
+		for (const name in this) if (this[name].constructor == constructor) return this[name]
+		return null
+	}
+
+	// @ts-ignore (find entry from instance)
+	findFromInstance(instance: object) {
+		const { constructor } = instance
+		if (constructor == Object || constructor == null) return null
+		return this.findFromConstructor(constructor as Constructor)
+	}
+})()

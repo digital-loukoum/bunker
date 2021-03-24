@@ -180,6 +180,23 @@ start(function Bunker({ stage, same }) {
 			const result = debunker(buffer)
 			same(value, result, "Basic tuple test")
 		}
+
+		stage("Instances")
+		{
+			class Zabu {
+				constructor(public name = "Zabu") {}
+				zabu() {
+					return this.name.toUpperCase() + "!!!"
+				}
+			}
+			bunker.registry.add({ Zabu })
+			const value = [new Zabu(), new Zabu("Coco")]
+			const buffer = bunker(value)
+			const result = debunker(buffer)
+			same(value, result, "Basic instance test: same values")
+			same(value[0].zabu(), result[0].zabu(), "Basic instance test: same prototype [0]")
+			same(value[1].zabu(), result[1].zabu(), "Basic instance test: same prototype [1]")
+		}
 	} catch (error) {
 		console.error(error)
 		throw error

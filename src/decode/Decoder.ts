@@ -418,6 +418,8 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 				return this.nullable(this.schema())
 			case Byte.recall:
 				return this.recall(this.positiveInteger())
+			case Byte.instance:
+				return this.instance(this.string())
 			case Byte.tuple: {
 				const length = this.positiveInteger()
 				const dispatchers: Dispatcher[] = []
@@ -431,8 +433,6 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 				const index = this.memory.schema.dispatchers.length++
 
 				switch (byte) {
-					case Byte.instance:
-						dispatcher = this.instance(this.string())
 					case Byte.object:
 						dispatcher = this.object(this.schemaProperties())
 						break

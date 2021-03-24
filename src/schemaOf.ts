@@ -48,6 +48,8 @@ class SchemaGuesser {
 				throw `Cannot encode a function into bunker data`
 			default: {
 				if (value == null) return Encoder.prototype.nullable()
+				const entry = registry.findFromInstance(value)
+				if (entry) return Encoder.prototype.instance(entry.name)
 				if (value instanceof Date) return Encoder.prototype.date
 				if (value instanceof RegExp) return Encoder.prototype.regularExpression
 
@@ -144,8 +146,10 @@ class SchemaGuesser {
 				)
 			} else if (a.target == Encoder.prototype.recall) {
 				if (a["0"] == b["0"]) joint = a
-				// same reference
 				else joint = Encoder.prototype.any // different references
+			} else if (a.target == Encoder.prototype.instance) {
+				if (a["0"] == b["0"]) joint = a
+				else joint = Encoder.prototype.any // different constructors
 			} else if (a.target == Encoder.prototype.set) {
 				joint = Encoder.prototype.set(
 					this.joinDispatchers(a["0"], b["0"]),
