@@ -189,7 +189,7 @@ start(function Bunker({ stage, same }) {
 					return this.name.toUpperCase() + "!!!"
 				}
 			}
-			bunker.registry.add({ Zabu })
+			bunker.register(Zabu)
 			const value = [new Zabu(), new Zabu("Coco")]
 			const buffer = bunker(value)
 			const result = debunker(buffer)

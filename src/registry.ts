@@ -1,48 +1,47 @@
 import { Dispatcher as Schema } from "./encode/Encoder"
 import { Dispatcher as DecoderDispatcher } from "./decode/Decoder"
-import schemaOf from "./schemaOf"
+import schemaOf, { hasMemory, DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
 import { SchemaMemory } from "./Memory"
 import { encoderToDecoder } from "./compile"
 import { encodeSchema } from "./index"
 
-type Constructor = new (...args: any[]) => any
-
 export type RegistryEntry = {
 	name: string
-	constructor: Constructor
+	constructor: FunctionConstructor
 	encode: Schema
 	decode: DecoderDispatcher
 	encodedSchema: Uint8Array
 	memory: SchemaMemory<Schema>
 }
 export type RegistryEntryInput =
-	| Constructor
+	| FunctionConstructor
 	| {
-			constructor: Constructor
-			schema?: Schema
+			constructor: FunctionConstructor
+			schema?: Schema | SchemaWithMemory
 	  }
 
-export default new (class Registry implements Record<string, RegistryEntry> {
-	[_: string]: RegistryEntry
+export default new (class Registry {
+	data = {} as Record<string, RegistryEntry>
 
-	// @ts-ignore (add a single entry)
-	entry(name: string, entry: RegistryEntryInput) {
-		if (typeof entry == "function") entry = { constructor: entry }
-		if (name in this) {
-			if (entry.constructor !== this[name].constructor)
+	// add a single entry
+	entry(
+		name: string,
+		constructor: FunctionConstructor,
+		schema?: Schema | SchemaWithMemory
+	) {
+		if (name in this.data) {
+			if (constructor !== this.data[name].constructor)
 				throw new Error(`Trying to register another constructor with the name '${name}'`)
 			return this
 		}
 
-		let { schema, constructor } = entry
 		let memory = new SchemaMemory<Schema>()
-		if (!schema) {
-			const guessedSchema = schemaOf(new constructor())
-			memory = guessedSchema.memory
-			schema = guessedSchema.dispatcher
+		if (!schema) schema = schemaOf(new constructor())
+		if (hasMemory(schema)) {
+			memory = schema.memory
+			schema = schema.dispatcher
 		}
-
-		this[name] = {
+		this.data[name] = {
 			name,
 			constructor,
 			encode: schema,
@@ -53,22 +52,27 @@ export default new (class Registry implements Record<string, RegistryEntry> {
 		return this
 	}
 
-	// @ts-ignore (add multiple entry)
-	add(entries: Record<string, RegistryEntryInput>) {
-		for (const name in entries) this.entry(name, entries[name])
+	// add multiple entry
+	entries(entries: Record<string, RegistryEntryInput>) {
+		for (const name in entries) {
+			const entry = entries[name]
+			if (typeof entry == "function") this.entry(name, entry)
+			else this.entry(name, entry.constructor, entry.schema)
+		}
 		return this
 	}
 
-	// @ts-ignore (find entry from constructor)
-	findFromConstructor(constructor: Constructor) {
-		for (const name in this) if (this[name].constructor == constructor) return this[name]
+	// find entry from constructor
+	findFromConstructor(constructor: FunctionConstructor) {
+		for (const name in this.data)
+			if (this.data[name].constructor == constructor) return this[name]
 		return null
 	}
 
-	// @ts-ignore (find entry from instance)
+	// find entry from instance
 	findFromInstance(instance: object) {
 		const { constructor } = instance
 		if (constructor == Object || constructor == null) return null
-		return this.findFromConstructor(constructor as Constructor)
+		return this.findFromConstructor(constructor as FunctionConstructor)
 	}
 })()
