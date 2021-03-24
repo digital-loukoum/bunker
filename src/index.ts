@@ -4,7 +4,7 @@ import compile from "./compile"
 import Encoder, { Dispatcher as Schema } from "./encode/Encoder"
 import schemaOf, { DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
 import registry, { RegistryEntryInput } from "./registry"
-export { schemaOf, Schema, compile, registry }
+export { schemaOf, Schema, SchemaWithMemory, compile, registry }
 
 export function bunker(
 	value: any,

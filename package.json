@@ -5,11 +5,11 @@
 	"type": "module",
 	"main": "lib/index.js",
 	"files": [
-		"lib/**/*"
+		"library/**/*"
 	],
 	"scripts": {
 		"test": "esrun test",
-		"build": "rm -r lib/* & tsc"
+		"build": "rm -r -f library/*.ts library/*.js & tsc"
 	},
 	"repository": {
 		"type": "git",

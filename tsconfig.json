@@ -5,7 +5,7 @@
 		"lib": ["es2020", "dom"],
 		"module": "esnext",
 		"strict": true,
-		"outDir": "dist",
+		"outDir": "library",
 		"declaration": true
 	},
 	"include": ["src", "bunker • 3"]

@@ -1,47 +1,32 @@
-import Decoder from "./Decoder"
-// import DataBuffer from '../DataBuffer'
+import { readSync } from "fs"
+import ChunkDecoder from "./ChunkDecoder"
+import DataBuffer from "../DataBuffer"
 
-export default class BufferDecoder extends Decoder {
-	constructor(public filename: string, public chunkSize = 4096) {
-		super()
+export default class FileDecoder extends ChunkDecoder {
+	offset = 0
+
+	constructor(public fileDescriptor: number, chunkSize?: number) {
+		super(chunkSize)
 	}
 
-	requestBytes(value: number) {
-		const requiredSize = this.cursor + value
-		if (requiredSize > this.buffer.byteLength) this.loadData(requiredSize)
-	}
-
-	loadData(requiredSize: number) {
-		console.log("loadData", requiredSize)
-	}
-
-	byte(): number {
-		this.requestBytes(1)
-		return super.byte()
-	}
-
-	bytes(length: number) {
-		this.requestBytes(length)
-		return super.bytes(length)
-	}
-
-	nextByteIs(byte: number): boolean {
-		this.requestBytes(1)
-		return super.nextByteIs(byte)
-	}
-
-	integer32() {
-		this.requestBytes(4)
-		return super.integer32()
-	}
-
-	number32() {
-		this.requestBytes(4)
-		return super.number32()
-	}
-
-	number64() {
-		this.requestBytes(8)
-		return super.number64()
+	/**
+	 * Load the next chunk of data from the file
+	 */
+	async loadNextChunk() {
+		const bytesToKeep = this.chunkSize - this.cursor
+		const chunk = new DataBuffer(this.chunkSize)
+		if (bytesToKeep)
+			// we copy the unread artifact from the last chunk
+			chunk.set(this.buffer.slice(this.cursor))
+		readSync(
+			this.fileDescriptor,
+			chunk,
+			bytesToKeep,
+			this.chunkSize - bytesToKeep,
+			this.offset
+		)
+		this.buffer = chunk
+		this.cursor = 0
+		this.offset += this.chunkSize - bytesToKeep
 	}
 }
