@@ -52,12 +52,6 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		return false
 	}
 
-	bytesUntil(stopAtByte: number) {
-		const start = this.cursor
-		while (this.byte() != stopAtByte);
-		return this.buffer.slice(start, this.cursor - 1)
-	}
-
 	unknown() {
 		throw Error(`Call to Decoder::unknown`)
 	}
