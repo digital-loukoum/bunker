@@ -48,7 +48,7 @@ class SchemaGuesser {
 				throw `Cannot encode a function into bunker data`
 			default: {
 				if (value == null) return Encoder.prototype.nullable()
-				const entry = registry.findFromInstance(value)
+				const entry = registry.findEntryFromInstance(value)
 				if (entry) return Encoder.prototype.instance(entry.name)
 				if (value instanceof Date) return Encoder.prototype.date
 				if (value instanceof RegExp) return Encoder.prototype.regularExpression

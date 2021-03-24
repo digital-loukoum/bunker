@@ -339,10 +339,11 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		return augment(
 			function (this: Encoder, value: object) {
 				// we store the current schema memory in a variable and use the memory of the constructor's schema
-				const memory = this.memory.schema
-				this.memory.schema = registry[name].memory
-				registry[name].encode.call(this, value)
+				const savedMemory = this.memory.schema
+				const { encode, memory } = registry.entries[name]
 				this.memory.schema = memory
+				encode.call(this, value)
+				this.memory.schema = savedMemory
 			},
 			Encoder.prototype.instance,
 			name

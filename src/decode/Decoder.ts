@@ -299,10 +299,11 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	instance(name: string) {
 		return function (this: Decoder): unknown {
 			// we store the current schema memory in a variable and use the memory of the constructor's schema
-			const memory = this.memory.schema
-			this.memory.schema = registry[name].memory
-			const instance = registry[name].decode.call(this, registry[name].constructor)
+			const { constructor, decode, memory } = registry.entries[name]
+			const savedMemory = this.memory.schema
 			this.memory.schema = memory
+			const instance = decode.call(this, constructor)
+			this.memory.schema = savedMemory
 			return instance
 		}
 	}

@@ -15,16 +15,8 @@ export function bunker(
 	return encoder.encode(value, schema)
 }
 
-export function register(
-	constructor: FunctionConstructor,
-	schema?: Schema,
-	name = constructor.name
-) {
-	registry.entry(name, constructor, schema)
-}
-
-export function registerMany(entries: Record<string, RegistryEntryInput>) {
-	registry.entries(entries)
+export function register(...entries: RegistryEntryInput[]) {
+	registry.add.apply(registry, entries)
 }
 
 export function encodeSchema(schema: Schema) {

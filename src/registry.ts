@@ -3,76 +3,76 @@ import { Dispatcher as DecoderDispatcher } from "./decode/Decoder"
 import schemaOf, { hasMemory, DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
 import { SchemaMemory } from "./Memory"
 import { encoderToDecoder } from "./compile"
-import { encodeSchema } from "./index"
+
+type InstanceConstructor<T = any> = new (...args: any[]) => T
 
 export type RegistryEntry = {
 	name: string
-	constructor: FunctionConstructor
+	constructor: InstanceConstructor
 	encode: Schema
 	decode: DecoderDispatcher
-	encodedSchema: Uint8Array
 	memory: SchemaMemory<Schema>
 }
 export type RegistryEntryInput =
-	| FunctionConstructor
+	| InstanceConstructor
 	| {
-			constructor: FunctionConstructor
+			constructor: InstanceConstructor
+			name?: string
 			schema?: Schema | SchemaWithMemory
 	  }
 
 export default new (class Registry {
-	data = {} as Record<string, RegistryEntry>
+	entries = {} as Record<string, RegistryEntry>
 
-	// add a single entry
-	entry(
-		name: string,
-		constructor: FunctionConstructor,
-		schema?: Schema | SchemaWithMemory
-	) {
-		if (name in this.data) {
-			if (constructor !== this.data[name].constructor)
-				throw new Error(`Trying to register another constructor with the name '${name}'`)
-			return this
-		}
+	// add one or multiple entries
+	add(...entries: RegistryEntryInput[]) {
+		for (let entry of entries) {
+			let memory = new SchemaMemory<Schema>()
+			let constructor: InstanceConstructor
+			let schema: Schema | SchemaWithMemory
+			let name: string
+			if (typeof entry == "function") {
+				constructor = entry
+				schema = schemaOf(new constructor())
+				name = constructor.name
+			} else {
+				constructor = entry.constructor
+				schema = entry.schema || schemaOf(new constructor())
+				name = entry.name || constructor.name
+			}
 
-		let memory = new SchemaMemory<Schema>()
-		if (!schema) schema = schemaOf(new constructor())
-		if (hasMemory(schema)) {
-			memory = schema.memory
-			schema = schema.dispatcher
-		}
-		this.data[name] = {
-			name,
-			constructor,
-			encode: schema,
-			decode: encoderToDecoder(schema),
-			encodedSchema: encodeSchema(schema),
-			memory,
+			if (name in this.entries) {
+				if (constructor !== this.entries[name].constructor)
+					throw new Error(
+						`Trying to register another constructor with the name '${name}'`
+					)
+				return this
+			}
+			if (hasMemory(schema)) {
+				memory = schema.memory
+				schema = schema.dispatcher
+			}
+
+			this.entries[name] = {
+				name,
+				constructor,
+				encode: schema,
+				decode: encoderToDecoder(schema),
+				memory,
+			}
 		}
 		return this
 	}
 
-	// add multiple entry
-	entries(entries: Record<string, RegistryEntryInput>) {
-		for (const name in entries) {
-			const entry = entries[name]
-			if (typeof entry == "function") this.entry(name, entry)
-			else this.entry(name, entry.constructor, entry.schema)
-		}
-		return this
-	}
-
-	// find entry from constructor
-	findFromConstructor(constructor: FunctionConstructor) {
-		for (const name in this.data)
-			if (this.data[name].constructor == constructor) return this[name]
+	findEntryFromConstructor(constructor: InstanceConstructor) {
+		for (const name in this.entries)
+			if (this.entries[name].constructor == constructor) return this.entries[name]
 		return null
 	}
 
-	// find entry from instance
-	findFromInstance(instance: object) {
+	findEntryFromInstance(instance: object) {
 		const { constructor } = instance
 		if (constructor == Object || constructor == null) return null
-		return this.findFromConstructor(constructor as FunctionConstructor)
+		return this.findEntryFromConstructor(constructor as InstanceConstructor)
 	}
 })()
