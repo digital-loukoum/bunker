@@ -1,4 +1,4 @@
-import { Memory } from "./Coder"
+import Memory from "./Memory"
 import Encoder, {
 	Dispatcher as Schema,
 	DispatcherRecord as EncoderDispatcherRecord,
@@ -25,7 +25,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 
 	const { data, memory } = schemaEncoder
 	const decoderDispatcher = encoderToDecoder(dispatcher)
-	const encoderMemory = memory.clone()
+	const encoderMemory = memory
 	const decoderMemory = memory.clone() as Memory<DecoderDispatcher>
 	decoderMemory.schema.dispatchers = decoderMemory.schema.dispatchers.map((dispatcher) =>
 		encoderToDecoder(dispatcher)
@@ -37,7 +37,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 		encode(value: any, encoder = new BufferEncoder()) {
 			encoder.reset()
 			encoder.bytes(data)
-			encoder.memory = encoderMemory.clone()
+			encoder.memory = encoderMemory
 			dispatcher.call(encoder, value)
 			return encoder.data
 		},
@@ -66,7 +66,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 				}
 			}
 			// if the schema is the same, we can use the compiled dispatcher
-			decoder.memory = decoderMemory.clone()
+			decoder.memory = decoderMemory
 			return (decoderDispatcher as DecoderDispatcher).call(decoder)
 		},
 
@@ -87,6 +87,8 @@ export function encoderToDecoder(schema: Schema): DecoderDispatcher {
 
 	if (isAugmented(schema))
 		switch (schema.target) {
+			case encoder.instance:
+				return decoder.instance(schema["0"])
 			case encoder.recall:
 				return decoder.recall(schema["0"])
 			case encoder.nullable:

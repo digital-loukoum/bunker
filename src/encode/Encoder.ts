@@ -1,4 +1,5 @@
-import Coder, { Memory } from "../Coder"
+import Coder from "../Coder"
+import Memory from "../Memory"
 import Byte from "../Byte"
 import augment, { isAugmented } from "../augment"
 import DataBuffer from "../DataBuffer"
@@ -50,7 +51,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.reset()
 		if (!schema) schema = schemaOf(value)
 		if (hasMemory(schema)) {
-			this.memory.schema = schema.memory.clone()
+			this.memory.schema = schema.memory
 			this.schema(schema.dispatcher)
 			schema.dispatcher.call(this, value)
 		} else {
@@ -288,14 +289,11 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 	any(value: any) {
 		const schema = schemaOf(value)
-		if (hasMemory(schema)) {
-			this.memory.schema.concatenate(schema.memory)
-			this.schema(schema.dispatcher)
-			schema.dispatcher.call(this, value)
-		} else {
-			this.schema(schema)
-			schema.call(this, value)
-		}
+		const memory = this.memory.schema // we save the current schema memory
+		this.memory.schema = schema.memory
+		this.schema(schema.dispatcher)
+		schema.dispatcher.call(this, value)
+		this.memory.schema = memory // we recall the legacy schema memory
 	}
 
 	/**
@@ -340,7 +338,11 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	instance(name: string) {
 		return augment(
 			function (this: Encoder, value: object) {
-				registry[name].schema.call(this, value)
+				// we store the current schema memory in a variable and use the memory of the constructor's schema
+				const memory = this.memory.schema
+				this.memory.schema = registry[name].memory
+				registry[name].encode.call(this, value)
+				this.memory.schema = memory
 			},
 			Encoder.prototype.instance,
 			name

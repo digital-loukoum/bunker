@@ -1,4 +1,4 @@
-import { SchemaMemory } from "./Coder"
+import { SchemaMemory } from "./Memory"
 import Encoder, { Dispatcher, DispatcherRecord } from "./encode/Encoder"
 import { isAugmented } from "./augment"
 import registry from "./registry"
@@ -7,7 +7,7 @@ export class DispatcherWithMemory {
 	constructor(public dispatcher: Dispatcher, public memory: SchemaMemory<Dispatcher>) {}
 }
 
-export default function schemaOf(value: any) {
+export default function schemaOf(value: any): DispatcherWithMemory {
 	return new SchemaGuesser().guessSchema(value)
 }
 
@@ -20,11 +20,9 @@ export function hasMemory(
 class SchemaGuesser {
 	memory = new SchemaMemory<Dispatcher>()
 
-	guessSchema(value: any): Dispatcher | DispatcherWithMemory {
+	guessSchema(value: any): DispatcherWithMemory {
 		const dispatcher = this.dispatcher(value)
-		return this.memory.objects.length
-			? new DispatcherWithMemory(dispatcher, this.memory)
-			: dispatcher
+		return new DispatcherWithMemory(dispatcher, this.memory)
 	}
 
 	/**

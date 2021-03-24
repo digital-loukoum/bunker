@@ -1,6 +1,7 @@
 import { Dispatcher as Schema } from "./encode/Encoder"
 import { Dispatcher as DecoderDispatcher } from "./decode/Decoder"
-import schemaOf, { hasMemory } from "./schemaOf"
+import schemaOf from "./schemaOf"
+import { SchemaMemory } from "./Memory"
 import { encoderToDecoder } from "./compile"
 import { encodeSchema } from "./index"
 
@@ -11,6 +12,7 @@ export type RegistryEntry = {
 	encode: Schema
 	decode: DecoderDispatcher
 	encodedSchema: Uint8Array
+	memory: SchemaMemory<Schema>
 }
 export type RegistryEntryInput = {
 	constructor: Constructor
@@ -30,18 +32,19 @@ export function register(entries: Record<string, RegistryEntryInput>) {
 		}
 
 		let { schema, constructor } = entries[name]
-		let encode = schema || schemaOf(new constructor())
-		if (hasMemory(encode)) {
-			console.log("Schema memory!... What to do with this?")
-			const { memory } = encode
-			encode = encode.dispatcher
+		let memory = new SchemaMemory<Schema>()
+		if (!schema) {
+			const guessedSchema = schemaOf(new constructor())
+			memory = guessedSchema.memory
+			schema = guessedSchema.dispatcher
 		}
 
 		registry[name] = {
 			constructor,
-			encode,
-			decode: encoderToDecoder(encode),
-			encodedSchema: encodeSchema(encode),
+			encode: schema,
+			decode: encoderToDecoder(schema),
+			encodedSchema: encodeSchema(schema),
+			memory,
 		}
 	}
 }

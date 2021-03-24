@@ -1,4 +1,5 @@
-import Coder, { Memory } from "../Coder"
+import Coder from "../Coder"
+import Memory, { SchemaMemory } from "../Memory"
 import Byte from "../Byte"
 import DataBuffer from "../DataBuffer"
 import registry from "../registry"
@@ -84,7 +85,11 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	any() {
-		return this.schema().call(this)
+		const memory = this.memory.schema
+		this.memory.schema = new SchemaMemory()
+		const value = this.schema().call(this)
+		this.memory.schema = memory
+		return value
 	}
 
 	integer() {
@@ -293,7 +298,12 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 
 	instance(name: string) {
 		return function (this: Decoder): unknown {
-			return registry[name].decode.call(this, registry[name].constructor)
+			// we store the current schema memory in a variable and use the memory of the constructor's schema
+			const memory = this.memory.schema
+			this.memory.schema = registry[name].memory
+			const instance = registry[name].decode.call(this, registry[name].constructor)
+			this.memory.schema = memory
+			return instance
 		}
 	}
 
