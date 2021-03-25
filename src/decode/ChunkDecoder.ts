@@ -1,4 +1,5 @@
 import Decoder from "./Decoder"
+import DataBuffer from "../DataBuffer"
 
 /**
  * An abstract class to help decoding data by chunks.
@@ -6,7 +7,7 @@ import Decoder from "./Decoder"
  */
 export default abstract class ChunkDecoder extends Decoder {
 	constructor(public chunkSize = 4096) {
-		super()
+		super(new DataBuffer(chunkSize))
 	}
 
 	abstract loadNextChunk(): void
@@ -33,6 +34,11 @@ export default abstract class ChunkDecoder extends Decoder {
 	integer32() {
 		this.requestBytes(4)
 		return super.integer32()
+	}
+
+	integer64() {
+		this.requestBytes(8)
+		return super.integer64()
 	}
 
 	number32() {

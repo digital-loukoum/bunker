@@ -47,7 +47,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.memory.strings.length = 0
 	}
 
-	encode(value: any, schema?: Dispatcher | DispatcherWithMemory): Uint8Array {
+	encode(value: any, schema?: Dispatcher | DispatcherWithMemory): unknown {
 		this.reset()
 		if (!schema) schema = schemaOf(value)
 		if (hasMemory(schema)) {

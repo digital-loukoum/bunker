@@ -1,6 +1,5 @@
-import { readSync } from "fs"
+import { readSync, closeSync } from "fs"
 import ChunkDecoder from "./ChunkDecoder"
-import DataBuffer from "../DataBuffer"
 
 export default class FileDecoder extends ChunkDecoder {
 	offset = 0
@@ -9,23 +8,29 @@ export default class FileDecoder extends ChunkDecoder {
 		super(chunkSize)
 	}
 
+	decode() {
+		readSync(this.fileDescriptor, this.buffer, 0, this.chunkSize, 0)
+		this.offset = this.chunkSize
+		const result = super.decode()
+		closeSync(this.fileDescriptor)
+		return result
+	}
+
 	/**
 	 * Load the next chunk of data from the file
 	 */
-	async loadNextChunk() {
-		const bytesToKeep = this.chunkSize - this.cursor
-		const chunk = new DataBuffer(this.chunkSize)
+	loadNextChunk() {
+		const bytesToKeep = this.buffer.byteLength - this.cursor
 		if (bytesToKeep)
-			// we copy the unread artifact from the last chunk
-			chunk.set(this.buffer.slice(this.cursor))
+			// we copy the unread artifact to the start of buffer
+			this.buffer.set(this.buffer.slice(this.cursor))
 		readSync(
 			this.fileDescriptor,
-			chunk,
+			this.buffer,
 			bytesToKeep,
 			this.chunkSize - bytesToKeep,
 			this.offset
 		)
-		this.buffer = chunk
 		this.cursor = 0
 		this.offset += this.chunkSize - bytesToKeep
 	}

@@ -11,11 +11,7 @@ export async function bunkerFile(
 	return new Promise((resolve, reject) => {
 		open(fileName, "w", (error, fileDescriptor) => {
 			if (error) reject(error)
-			else {
-				const encoder = new FileEncoder(fileDescriptor)
-				encoder.encode(value, schema)
-				resolve()
-			}
+			else resolve(new FileEncoder(fileDescriptor).encode(value, schema))
 		})
 	})
 }

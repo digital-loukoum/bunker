@@ -14,8 +14,33 @@ import {
 	tuple,
 	object,
 } from "../src"
+import { bunkerFile, debunkerFile } from "../src/io"
+import { existsSync, mkdirSync, readFileSync } from "fs"
 
-start(function Bunker({ stage, same }) {
+start(`Bunker i/o `, async function ({ stage, same }) {
+	if (!existsSync(`test/output`)) mkdirSync(`test/output`)
+
+	stage("Just a number")
+	{
+		const file = `test/output/number.bunker`
+		const value = 12
+		await bunkerFile(file, value)
+		const decoded = debunker(readFileSync(file))
+		same(value, decoded, "i/o writing")
+		const devalue = await debunkerFile(file)
+		same(value, devalue, "i/o reading")
+	}
+
+	stage("I/O samples")
+	for (const sample in samples) {
+		const value = samples[sample]
+		const file = `test/output/${sample}.bunker`
+		await bunkerFile(file, value)
+		same(value, await debunkerFile(file), sample)
+	}
+})
+
+start(`Bunker`, function Bunker({ stage, same }) {
 	try {
 		stage("Sample")
 		{
@@ -203,7 +228,7 @@ start(function Bunker({ stage, same }) {
 	}
 })
 
-start(function BunkerCompile({ stage, same }) {
+start(`Precompiled`, function BunkerCompile({ stage, same }) {
 	stage("Precompile")
 	{
 		const value = sample

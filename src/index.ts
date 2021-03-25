@@ -12,7 +12,7 @@ export function bunker(
 	encoder = new BufferEncoder()
 ) {
 	if (!schema) schema = schemaOf(value)
-	return encoder.encode(value, schema)
+	return encoder.encode(value, schema) as Uint8Array
 }
 
 export function register(...entries: RegistryEntryInput[]) {
