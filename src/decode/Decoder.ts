@@ -291,14 +291,11 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	instance(name: string) {
+		const { constructor } = registry.entries[name]
+		const decode = this.memory.classes[name]
 		return function (this: Decoder): unknown {
 			// we store the current schema memory in a variable and use the memory of the constructor's schema
-			const { constructor, decode, memory } = registry.entries[name]
-			const savedMemory = this.memory.schema
-			this.memory.schema = memory
-			const instance = decode.call(this, constructor)
-			this.memory.schema = savedMemory
-			return instance
+			return decode.call(this, constructor)
 		}
 	}
 
@@ -413,8 +410,16 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 				return this.nullable(this.schema())
 			case Byte.recall:
 				return this.recall(this.positiveInteger())
-			case Byte.instance:
-				return this.instance(this.string())
+			case Byte.instance: {
+				const name = this.string()
+				if (!(name in this.memory.classes)) {
+					// we do double assignment because this.schema() needs to know
+					// that 'name' has already been encountered
+					this.memory.classes[name] = this.unknown
+					this.memory.classes[name] = this.schema()
+				}
+				return this.instance(name)
+			}
 			case Byte.tuple: {
 				const length = this.positiveInteger()
 				const dispatchers: Dispatcher[] = []

@@ -5,6 +5,7 @@ export default class Memory<Dispatcher extends Function> {
 	constructor(
 		public objects: object[] = [],
 		public strings: string[] = [],
+		public classes: Record<string, Dispatcher> = {},
 		public schema = new SchemaMemory<Dispatcher>()
 	) {}
 
@@ -12,6 +13,7 @@ export default class Memory<Dispatcher extends Function> {
 		return new Memory<Dispatcher>(
 			Array<object>().concat(this.objects),
 			Array<string>().concat(this.strings),
+			{ ...this.classes },
 			this.schema.clone()
 		)
 	}
@@ -19,6 +21,7 @@ export default class Memory<Dispatcher extends Function> {
 	reset() {
 		this.objects.length = 0
 		this.strings.length = 0
+		this.classes = {}
 		this.schema.reset()
 	}
 }

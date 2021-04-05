@@ -3,7 +3,7 @@ import BufferDecoder from "./decode/BufferDecoder"
 import compile from "./compile"
 import Encoder, { Dispatcher as Schema } from "./encode/Encoder"
 import schemaOf, { DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
-import registry, { RegistryEntryInput } from "./registry"
+import registry, { InstanceConstructor } from "./registry"
 export { schemaOf, Schema, SchemaWithMemory, compile, registry }
 
 export function bunker(
@@ -15,8 +15,12 @@ export function bunker(
 	return encoder.encode(value, schema) as Uint8Array
 }
 
-export function register(...entries: RegistryEntryInput[]) {
-	registry.add.apply(registry, entries)
+export function register(
+	constructor: InstanceConstructor,
+	schema: Schema,
+	name?: string
+) {
+	registry.add(constructor, schema, name)
 }
 
 export function encodeSchema(schema: Schema) {

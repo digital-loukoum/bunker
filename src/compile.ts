@@ -17,7 +17,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 	let dispatcher!: Schema
 	if (hasMemory(schema)) {
 		dispatcher = schema.dispatcher
-		schemaEncoder.memory.schema.concatenate(schema.memory)
+		schemaEncoder.memory.schema = schema.memory
 	} else dispatcher = schema
 
 	// let's pre-encode the schema
@@ -27,7 +27,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 	const decoderDispatcher = encoderToDecoder(dispatcher)
 	const encoderMemory = memory
 	const decoderMemory = memory.clone() as Memory<DecoderDispatcher>
-	decoderMemory.schema.dispatchers = decoderMemory.schema.dispatchers.map((dispatcher) =>
+	decoderMemory.schema.dispatchers = decoderMemory.schema.dispatchers.map(dispatcher =>
 		encoderToDecoder(dispatcher)
 	)
 

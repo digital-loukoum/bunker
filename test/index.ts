@@ -214,13 +214,50 @@ start(`Bunker`, function Bunker({ stage, same }) {
 					return this.name.toUpperCase() + "!!!"
 				}
 			}
-			bunker.register(Zabu)
+			bunker.register(
+				Zabu,
+				bunker.object({
+					name: bunker.string,
+				})
+			)
 			const value = [new Zabu(), new Zabu("Coco")]
 			const buffer = bunker(value)
 			const result = debunker(buffer)
 			same(value, result, "Basic instance test: same values")
 			same(value[0].zabu(), result[0].zabu(), "Basic instance test: same prototype [0]")
 			same(value[1].zabu(), result[1].zabu(), "Basic instance test: same prototype [1]")
+		}
+		{
+			class NamedArray extends Array<number> {
+				constructor(public name = "Zabu") {
+					super()
+				}
+				getName() {
+					return this.name
+				}
+			}
+			bunker.register(
+				NamedArray,
+				bunker.array(bunker.integer, {
+					name: bunker.string,
+				})
+			)
+			const value = [new NamedArray(), new NamedArray("Coco")]
+			value[0].push(4, 6, 2)
+			const buffer = bunker(value)
+			const result = debunker(buffer)
+			same(value, result, "Basic instance test: same values")
+			same(
+				value[0].getName(),
+				result[0].getName(),
+				"Array instance test: same prototype [0]"
+			)
+			same(
+				value[1].getName(),
+				result[1].getName(),
+				"Array instance test: same prototype [1]"
+			)
+			same(value[0], result[0], "Array instance test: same array values")
 		}
 	} catch (error) {
 		console.error(error)
