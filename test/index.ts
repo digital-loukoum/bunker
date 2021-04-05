@@ -336,21 +336,38 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 
 start(`Precompiled`, function BunkerCompile({ stage, same }) {
 	const value = sample
-	const { encode, decode } = bunker.compile(schemaOf(sample))
+	const { encode, decode, encodeNaked, decodeNaked } = bunker.compile(schemaOf(sample))
 
-	stage("Precompile (with reference)")
+	stage("Precompile")
 	{
 		const data = encode(value)
 		const decoded = decode(data)
 		same(value, decoded)
 	}
 
-	stage("Multiple runs (with reference)")
+	stage("Precompile naked")
+	{
+		const data = encodeNaked(value)
+		const decoded = decodeNaked(data)
+		same(value, decoded)
+	}
+
+	stage("Multiple runs")
 	{
 		let iterations = 5
 		while (iterations--) {
 			const data = encode(value)
 			const decoded = decode(data)
+			same(value, decoded)
+		}
+	}
+
+	stage("Multiple runs naked")
+	{
+		let iterations = 5
+		while (iterations--) {
+			const data = encodeNaked(value)
+			const decoded = decodeNaked(data)
 			same(value, decoded)
 		}
 	}
