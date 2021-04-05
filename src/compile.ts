@@ -44,6 +44,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 
 		encodeNaked(value: any, encoder = new BufferEncoder()) {
 			encoder.reset()
+			encoder.memory = encoderMemory
 			dispatcher.call(encoder, value)
 			return encoder.data
 		},
@@ -73,6 +74,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 		decodeNaked(decoder: Decoder | Uint8Array) {
 			if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
 			decoder.reset()
+			decoder.memory = decoderMemory
 			return (decoderDispatcher as DecoderDispatcher).call(decoder)
 		},
 	}
