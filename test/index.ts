@@ -40,7 +40,7 @@ start(`Bunker i/o `, async function ({ stage, same }) {
 	}
 })
 
-start(`Bunker`, function Bunker({ stage, same }) {
+start(`Bunker`, function Bunker({ stage, same, test }) {
 	try {
 		stage("Sample")
 		{
@@ -262,14 +262,7 @@ start(`Bunker`, function Bunker({ stage, same }) {
 					name: bunker.string,
 				})
 			)
-			const value = [new Zabu(), new Zabu("Coco")]
-			const buffer = bunker(value)
-			const result = debunker(buffer)
-			same(value, result, "Basic instance test: same values")
-			same(value[0].zabu(), result[0].zabu(), "Basic instance test: same prototype [0]")
-			same(value[1].zabu(), result[1].zabu(), "Basic instance test: same prototype [1]")
-		}
-		{
+
 			class NamedArray extends Array<number> {
 				constructor(public name = "Zabu") {
 					super()
@@ -284,22 +277,56 @@ start(`Bunker`, function Bunker({ stage, same }) {
 					name: bunker.string,
 				})
 			)
-			const value = [new NamedArray(), new NamedArray("Coco")]
-			value[0].push(4, 6, 2)
-			const buffer = bunker(value)
-			const result = debunker(buffer)
-			same(value, result, "Basic instance test: same values")
-			same(
-				value[0].getName(),
-				result[0].getName(),
-				"Array instance test: same prototype [0]"
-			)
-			same(
-				value[1].getName(),
-				result[1].getName(),
-				"Array instance test: same prototype [1]"
-			)
-			same(value[0], result[0], "Array instance test: same array values")
+
+			{
+				const value = [new Zabu(), new Zabu("Coco")]
+				const buffer = bunker(value)
+				const result = debunker(buffer)
+				same(value, result, "Basic instance test: same values")
+				same(value[0].zabu(), result[0].zabu(), "Basic instance test: same prototype [0]")
+				same(value[1].zabu(), result[1].zabu(), "Basic instance test: same prototype [1]")
+			}
+
+			{
+				const value = [new NamedArray(), new NamedArray("Coco")]
+				value[0].push(4, 6, 2)
+				const buffer = bunker(value)
+				const result = debunker(buffer)
+				same(value, result, "Basic instance test: same values")
+				same(
+					value[0].getName(),
+					result[0].getName(),
+					"Array instance test: same prototype [0]"
+				)
+				same(
+					value[1].getName(),
+					result[1].getName(),
+					"Array instance test: same prototype [1]"
+				)
+				same(value[0], result[0], "Array instance test: same array values")
+			}
+
+			{
+				const zabu = new Zabu()
+				const value = [zabu, zabu]
+				const buffer = bunker(value)
+				const result = debunker(buffer)
+				test(result[0] === result[1], "References of instances work [object]")
+			}
+			{
+				const namedArray = new NamedArray()
+				const value = [namedArray, namedArray]
+				const buffer = bunker(value)
+				const result = debunker(buffer)
+				test(result[0] === result[1], "References of instances work [array]")
+			}
+
+			{
+				const value = new Zabu("Coco")
+				const buffer = bunker(value)
+				const result = debunker(buffer)
+				same(value.zabu(), result.zabu(), "Guess instance")
+			}
 		}
 	} catch (error) {
 		console.error(error)
