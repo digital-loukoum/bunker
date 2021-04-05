@@ -1,7 +1,5 @@
 import { Dispatcher as Schema } from "./encode/Encoder"
 import { Dispatcher as DecoderDispatcher } from "./decode/Decoder"
-import schemaOf, { hasMemory, DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
-import { SchemaMemory } from "./Memory"
 import { encoderToDecoder } from "./compile"
 
 type InstanceConstructor<T = any> = new (...args: any[]) => T
@@ -11,15 +9,12 @@ export type RegistryEntry = {
 	constructor: InstanceConstructor
 	encode: Schema
 	decode: DecoderDispatcher
-	memory: SchemaMemory<Schema>
 }
-export type RegistryEntryInput =
-	| InstanceConstructor
-	| {
-			constructor: InstanceConstructor
-			name?: string
-			schema?: Schema | SchemaWithMemory
-	  }
+export type RegistryEntryInput = {
+	name?: string
+	class: InstanceConstructor
+	schema: Schema
+}
 
 export default new (class Registry {
 	entries = {} as Record<string, RegistryEntry>
@@ -27,19 +22,10 @@ export default new (class Registry {
 	// add one or multiple entries
 	add(...entries: RegistryEntryInput[]) {
 		for (let entry of entries) {
-			let memory = new SchemaMemory<Schema>()
 			let constructor: InstanceConstructor
-			let schema: Schema | SchemaWithMemory
 			let name: string
-			if (typeof entry == "function") {
-				constructor = entry
-				schema = schemaOf(new constructor())
-				name = constructor.name
-			} else {
-				constructor = entry.constructor
-				schema = entry.schema || schemaOf(new constructor())
-				name = entry.name || constructor.name
-			}
+			constructor = entry.class
+			name = entry.name || constructor.name
 
 			if (name in this.entries) {
 				if (constructor !== this.entries[name].constructor)
@@ -48,17 +34,12 @@ export default new (class Registry {
 					)
 				return this
 			}
-			if (hasMemory(schema)) {
-				memory = schema.memory
-				schema = schema.dispatcher
-			}
 
 			this.entries[name] = {
 				name,
 				constructor,
-				encode: schema,
-				decode: encoderToDecoder(schema),
-				memory,
+				encode: entry.schema,
+				decode: encoderToDecoder(entry.schema),
 			}
 		}
 		return this
