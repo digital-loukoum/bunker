@@ -113,7 +113,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	integer64() {
-		const value = this.buffer.view.getBigInt64(this.cursor)
+		const value = Number(this.buffer.view.getBigInt64(this.cursor))
 		this.cursor += 8
 		return value
 	}
@@ -161,7 +161,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		let stringified = ""
 		while (digit != 15) {
 			stringified += this.numberDigitCharacter(digit)
-			if (++offset % 2) {
+			if (offset++ % 2) {
 				byte = this.byte()
 				digit = byte >> 4
 			} else digit = byte % 16

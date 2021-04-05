@@ -159,6 +159,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		if (value == Infinity) return this.byte(206)
 		else if (value == -Infinity) return this.byte(222)
 		else if (isNaN(value)) return this.byte(238)
+		else if (Object.is(value, -0)) return this.bytes(Uint8Array.of(192, 255))
 		const stringified = "" + value
 		const bytes = new Uint8Array(Math.ceil((stringified.length + 1) / 2))
 
@@ -495,6 +496,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 					return this.byte(Byte.positiveInteger)
 				case this.integer32:
 					return this.byte(Byte.integer32)
+				case this.integer64:
+					return this.byte(Byte.integer64)
 				case this.bigInteger:
 					return this.byte(Byte.bigInteger)
 				case this.number:
