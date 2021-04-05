@@ -308,12 +308,23 @@ start(`Bunker`, function Bunker({ stage, same }) {
 })
 
 start(`Precompiled`, function BunkerCompile({ stage, same }) {
-	stage("Precompile")
+	const value = sample
+	const { encode, decode } = bunker.compile(schemaOf(sample))
+
+	stage("Precompile (with reference)")
 	{
-		const value = sample
-		const { encode, decode } = bunker.compile(schemaOf(sample))
 		const data = encode(value)
 		const decoded = decode(data)
 		same(value, decoded)
+	}
+
+	stage("Multiple runs (with reference)")
+	{
+		let iterations = 5
+		while (iterations--) {
+			const data = encode(value)
+			const decoded = decode(data)
+			same(value, decoded)
+		}
 	}
 })
