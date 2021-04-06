@@ -174,8 +174,8 @@ async function benchmark(fn: Function, iterations = 500) {
 				await zip(Buffer.from(JSON.stringify(value))),
 			bunker: ([value]: any) => bunker(value),
 			// 'bunker (with schema)': ([value, schema]: any) => bunker(value, schema),
+			// "bunker (naked)": ([value, , compiled]: any) => compiled.encodeNaked(value),
 			"bunker (compiled)": ([value, , compiled]: any) => compiled.encode(value),
-			"bunker (naked)": ([value, , compiled]: any) => compiled.encodeNaked(value),
 			msgpack: ([value]: any) => msgpack.encode(value),
 			notepack: ([value]: any) => notepack.encode(value),
 		},
@@ -191,9 +191,9 @@ async function benchmark(fn: Function, iterations = 500) {
 			"zipped json": async (encoded: any) =>
 				JSON.parse((await unzip(encoded["zipped json"][0])).toString()),
 			bunker: (encoded: any) => debunker(encoded["bunker"][0]),
+			// "bunker (naked)": (encoded: any) =>
+			// encoded["bunker"][2](encoded["bunker (naked)"][0]),
 			"bunker (compiled)": (encoded: any) => encoded["bunker"][1](encoded["bunker"][0]),
-			"bunker (naked)": (encoded: any) =>
-				encoded["bunker"][2](encoded["bunker (naked)"][0]),
 			msgpack: (encoded: any) => msgpack.decode(encoded.msgpack[0]),
 			notepack: (encoded: any) => notepack.decode(encoded.notepack[0]),
 		},
