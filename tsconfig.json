@@ -8,5 +8,5 @@
 		"outDir": "library",
 		"declaration": true
 	},
-	"include": ["src", "bunker • 3"]
+	"include": ["source"]
 }
