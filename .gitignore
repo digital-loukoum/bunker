@@ -4,6 +4,7 @@ target/
 test/output
 
 /pnpm-lock.yaml
+/package-lock.json
 
 # logs
 npm-debug.log*

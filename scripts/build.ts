@@ -1,18 +1,8 @@
-import { exec } from "child_process"
-import { bold } from "chalk"
+import { build } from "@digitak/tsc-esm"
+import { rmSync } from "fs"
 
-const execOptions = { windowsHide: true }
+console.log("Cleaning library...")
+rmSync("library", { recursive: true, force: true })
 
-console.log(`Cleaning ${bold("library")}...`)
-exec(`rm -r -f library/*.ts library/*.js`, execOptions, (error, stdout, stderr) => {
-	stdout && console.log("stdout", stdout)
-	stderr && console.error("stderr", stderr)
-	if (error) return console.error(error)
-
-	console.log(`Generating library...`)
-	exec(`tsc`, execOptions, (error, stdout, stderr) => {
-		stdout && console.log("stdout", stdout)
-		stderr && console.error("stderr", stderr)
-		if (error) return console.error(error)
-	})
-})
+console.log("Compiling typescript...")
+build()
