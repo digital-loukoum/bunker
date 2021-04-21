@@ -18,7 +18,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		this.cursor = 0
 	}
 
-	decode(): any {
+	decode(): unknown {
 		this.reset()
 		return this.any()
 	}

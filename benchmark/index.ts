@@ -1,4 +1,4 @@
-import { bunker, debunker, schemaOf } from "../src"
+import { bunker, debunker, schemaOf } from "../source"
 import Table from "cli-table"
 // import zlib from 'zlib'
 // import { inflate, deflate } from 'pako'

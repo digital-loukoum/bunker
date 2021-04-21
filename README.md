@@ -1,66 +1,53 @@
 # Bunker
-Bunker is a fast and compact JSON alternative to store, pass and retrieve data.
+Bunker is a fast and compact JSON alternative to store, pass and retrieve data in a binary format with a friendly API.
 
-It is comparable to [MessagePack](https://msgpack.org/index.html), but more efficient in terms of compacity.
+It can be compared to [MessagePack](https://msgpack.org/index.html) or [Protocol Buffers](https://developers.google.com/protocol-buffers).
 
-Bunker is especially effeicient when working with arrays of objects. Instead of writing repeatedly all objects with all keys like JSON and MessagePack do, it guesses the most accurate schema and write keys and type *only once*. It results in very compact data size.
+Bunker is finely optimized to be very compact. In average, its output is **2.5x smaller than JSON** and **2x smaller than MessagePack**. See the [data size comparison](#data-size-comparison) appendice for more details.
 
-Some use cases for bunker :
+Bunker achieves this extreme density by:
 
-- Replacing JSON when storing files,
-- Replacing CSV when storing files (CSV also use a schema to avoid repetition but it's not as flexible as bunker - bunker can deal with any types),
-- Creating your homemade database,
-- Saving your files server-side and passing it to your client without compression (bunker format is already compact enough) for maximum speed efficiency,
+- using a custom binary format for integers (this special format is called  elastic integers),
+- working well with arrays of objects. Instead of writing repeatedly all objects with all keys like JSON and MessagePack do, it guesses the most accurate schema and write keys and types only once,
+- memorizing and reusing strings and objects so that nothing is encoded twice.
 
-Depending on existing Bunker implementations, it can also be great to communicate between processes written in different languages.
+Bunker is very compact but also extremely versatile as it can encode any data type.
 
-## Highlights
+Unlike JSON and MessagePack, Bunker correctly encode and decode:
 
-Unlike JSON and MessagePack, Bunker correctly encode and decode :
-- Big integers
-- Regular expressions
-- Dates
-- Circular references
-- Arrays with properties
-- Maps
-- Sets
-- Maps and sets with properties
+- big integers,
+- regular expressions,
+- dates,
+- **arrays with properties**,
+- maps,
+- sets,
+- maps and sets with properties,
+- **instances of classes**: you can store and retrieve your prototypes,
+- and **circular references**.
 
-## Data size comparison
 
-Here are the results from comparing the Bunker output with regular JSON, MesssagePack and zipped JSON :
+## API
 
-![](https://i.ibb.co/j4z9VMp/Capture-d-e-cran-2021-02-01-a-12-01-01.png)
+Bunker exports two main functions to encode and decode data:
 
-In average, Bunker is about :
-- 50% smaller than JSON.
-- 30% smaller than MessagePack.
-- 25% bigger than compressed JSON.
-
-We can also note that Bunker is especially efficient with regular data - ie arrays of similar objects.
-
-Zipped JSON is the best way to compress data but it also comes with very slow encoding / decoding. For example, this Bunker implementation is 3000% faster to decode data. See [benchmarks](#benchmarks).
-
-## Usage
-
-Bunker exports two functions to encode and decode data :
+- `bunker` is the equivalent of `JSON.stringify`,
+- `debunker` is the equivalent of `JSON.parse`.
 
 ```ts
-import { bunker, debunker } from 'bunker'
-
-// signatures
-function bunker(value: any, schema?: Schema): Uint8Array  // equivalent of JSON.stringify
-function debunker(data: Uint8Array): any  // equivalent of JSON.parse
+function bunker(value: any, schema?: Schema): Uint8Array
+function debunker(data: Uint8Array): any
 ```
 
-You can bunker any value. If you store the resulting data in a file, it should have the `.bunker` extension.
+You can encode and decode any value except functions.
 
-`bunker` and `debunker` can be used in a browser or Node environment.
+> If you store the resulting data in a file, it should have the `.bunker` extension.
 
-### Basic example
+`bunker` and `debunker` can be used in a browser, Node or Deno environment.
+
+#### Basic example
 
 ```ts
-import { bunker, debunker } from 'bunker'
+import { bunker, debunker } from '@digitak/bunker'
 
 const myObject = {
   foo: 12,
@@ -70,122 +57,144 @@ const myObject = {
   }
 }
 
-const bunkered = bunker(myObject)
-const myObject2 = debunker(bunkered)
-console.log(myObject2.foo)  // print "12"
+const encoded = bunker(myObject)
+const decoded = debunker(encoded)
+console.log(decoded.foo)  // print "12"
 ```
 
 
-### Saving and loading from a file in a Node environment
 
-I you need to store data into a file using Node, two helper functions are exported :
+
+## Schema
+
+When you encode data with bunker, the first step is to guess the schema of the object.
+
+Guessing the most precise schema is the heaviest part of encoding data with Bunker. Manually indicating Bunker what schema to use will drastically improve encoding and decoding speed!
+
+You can use a schema in two ways:
+
+- *on the fly* by passing the schema to the `bunker` function,
+- or you can *compile it* and get an encoder and a decoder function
+
+For the exhaustive list of schema types exported by Bunker, you can read the [complete schema reference]().
+
+You can also [browse examples in Javascript]().
+
+### On the fly schema
+
+##### Basic example
 
 ```ts
-import { bunkerFile, debunkerFile } from 'bunker/node'
+import { bunker, integer, string } from '@digitak/bunker'
 
-// signatures
+const encoded12 = bunker(12, integer)
+const encodedHelloWorld = bunker("Hello world!", string)
+const encodedObject = bunker({
+   id: 42,
+   name: "Foo",
+}, object({
+   id: integer,
+   name: string,
+}))
+
+console.log(debunker(encoded12)) // print 12
+console.log(debunker(encodedHelloWorld)) // print "Hello world!"
+console.log(debunker(encodedObject)) // print { id: 42, name: "Foo" }
+```
+
+The `debunker` function does not need to know the schema since it is encoded along with its value.
+
+> Be cautious, a bad schema for a given value may cause unpredictable bugs!
+
+### Schema compilation
+
+
+##### Basic example
+```ts
+import { bunker, number } from '@digitak/bunker'
+
+const { encode, decode } = bunker.compile(number)
+
+const encoded12 = encode(12)
+const encoded36 = encode(36)
+
+console.log(decode(encoded12)) // print 12
+console.log(decode(encoded36)) // print 36
+```
+
+Note that you could use `debunker` instead of the compiled `decode` function but the last one is slightly faster since it already knows the schema of the value to decode.
+
+
+### Naked encoding
+
+When you don't want to encode the schema informations and only get the data you can use **naked encoding**:
+
+```ts
+import { bunker, number } from '@digitak/bunker'
+
+const { encodeNaked, decodeNaked } = bunker.compile(number)
+
+const encoded12 = encodeNaked(12)
+const encoded36 = encodeNaked(36)
+
+console.log(decodeNaked(encoded12)) // print 12
+console.log(decodeNaked(encoded36)) // print 36
+```
+
+Naked encoding slightly improves data density as well as encoding / decoding speed, but you take the risk of ***losing your data*** if you lose the schema you used.
+
+
+## Use cases
+
+### Reading and writing files with bunker
+
+Bunker also exports two functions to easily encode to a file / decode from a file:
+
+```ts
 async function bunkerFile(file: string, value: any, schema?: Schema): void
-async function debunkerFile(file: string): void
+async function debunkerFile(file: string): unknown
 ```
 
+These two functions scale well: you can load huge files without affecting your memory.
 
-### Custom schema
-
-When you bunker data, the first step is to guess the schema object.
-
-This step is quite complicated to get the most accurate result, and so the heaviest part of encoding with Bunker is actually to guess the right schema. Giving the schema to the bunker function will lead to a huge performance boost (more than 300% faster for this bunker implementation).
-
-If speed is a matter to you and if you need to `bunker(...)` a lot of data, it is recommanded to pass the schema manually.
-
-#### Basic schema example
+##### Basic example
 
 ```ts
-import { createSchema, Integer } from 'bunker'
+import { bunkerFile, debunkerFile } from '@digitak/bunker/io'
 
-const schema = createSchema({
-  foo: Integer,
-  bar: {
-    hello: String,
-    world: String,
-  }
-})
-
-bunker({
+const myObject = {
   foo: 12,
   bar: {
-    hello: "Hello ",
-    world: "world",
+    hello: "Hello",
+    you: "world"
   }
-}, schema)
+}
+
+bunkerFile('./myFile.bunker', myObject)
+const decoded = debunkerFile('myFile.bunker')
+
+console.log(decoded.foo)  // print "12"
 ```
 
-The `createSchema` function will make your schema Bunker-compatible.
-
-Be cautious though, a bad schema will cause your data to be corrupted!
-
-#### Full schema example
-
-```ts
-import { createSchema, Integer, PositiveInteger, Any, Nullable, ArrayOf, SetOf, MapOf } from 'bunker'
-
-const schema = createSchema({
-  integer: Integer,
-  unsignedInteger: PositiveInteger,
-  string: String,
-  float: Number,
-  boolean: Boolean,
-  date: Date,
-  regularExpression: RegExp,
-  bigInteger: BigInt,
-  any: Any,
-
-  // a nullable can have the values 'null' and 'undefined'
-  nullable: Nullable(Integer),
-
-  tuple: [Integer, String],
-
-  object: {
-    nestedInteger: Integer,
-    nestedString: String,
-  },
-
-  // a record is a dictionary with strings for keys
-  // and all values sharing the same type
-  // it's like a Map, but in object form
-  record: RecordOf(Integer),
-
-  array: ArrayOf(String),
-  arrayOfObjects: ArrayOf({
-    foo: String,
-    bar: String,
-  }),
-  arrayWithProperties: ArrayOf(String, {
-    size: PositiveInteger,
-    isParsed: Boolean,
-  }),
-
-  set: SetOf(String),
-
-  map: MapOf({ firstname: String, lastname: String }),
-})
-```
 
 
 ### Fetching bunker binary data from browser
 
-Using the fetch API :
+Using the fetch API:
 
 ```ts
-import { debunker } from 'bunker'
+import { debunker } from '@digitak/bunker'
+
 const response = await fetch('https://my-url/my-data.bunker')
 const data = debunker(await reponse.arrayBuffer())
 ```
 
 
-Using axios :
+Using axios:
 
 ```ts
-import { debunker } from 'bunker'
+import { debunker } from '@digitak/bunker'
+
 const response = await axios.get('https://my-url/my-data.bunker', { responseType: 'arraybuffer' })
 const data = debunker(response.data)
 ```
@@ -193,12 +202,12 @@ const data = debunker(response.data)
 
 ### Serving bunker binary data from a node server
 
-From a file :
+If you serve a file, it is recommended to use streams:
 
 ```ts
 import fs from 'fs'
 import http from 'http'
-import { bunker } from 'bunker'
+import { bunker } from '@digitak/bunker'
 
 http.createServer((request, response) => {
   const filePath = 'myfile.bunker'
@@ -215,23 +224,30 @@ http.createServer((request, response) => {
 
 ```
 
-From a variable :
+Or you can serve from any value:
 
 ```ts
 import http from 'http'
-import { bunker } from 'bunker'
+import { bunker } from '@digitak/bunker'
 
 http.createServer((request, response) => {
-  const bunkered = bunker(12)
+  const encoded = bunker(12)
 
     response.writeHead(200, {
         'Content-Type': 'application/octet-stream',
-        'Content-Length': bunkered.length,
+        'Content-Length': encoded.length,
     })
 
-    response.end(bunkered)
+    response.end(encoded)
 })
 ```
 
 
-## <a name="benchmarks"></a>Benchmarks
+
+## Comparisons
+
+### Output size
+
+### Encoding speed
+
+### Decoding speed
