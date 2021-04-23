@@ -20,7 +20,6 @@ enum Byte {
 	object, // ... objects
 	array,
 	set,
-	record,
 	map,
 	instance,
 

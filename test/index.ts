@@ -5,7 +5,6 @@ import {
 	bunker,
 	debunker,
 	schemaOf,
-	record,
 	nullable,
 	integer,
 	string,
@@ -181,26 +180,6 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 			const buffer = bunker(value)
 			const result = debunker(buffer)
 			same(value, result, name)
-		}
-
-		stage("Records")
-		{
-			const value = { x: 1, y: 2, z: 3 }
-			const buffer = bunker(value, record(integer))
-			const result = debunker(buffer)
-			same(value, result, "Record of numbers")
-		}
-		{
-			const value = { x: "1", y: "2", z: "3" }
-			const buffer = bunker(value, record(string))
-			const result = debunker(buffer)
-			same(value, result, "Record of strings")
-		}
-		{
-			const value = { x: "1", y: null, z: "3" }
-			const buffer = bunker(value, record(nullable(string)))
-			const result = debunker(buffer)
-			same(value, result, "Record of nullable strings")
 		}
 
 		stage("References")

@@ -8,6 +8,7 @@
 		"library/**/*"
 	],
 	"scripts": {
+		"check": "tsc --noEmit",
 		"test": "esrun test",
 		"build": "esrun scripts/build"
 	},

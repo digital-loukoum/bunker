@@ -57,7 +57,6 @@ export const {
 	object,
 	array,
 	set,
-	record,
 	map,
 } = Encoder.prototype
 bunker.character = character
@@ -78,5 +77,4 @@ bunker.tuple = tuple
 bunker.object = object
 bunker.array = array
 bunker.set = set
-bunker.record = record
 bunker.map = map

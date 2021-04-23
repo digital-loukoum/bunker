@@ -158,8 +158,6 @@ class SchemaGuesser {
 					this.joinDispatchers(a["0"], b["0"]),
 					this.joinDispatcherProperties(a["1"], b["1"])
 				)
-			} else if (a.target == Encoder.prototype.record) {
-				joint = Encoder.prototype.record(this.joinDispatchers(a["0"], b["0"]))
 			} else joint = Encoder.prototype.any
 		}
 
