@@ -315,19 +315,24 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		)
 	}
 
-	map(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
+	map(
+		keyDispatcher: Dispatcher,
+		valueDispatcher: Dispatcher = this.unknown,
+		properties: DispatcherRecord = {}
+	) {
 		return augment(
-			function (this: Encoder, map: Map<string, any>) {
+			function (this: Encoder, map: Map<any, any>) {
 				if (this.inMemory(map)) return
 				this.positiveInteger(map.size)
 				for (const [key, value] of map.entries()) {
-					this.string(key)
-					dispatch.call(this, value)
+					keyDispatcher.call(this, key)
+					valueDispatcher.call(this, value)
 				}
 				this.properties(properties, map)
 			},
 			Encoder.prototype.map,
-			dispatch,
+			keyDispatcher,
+			valueDispatcher,
 			properties
 		)
 	}
@@ -368,7 +373,8 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 				case this.map:
 					this.byte(Byte.map)
 					this.schema(dispatcher["0"])
-					this.schemaProperties(dispatcher["1"])
+					this.schema(dispatcher["1"])
+					this.schemaProperties(dispatcher["2"])
 					return
 				case this.instance: {
 					const name = dispatcher["0"]

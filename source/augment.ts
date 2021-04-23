@@ -2,6 +2,7 @@ export type Augmented<Fn extends any> = Fn & {
 	target: Fn
 	"0": any
 	"1": any
+	"2": any
 }
 
 export function isAugmented<Fn extends Function>(fn: Fn): fn is Augmented<Fn> {
@@ -17,7 +18,8 @@ export default function augment<A extends Function, Target extends Function>(
 	augmented: A,
 	target: Target,
 	arg0?: any,
-	arg1?: any
+	arg1?: any,
+	arg2?: any
 ): Augmented<A> {
 	// @ts-ignore
 	augmented.target = target
@@ -25,6 +27,8 @@ export default function augment<A extends Function, Target extends Function>(
 	augmented["0"] = arg0
 	// @ts-ignore
 	augmented["1"] = arg1
+	// @ts-ignore
+	augmented["2"] = arg2
 	// @ts-ignore
 	return augmented
 }

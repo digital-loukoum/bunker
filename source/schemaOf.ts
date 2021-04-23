@@ -97,11 +97,16 @@ class SchemaGuesser {
 		return Encoder.prototype.set(type, this.propertiesDispatcher(value))
 	}
 
-	mapDispatcher(value: Map<string, any>) {
-		let type: Dispatcher = Encoder.prototype.unknown
-		for (const element of value.values())
-			type = this.joinDispatchers(type, this.dispatcher(element))
-		return Encoder.prototype.map(type, this.propertiesDispatcher(value))
+	mapDispatcher(map: Map<string, any>) {
+		let keyType: Dispatcher = Encoder.prototype.unknown
+		let valueType: Dispatcher = Encoder.prototype.unknown
+
+		for (const [key, value] of map.entries()) {
+			keyType = this.joinDispatchers(keyType, this.dispatcher(key))
+			valueType = this.joinDispatchers(valueType, this.dispatcher(value))
+		}
+
+		return Encoder.prototype.map(keyType, valueType, this.propertiesDispatcher(map))
 	}
 
 	joinDispatchers(a: Dispatcher, b: Dispatcher): Dispatcher {
@@ -156,7 +161,8 @@ class SchemaGuesser {
 			} else if (a.target == Encoder.prototype.map) {
 				joint = Encoder.prototype.map(
 					this.joinDispatchers(a["0"], b["0"]),
-					this.joinDispatcherProperties(a["1"], b["1"])
+					this.joinDispatchers(a["1"], b["1"]),
+					this.joinDispatcherProperties(a["2"], b["2"])
 				)
 			} else joint = Encoder.prototype.any
 		}

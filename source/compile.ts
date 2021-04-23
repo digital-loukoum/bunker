@@ -114,7 +114,8 @@ export function encoderToDecoder(schema: Schema): DecoderDispatcher {
 			case encoder.map:
 				return decoder.map(
 					encoderToDecoder(schema["0"]),
-					encoderToDecoderProperties(schema["1"])
+					encoderToDecoder(schema["1"]),
+					encoderToDecoderProperties(schema["2"])
 				)
 			default:
 				throw `[encoderToDecoder] Unknown schema ${schema.target.name}`

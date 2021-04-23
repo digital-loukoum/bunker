@@ -172,9 +172,17 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 
 		stage("Maps")
 		for (const [name, value] of Object.entries({
-			"Standard map": new Map([
+			"Map<string, integer>": new Map([
 				["x", 12],
 				["y", 121],
+			]),
+			"Map<number[], integer>": new Map([
+				[[12], 12],
+				[[121, 12], 121],
+			]),
+			"Map<{x: integer, y: string}, integer>": new Map([
+				[{ x: 12, y: "hey" }, 12],
+				[{ x: 121, y: "you" }, 121],
 			]),
 		})) {
 			const buffer = bunker(value)

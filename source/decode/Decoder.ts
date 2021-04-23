@@ -283,13 +283,18 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		}
 	}
 
-	map(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
+	map(
+		keyDispatcher: Dispatcher = this.unknown,
+		valueDispatcher: Dispatcher = this.unknown,
+		properties: DispatcherRecord = {}
+	) {
 		return function (this: Decoder, constructor = Map) {
 			if (this.isReference()) return this.reference() as Map<string, any>
 			const map = new constructor() as Map<string, any>
 			const length = this.integer()
 			this.memory.objects.push(map)
-			for (let i = 0; i < length; i++) map.set(this.string(), dispatch.call(this))
+			for (let i = 0; i < length; i++)
+				map.set(keyDispatcher.call(this), valueDispatcher.call(this))
 			return this.properties(map, properties)
 		}
 	}
@@ -365,7 +370,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 						dispatcher = this.set(this.schema(), this.schemaProperties())
 						break
 					case Byte.map:
-						dispatcher = this.map(this.schema(), this.schemaProperties())
+						dispatcher = this.map(this.schema(), this.schema(), this.schemaProperties())
 						break
 					default:
 						throw this.error(`Unknown byte`)
