@@ -8,11 +8,7 @@ This page indexes all the types exported by Bunker to create your schemas.
    - [boolean](#boolean)
    - [positiveInteger](#positiveinteger)
    - [integer](#integer)
-   - [integer32](#integer32)
-   - [integer64](#integer64)
    - [bigInteger](#biginteger)
-   - [float32](#float32)
-   - [float64](#float64)
    - [number](#number)
    - [string](#string)
    - [regularExpression](#regularexpression)
@@ -43,36 +39,16 @@ A character is a one-byte value, ie. a number between `0` and `255`.
 A boolean is a `true` or `false` value.
 
 ##### positiveInteger
-A positive integer is an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers) that is always positive.
+A positive integer is encoded as a [positive elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#positive-elastic-integers).
 
 ##### integer
-An integer is an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers) that can be negative.
-
-This is the default integer format used by Bunker.
-
-##### integer32
-An integer32 is a signed 32-bit integer stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
-
-##### integer64
-An integer64 is a signed 64-bit integer stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
+An integer is encoded as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
 
 ##### bigInteger
-A bigInteger is a signed [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers) that can be arbitrarily large.
-
-##### float32
-An float32 is a signed 32-bit float stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
-
-##### float64
-An float64 is a signed 64-bit float (a double) stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
-
-This is the default number format used by Bunker.
-
-It can be used instead of the **number** type when encoding / decoding speed is more important than data density.
+A bigInteger can be arbitrarily large. It is encoded as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
 
 ##### number
-A number is an [elastic number](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-number).
-
-It can be used instead of the **float64** type when data density is more important than encoding / decoding speed.
+An number is a signed 64-bit float (a double) stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
 
 ##### string
 A string is an UTF-8 list of characters with a trailing zero at the end.
@@ -83,6 +59,8 @@ Use this type to store regular expressions.
 ##### date
 
 The number of milliseconds since 1970 stored as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
+
+Can be negative for pre-1970 dates.
 
 ##### any
 A any type can be any primitive, composed or object type.
@@ -155,7 +133,7 @@ map(KeyType, ValueType): Type
 
 Since a map is also an object, it can have its own properties:
 ```ts
-map(ValueType, KeyType = String, { [key: string]: Type }): Type
+map(KeyType, ValueType, { [key: string]: Type }): Type
 ```
 
 

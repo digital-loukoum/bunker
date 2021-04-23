@@ -31,16 +31,6 @@ export default abstract class ChunkDecoder extends Decoder {
 		return super.nextByteIs(byte)
 	}
 
-	integer32() {
-		this.requestBytes(4)
-		return super.integer32()
-	}
-
-	integer64() {
-		this.requestBytes(8)
-		return super.integer64()
-	}
-
 	number() {
 		this.requestBytes(8)
 		return super.number()

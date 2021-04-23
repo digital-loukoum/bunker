@@ -16,9 +16,9 @@ bunker({ id: 12, name: "Foo" }, schema)
 
 #### Array of numbers
 ```ts
-import { bunker, array, float64 } from "@digitak/bunker"
+import { bunker, array, number } from "@digitak/bunker"
 
-const schema = array(float64)
+const schema = array(number)
 
 bunker([11, 3.4, Infinity, -0])
 ```
@@ -27,9 +27,9 @@ bunker([11, 3.4, Infinity, -0])
 
 Since arrays are objects they can have properties:
 ```ts
-import { bunker, array, float64, integer } from "@digitak/bunker"
+import { bunker, array, number, integer } from "@digitak/bunker"
 
-const schema = array(float64, { id: integer })
+const schema = array(number, { id: integer })
 
 const myArray = [11, 3.4, Infinity, -0]
 myArray.id = 12
@@ -91,7 +91,7 @@ bunker(new Map([
 #### Simple instance
 
 ```ts
-import { bunker, instance, object, float64 } from "@digitak/bunker"
+import { bunker, instance, object, number } from "@digitak/bunker"
 
 class Point {
    constructor() {
@@ -101,8 +101,8 @@ class Point {
 }
 
 bunker.register(Point, object({
-   x: float64,
-   y: float64,
+   x: number,
+   y: number,
 }))
 
 bunker(new Point(4, -2), instance('Point'))

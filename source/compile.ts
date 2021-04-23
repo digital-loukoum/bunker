@@ -132,10 +132,6 @@ export function encoderToDecoder(schema: Schema): DecoderDispatcher {
 				return decoder.boolean
 			case encoder.integer:
 				return decoder.integer
-			case encoder.integer32:
-				return decoder.integer32
-			case encoder.integer64:
-				return decoder.integer64
 			case encoder.positiveInteger:
 				return decoder.positiveInteger
 			case encoder.bigInteger:

@@ -5,8 +5,6 @@ enum Byte {
 	binary,
 	boolean,
 	positiveInteger,
-	integer32,
-	integer64,
 	integer,
 	bigInteger,
 	number,

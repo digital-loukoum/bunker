@@ -43,8 +43,6 @@ export const {
 	binary,
 	boolean,
 	positiveInteger,
-	integer32,
-	integer64,
 	integer,
 	bigInteger,
 	number,
@@ -63,8 +61,6 @@ bunker.character = character
 bunker.binary = binary
 bunker.boolean = boolean
 bunker.positiveInteger = positiveInteger
-bunker.integer32 = integer32
-bunker.integer64 = integer64
 bunker.integer = integer
 bunker.bigInteger = bigInteger
 bunker.number = number

@@ -105,23 +105,6 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 			same(value, result, name)
 		}
 
-		stage("bunker.integer32/64")
-		for (const encoder of [bunker.integer32, bunker.integer64]) {
-			for (const [name, value] of Object.entries({
-				zero: 0,
-				smallInteger: 9,
-				mediumInteger: 348,
-				bigInteger: 1234567890,
-				"minus-smallInteger": -9,
-				"minus-mediumInteger": -348,
-				"minus-bigInteger": -1234567890,
-			})) {
-				const buffer = bunker(value, encoder)
-				const result = debunker(buffer)
-				same(value, result, (encoder == bunker.integer32 ? "[32] " : "[64] ") + name)
-			}
-		}
-
 		stage("Strings")
 		for (const [name, value] of Object.entries({
 			Foo: "foo",

@@ -106,18 +106,6 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		return sign * integer
 	}
 
-	integer32() {
-		const value = this.buffer.view.getInt32(this.cursor)
-		this.cursor += 4
-		return value
-	}
-
-	integer64() {
-		const value = Number(this.buffer.view.getBigInt64(this.cursor))
-		this.cursor += 8
-		return value
-	}
-
 	positiveInteger() {
 		let base = 1
 		let byte: number
@@ -317,10 +305,6 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 				return this.binary
 			case Byte.integer:
 				return this.integer
-			case Byte.integer32:
-				return this.integer32
-			case Byte.integer64:
-				return this.integer64
 			case Byte.positiveInteger:
 				return this.positiveInteger
 			case Byte.bigInteger:

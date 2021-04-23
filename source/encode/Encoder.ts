@@ -112,18 +112,6 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		if (nextValue) this.positiveInteger(nextValue)
 	}
 
-	integer32(value: number) {
-		this.incrementSizeBy(4)
-		this.buffer.view.setInt32(this.size, value)
-		this.size += 4
-	}
-
-	integer64(value: number | bigint) {
-		this.incrementSizeBy(8)
-		this.buffer.view.setBigInt64(this.size, BigInt(value))
-		this.size += 8
-	}
-
 	bigInteger(value: bigint) {
 		let sign = 0
 		if (value < 0n) {
@@ -402,10 +390,6 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 					return this.byte(Byte.integer)
 				case this.positiveInteger:
 					return this.byte(Byte.positiveInteger)
-				case this.integer32:
-					return this.byte(Byte.integer32)
-				case this.integer64:
-					return this.byte(Byte.integer64)
 				case this.bigInteger:
 					return this.byte(Byte.bigInteger)
 				case this.number:

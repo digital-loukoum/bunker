@@ -48,11 +48,7 @@ All future versions of bunker will be compatible with this specification.
 	- boolean
 	- positiveInteger
    - integer
-	- integer32
-	- integer64
 	- bigInteger
-	- float32
-	- float64
 	- number
 	- string
 	- regularExpression
@@ -100,12 +96,8 @@ enum Type {
    binary,
    boolean,
    positiveInteger,
-   integer32,
-   integer64,
    integer,
    bigInteger,
-   float32,
-   float64,
    number,
    string,
    regularExpression,
