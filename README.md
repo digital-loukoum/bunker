@@ -25,8 +25,9 @@ Unlike JSON and MessagePack, Bunker correctly encode and decode:
 - **instances of classes**: you can store and retrieve your prototypes,
 - and **circular references**.
 
+This is the official bunker
 
-## API
+## Usage
 
 Bunker exports two main functions to encode and decode data:
 
@@ -73,16 +74,18 @@ Guessing the most precise schema is the heaviest part of encoding data with Bunk
 
 You can use a schema in two ways:
 
-- *on the fly* by passing the schema to the `bunker` function,
-- or you can *compile it* and get an encoder and a decoder function
+- on the fly by passing the schema to the `bunker` function,
+- or you can compile it to get an encoder and a decoder function.
 
-For the exhaustive list of schema types exported by Bunker, you can read the [complete schema reference]().
+For the exhaustive list of schema types exported by Bunker, you can read the [complete schema reference](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
 
-You can also [browse examples in Javascript]().
+You can also [browse examples of schemas in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema.md).
 
 ### On the fly schema
 
-##### Basic example
+You pass the schema as a second argument to the `bunker` function.
+
+#### Basic example
 
 ```ts
 import { bunker, integer, string } from '@digitak/bunker'
@@ -109,7 +112,7 @@ The `debunker` function does not need to know the schema since it is encoded alo
 ### Schema compilation
 
 
-##### Basic example
+#### Basic example
 ```ts
 import { bunker, number } from '@digitak/bunker'
 
@@ -122,7 +125,7 @@ console.log(decode(encoded12)) // print 12
 console.log(decode(encoded36)) // print 36
 ```
 
-Note that you could use `debunker` instead of the compiled `decode` function but the last one is slightly faster since it already knows the schema of the value to decode.
+Note that you could use `debunker` instead of the compiled `decode` function, but `decode` is slightly faster since it already knows the schema of the value to decode.
 
 
 ### Naked encoding
@@ -157,7 +160,7 @@ async function debunkerFile(file: string): unknown
 
 These two functions scale well: you can load huge files without affecting your memory.
 
-##### Basic example
+#### Basic example
 
 ```ts
 import { bunkerFile, debunkerFile } from '@digitak/bunker/io'
@@ -242,6 +245,11 @@ http.createServer((request, response) => {
 })
 ```
 
+### Communicating between processes
+
+Because of its versatility and its small size, bunker is a great choice for process communication.
+
+If you don't find a bunker library with your programming language, you can create your own by following the [official bunker binary format specifications](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
 
 
 ## Comparisons

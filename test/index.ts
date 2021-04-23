@@ -13,8 +13,8 @@ import {
 	any,
 	tuple,
 	object,
-} from "../library/index"
-import { bunkerFile, debunkerFile } from "../library/io"
+} from "../source/index"
+import { bunkerFile, debunkerFile } from "../source/io"
 import { existsSync, mkdirSync, readFileSync } from "fs"
 
 start(`Bunker i/o `, async function ({ stage, same }) {

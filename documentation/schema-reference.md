@@ -1,6 +1,6 @@
 ## Bunker schema reference
 
-This page indexes all the types you can use to build your schema.
+This page indexes all the types exported by Bunker to create your schemas.
 
 ### Table of contents
 1. [**Primitive values**](#primitive-values)

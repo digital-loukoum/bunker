@@ -1,109 +1,143 @@
-# Bunker's binary format specifications
+## Bunker 3 binary format specifications
 
-Bunker is a very efficient binary data format that can be used as a replacement for Json, Csv or MessagePack. Bunker format is great for every type of data but especially shines when handling big arrays of objects.
+Bunker is a very efficient binary data format that can be used as a replacement for JSON, CSV, MessagePack or ProtocolBuffers that uses its own binary format to store data in a very compact and efficient way.
 
-In average, Bunker data is 130% smaller than JSON and 100% smaller than MessagePack. If you use big arrays of objects, it can easly go up to 400% smaller than JSON. Bunker is the perfect alternative between space efficiency (zipped data will always be better) and encoding / decoding speed (zipped data will always be very very much slower).
+This document is the official specifications for the bunker 3 binary format.
 
-Furthermore, Bunker can also store and load - unlike Json and MessagePack :
+All future versions of bunker will be compatible with this specification.
 
-- Big integers
-- Regular expressions
-- Dates
-- Circular references (JSON will crash)
-- Arrays with properties
-- Maps
-- Sets
-- Maps and sets with properties
+### Table of contents
+1. **Data structure**
 
-This document explains the format used by Bunker to achieve great performance in storing data.
+2. **Enumerations**
+   - Type
+   - NullableValue
+   - Byte
 
-## Notions
+3. **Special number formats**
+   - Positive elastic integers
+   - Elastic integers
+   - Elastic numbers
 
-The following notions are necessary to understand the bunker specifications.
+4. **The string format**
 
-### Base structure
+5. **Memory and references**
+   - Schema memory
+   - Raw data memory
 
-Bunker data is composed of two parts: the data schema and then the data itself. Storing the schema before writing the data is the key to Bunker's efficieny. Imagine you have this object in Json:
+6. **Encoding schema**
+   6.1. Primitive values
 
-```json
-[
-  {
-    "name": "name1",
-    "company": "company1",
-    "phone": "number1"
-  },
-  {
-    "name": "name2",
-    "company": "company2",
-    "phone": "number2"
-  },
-  {
-    "name": "name3",
-    "company": "company3",
-    "phone": "number3"
-  },
-  ...etc etc...
-]
-```
+   6.2. Composed values
+   - nullable
+	- tuple
+	- recall
 
-Then if we would write this same data using Bunker in a Json-way, it would be something like:
+   6.3. Objects
+	- object
+	- array
+	- set
+	- map
+	- instance
 
-```json
-{
-  "schema": {
-    "type": "Array",
-    "arrayOf": {
-      "name": "String",
-      "company": "String",
-      "phone": "String",
-    }
-  },
-  "data": [
-    ["name1", "company1", "number1"],
-    ["name2", "company2", "number2"],
-    ["name3", "company3", "number3"],
-    ...etc etc...
-  ]
+7. **Encoding data**
+   7.1. *Primitive values*
+   - unknown
+	- character
+	- binary
+	- boolean
+	- positiveInteger
+   - integer
+	- integer32
+	- integer64
+	- bigInteger
+	- float32
+	- float64
+	- number
+	- string
+	- regularExpression
+	- date
+	- any
+
+   7.2. *Composed values*
+   - nullable
+   - tuple
+   - recall
+
+   7.3. *Objects*
+   - object
+   - array
+   - set
+   - map
+   - instance
+
+8. **Implementation tips**
+   - String references
+
+## Data structure
+
+Bunker data is composed of two parts:
+
+- the encoded `schema`,
+- the encoded `data`.
+
+For example, if you run `bunker(3)` you will get the following buffer: `[7, 3]`.
+
+- `7` is the byte that indicates an integer (see the [Type](#enumeration-type) enumeration),
+- `3` is the data value encoded as an [elastic integer](#elastic-integers).
+
+## Enumerations
+
+The following enumerations will be used throughout the whole document in the form: `EnumerationName.key`.
+
+### Type
+The `Type` enumeration is used to encode the `schema`.
+```ts
+enum Type {
+   // primitives
+   unknown = 0,
+   character,
+   binary,
+   boolean,
+   positiveInteger,
+   integer32,
+   integer64,
+   integer,
+   bigInteger,
+   float32,
+   float64,
+   number,
+   string,
+   regularExpression,
+   date,
+   any,
+
+   // composed values
+   nullable,
+   tuple,
+   recall,
+
+   // objects
+   object,
+   array,
+   set,
+   map,
+   instance,
+
+   // special types
+   reference = 0xf8,
+   stringReference = 0xf9,
 }
 ```
 
-We can easily understand why the longer and the longer the array becomes, the better Bunker will compare to Json (or MessagePack). The keys "name", "company" and "phone" are not be repeated over and over (only once in the schema), which leads to a huge size improvement.
+- `Type.reference` indicates a previously encountered object,
+- `Type.stringReference` indicates a previously encountered string.
 
-It's the same way as Csv or Sql works - except Csv can only handle arrays of objects, while Bunker can handle any type of data.
 
 
-### Base enumerations
+### NullableValue
 
-The specification is based on two enumerations:
-
-- The `Type` enumeration is used to write and read the schema.
-  ```ts
-  enum Type {
-    // primitive types
-    unknown = 0,
-    any,
-    boolean,
-    character,
-    integer,
-    positiveInteger,
-    bigInteger,
-    number,
-    string,
-    regularExpression,
-    date,
-    reference,
-    tuple,
-    nullable,
-    // object types
-    object,
-    array,
-    set,
-    record,
-    map,
-  }
-  ```
-
-- The `NullableValue` enumeration indicates if a nullable value is null, undefined, or well-defined.
+The `NullableValue` enumeration is used by the nullable type to indicate whether a nullable value is null, undefined, or defined.
   ```ts
   enum NullableValue {
     null = 0,
@@ -112,30 +146,46 @@ The specification is based on two enumerations:
   }
   ```
 
-  > Note: depending on the language, if the `undefined` value does not exist it can be treated as a `null`.
 
-- The constant `Byte` object stores special byte values.
-  ```ts
-  const Byte = {
-    reference = 0xF8,  // used to indicate if the value is a reference to another value
-    stop = 0xFF,  // used to indicate the end of an object definition in a schema
-  }
-  ```
+### Byte
 
-### Integers
+Miscellaneous byte values.
 
-Bunker use a special format for integer which is named *elastic integers*. In low-level languages like C, the size of an integer is static: every `short int` is 2-bytes long, `long int` 4-bytes long, and `long long int` 8-bytes long.
+```ts
+enum Byte {
+   start = 0xfe,
+   stop = 0xff,
+}
+```
 
-Integers in Bunker use *as few space as possible* and can be infinitely big, using a very simple rule:
+## Special number formats
+
+Bunker use three custom binary formats to store numbers:
+
+- `positive elastic integers` to store unsigned integers,
+- `elastic integers` to store signed integers,
+- `elastic numbers` to store signed decimal numbers.
+
+They are called *elastic* because they use as few data space as possible and they can scale infinitely.
+
+### Positive elastic integers
+
+A positive elastic integer is made by following this simple rule:
 
 - if the first bit of the current byte is `1`, then the next byte continue to describe the number,
 - if the first bit of the current byte is `0`, then this is the last byte.
 
-These two rules have a single exception:
+#### Example of algorithm
 
-- in case of signed integer, the first bit of the first byte is used to set the sign, and then the second bit of the first byte is used to indicate the continuation of the integer.
+Let's encode the arbitrary positive integer `42345`:
 
-Examples of `positive integers`:
+1. convert it into a binary format: `1010010101101001`,
+2. split it into chunks of seven bits: `0000010` `1001010` `1101001`
+3. add `0` in front of the last chunk and `1` in front of the others: `10000010` `11001010` `01101001`.
+
+This is the 3-bytes positive elastic integer representation of `42345`.
+
+#### Examples of elastic positive integer representations
 
 `0` -> `00000000`
 `1` -> `00000001`
@@ -144,10 +194,21 @@ Examples of `positive integers`:
 `128` -> `10000001 00000000`
 `129` -> `10000001 00000001`
 
-Examples of `signed integers`:
+
+### Elastic integers
+
+It works the same way as positive elastic integers, except that the first bit of the first byte is used to indicate the sign:
+
+- `1` indicates a negative integer,
+- `0` indicates a positive integer.
+
+For the first byte exclusively, it is the second bit that is the "continuation bit" and indicates whether the next byte is part of the number or not.
+
+#### Examples of elastic integer representations
 
 `-1` -> `10000001`
 `-0` -> `10000000`
+`0` -> `00000000`
 `1` -> `00000001`
 ...
 `63` -> `00111111`
@@ -155,31 +216,56 @@ Examples of `signed integers`:
 `-64` -> `11000001 00000000`
 `-65` -> `11000001 00000001`
 
-### Floating numbers
 
-Any number `n` can be written in the form: `n = b * 10 ^ i`, where `b` and `i` are signed integers, and `b` being as small as possible.
+### Elastic numbers
 
-In Bunker, a floating number is simply `i` and then `b`, written as *signed elastic integers*.
+Encoding a decimal number in a compact and extensible way is not easy work.
 
-Examples:
+Since we humans think and write numbers in base-10, it happens it is quite often space-efficient to store a number as a string rather than as a float64.
 
-`0` -> `0e0` -> `00000000 00000000`
-`-0` -> `-0e0` -> `00000000 10000000`
-`1` -> `1e0` ->`00000000 00000001`
-`9` -> `9e0` ->`00000000 00001001`
-`10` -> `1e1` ->`00000001 00000001`
-`11` -> `11e0` ->`00000000 00001011`
-`0.1` -> `1e-1` ->`10000001 00000001`
-`-0.1` -> `-1e-1` ->`10000001 10000001`
+For example, writing "1.2" is a three-bytes length only when it would take eight bytes to write it in the float64 format.
 
-### Strings
+Bunker use the fact that we are humans and store all numbers into a base-10 string representation of the number using the following 4-bits characters:
 
-Bunker strings:
+`0` -> `0000`
+`1` -> `0001`
+`2` -> `0010`
+`3` -> `0011`
+`4` -> `0100`
+`5` -> `0101`
+`6` -> `0110`
+`7` -> `0111`
+`8` -> `1000`
+`9` -> `1001`
+`.` -> `1010`
+`+` -> `1011`
+`-` -> `1100`
+`e` -> `1101`
+
+The `1111` 4-bits character indicates the end of the string.
+
+If there is an odd number of 4-bits characters, a `0000` is appended to finish the last byte.
+
+There are special bytes:
+
+- `1110 1011` is `infinity`,
+- `1110 1100` is `-infinity`,
+- `1110 0000` is `not a number`.
+
+### Examples
+
+`1124` -> `0001 0001 0010 0100` (encoded in 2 bytes)
+`1.2` -> `0001 1010 0010 0000` (encoded in 2 bytes)
+`1.324e12` -> `0001 1010 0011 0010 0100 1101 0001 0010` (encoded in 4 bytes)
+
+## Strings
+
+All bunker strings:
 
 - are encoded in UTF-8,
 - finish with a trailing zero.
 
-Examples:
+### Examples
 
 `"a"` -> `[97, 0]`
 `"à"` -> `[195, 160, 0]`

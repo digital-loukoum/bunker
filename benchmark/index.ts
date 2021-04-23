@@ -118,12 +118,9 @@ async function benchmark(fn: Function, iterations = 500) {
 	let start = performance.now()
 	let time: number
 
-	do {
-		await fn()
-		operations++
-		time = performance.now()
-	} while (operations < iterations)
+	while (operations++ < iterations) await fn()
 
+	time = performance.now()
 	return (operations / (time - start)) * 1000
 }
 
@@ -135,13 +132,13 @@ async function benchmark(fn: Function, iterations = 500) {
 	}
 
 	const encoders = {
-		json: ([value]: any) => Buffer.from(JSON.stringify(value)),
-		"zipped json": async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
-		bunker: ([value]: any) => bunker(value),
-		"bunker (naked)": ([value]: any) =>
+		json: async ([value]: any) => Buffer.from(JSON.stringify(value)),
+		// "zipped json": async ([value]: any) => await zip(Buffer.from(JSON.stringify(value))),
+		bunker: async ([value]: any) => bunker(value),
+		"bunker (naked)": async ([value]: any) =>
 			bunker.compile(schemaOf(value)).encodeNaked(value),
-		msgpack: ([value]: any) => msgpack.encode(value),
-		notepack: ([value]: any) => notepack.encode(value),
+		msgpack: async ([value]: any) => msgpack.encode(value),
+		notepack: async ([value]: any) => notepack.encode(value),
 	}
 
 	const encoded = {}
@@ -166,36 +163,37 @@ async function benchmark(fn: Function, iterations = 500) {
 	})
 
 	compare({
-		title: "Encoding speed",
-		inputs,
+		title: "Decoding speed",
+		inputs: encoded,
 		challengers: {
-			json: ([value]: any) => Buffer.from(JSON.stringify(value)),
-			"zipped json": async ([value]: any) =>
-				await zip(Buffer.from(JSON.stringify(value))),
-			bunker: ([value]: any) => bunker(value),
-			// 'bunker (with schema)': ([value, schema]: any) => bunker(value, schema),
-			// "bunker (naked)": ([value, , compiled]: any) => compiled.encodeNaked(value),
-			"bunker (compiled)": ([value, , compiled]: any) => compiled.encode(value),
-			msgpack: ([value]: any) => msgpack.encode(value),
-			notepack: ([value]: any) => notepack.encode(value),
+			json: async (encoded: any) => JSON.parse(encoded.json[0].toString()),
+			// "zipped json": async (encoded: any) =>
+			// 	JSON.parse((await unzip(encoded["zipped json"][0])).toString()),
+			bunker: async (encoded: any) => debunker(encoded["bunker"][0]),
+			// "bunker (naked)": (encoded: any) =>
+			// encoded["bunker"][2](encoded["bunker (naked)"][0]),
+			"bunker (compiled)": async (encoded: any) =>
+				encoded["bunker"][1](encoded["bunker"][0]),
+			msgpack: async (encoded: any) => msgpack.decode(encoded.msgpack[0]),
+			notepack: async (encoded: any) => notepack.decode(encoded.notepack[0]),
 		},
 		format: (value: number) => Intl.NumberFormat().format(~~value) + " ops/s",
 		apply: benchmark,
 	})
 
 	compare({
-		title: "Decoding speed",
-		inputs: encoded,
+		title: "Encoding speed",
+		inputs,
 		challengers: {
-			json: (encoded: any) => JSON.parse(encoded.json[0].toString()),
-			"zipped json": async (encoded: any) =>
-				JSON.parse((await unzip(encoded["zipped json"][0])).toString()),
-			bunker: (encoded: any) => debunker(encoded["bunker"][0]),
-			// "bunker (naked)": (encoded: any) =>
-			// encoded["bunker"][2](encoded["bunker (naked)"][0]),
-			"bunker (compiled)": (encoded: any) => encoded["bunker"][1](encoded["bunker"][0]),
-			msgpack: (encoded: any) => msgpack.decode(encoded.msgpack[0]),
-			notepack: (encoded: any) => notepack.decode(encoded.notepack[0]),
+			json: async ([value]: any) => Buffer.from(JSON.stringify(value)),
+			// "zipped json": async ([value]: any) =>
+			// 	await zip(Buffer.from(JSON.stringify(value))),
+			bunker: async ([value]: any) => bunker(value),
+			// 'bunker (with schema)': ([value, schema]: any) => bunker(value, schema),
+			// "bunker (naked)": ([value, , compiled]: any) => compiled.encodeNaked(value),
+			"bunker (compiled)": async ([value, , compiled]: any) => compiled.encode(value),
+			msgpack: async ([value]: any) => msgpack.encode(value),
+			notepack: async ([value]: any) => notepack.encode(value),
 		},
 		format: (value: number) => Intl.NumberFormat().format(~~value) + " ops/s",
 		apply: benchmark,

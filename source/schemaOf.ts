@@ -33,10 +33,13 @@ class SchemaGuesser {
 			case "undefined":
 				return Encoder.prototype.nullable()
 			case "number": {
-				const isSmall = Math.fround(value) == value
-				if (Number.isInteger(value))
-					return isSmall ? Encoder.prototype.smallInteger : Encoder.prototype.integer
-				else return isSmall ? Encoder.prototype.number32 : Encoder.prototype.number64
+				// const isSmall = Math.fround(value) == value
+				// if (Number.isInteger(value))
+				// 	return isSmall ? Encoder.prototype.smallInteger : Encoder.prototype.integer
+				// else return isSmall ? Encoder.prototype.number32 : Encoder.prototype.number64
+				return Number.isInteger(value)
+					? Encoder.prototype.integer
+					: Encoder.prototype.number64
 			}
 			case "bigint":
 				return Encoder.prototype.bigInteger
