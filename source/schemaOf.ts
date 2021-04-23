@@ -32,15 +32,10 @@ class SchemaGuesser {
 		switch (typeof value) {
 			case "undefined":
 				return Encoder.prototype.nullable()
-			case "number": {
-				// const isSmall = Math.fround(value) == value
-				// if (Number.isInteger(value))
-				// 	return isSmall ? Encoder.prototype.smallInteger : Encoder.prototype.integer
-				// else return isSmall ? Encoder.prototype.number32 : Encoder.prototype.number64
+			case "number":
 				return Number.isInteger(value)
 					? Encoder.prototype.integer
-					: Encoder.prototype.number64
-			}
+					: Encoder.prototype.number
 			case "bigint":
 				return Encoder.prototype.bigInteger
 			case "string":
@@ -187,18 +182,11 @@ class SchemaGuesser {
 
 	joinPrimitives(a: Dispatcher, b: Dispatcher) {
 		if (a == b) return a
-		const numbers = [
-			Encoder.prototype.smallInteger,
-			Encoder.prototype.integer,
-			Encoder.prototype.number32,
-			Encoder.prototype.number64,
-		]
-		const indexA = numbers.indexOf(a)
-		if (indexA == -1) return Encoder.prototype.any
-		const indexB = numbers.indexOf(b)
-		if (indexB == -1) return Encoder.prototype.any
-		const max = Math.max(indexA, indexB)
-		if (max == 2 && (indexA == 1 || indexB == 1)) return Encoder.prototype.number64
-		return numbers[max]
+		if (
+			(a == Encoder.prototype.integer && b == Encoder.prototype.number) ||
+			(b == Encoder.prototype.integer && a == Encoder.prototype.number)
+		)
+			return Encoder.prototype.number
+		return Encoder.prototype.any
 	}
 }

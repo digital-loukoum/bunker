@@ -41,13 +41,8 @@ export default abstract class ChunkDecoder extends Decoder {
 		return super.integer64()
 	}
 
-	number32() {
-		this.requestBytes(4)
-		return super.number32()
-	}
-
-	number64() {
+	number() {
 		this.requestBytes(8)
-		return super.number64()
+		return super.number()
 	}
 }

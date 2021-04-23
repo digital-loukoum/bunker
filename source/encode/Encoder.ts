@@ -101,10 +101,6 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		} while (value)
 	}
 
-	smallInteger(value: number) {
-		return this.integer(value)
-	}
-
 	integer(value: number) {
 		let sign = 0
 		if (value < 0 || (value == 0 && Object.is(value, -0))) {
@@ -146,81 +142,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		}
 	}
 
-	/**
-	 * The Bunker's number format converts a number to a base 10 representation,
-	 * Then every digit is converted to a semi-byte number going from 0 to 9.
-	 * Those semi-bytes are finally concatenated into a Uint8Array.
-	 * Since we naturally write numbers in their base-10 representation, it's often
-	 * shorter to store decimal numbers in this format.
-	 * @enhancement this function would be much faster if compiled to wasm because
-	 * we could omit the intermediate conversion to UTF-16 string.
-	 */
 	number(value: number) {
-		if (value == Infinity) return this.byte(206)
-		else if (value == -Infinity) return this.byte(222)
-		else if (isNaN(value)) return this.byte(238)
-		else if (Object.is(value, -0)) return this.bytes(Uint8Array.of(192, 255))
-		const stringified = "" + value
-		const bytes = new Uint8Array(Math.ceil((stringified.length + 1) / 2))
-
-		let offset = 0,
-			index = 0
-		while (index < stringified.length) {
-			const value = this.numberDigitValue(stringified[index++])
-			if (index % 2) bytes[offset] = value * 16
-			else bytes[offset++] += value
-		}
-
-		// we add the stop semi-byte (15)
-		if (index % 2) bytes[offset] += 15
-		else bytes[offset] = 15 * 16
-		this.bytes(bytes)
-	}
-
-	private numberDigitValue(character: string) {
-		switch (character) {
-			case "0":
-				return 0
-			case "1":
-				return 1
-			case "2":
-				return 2
-			case "3":
-				return 3
-			case "4":
-				return 4
-			case "5":
-				return 5
-			case "6":
-				return 6
-			case "7":
-				return 7
-			case "8":
-				return 8
-			case "9":
-				return 9
-			case ".":
-				return 10
-			case "+":
-				return 11
-			case "-":
-				return 12
-			case "e":
-				return 13
-			case "i":
-				return 14 // should not happen ; infinity is a special case
-			default:
-				throw `Unexpected character in number: '${character}'`
-		}
-	}
-
-	number32(value: number) {
-		this.incrementSizeBy(4)
-		this.buffer.view.setFloat32(this.size, value)
-		this.size += 4
-	}
-
-	number64(value: number) {
 		this.incrementSizeBy(8)
 		this.buffer.view.setFloat64(this.size, value)
 		this.size += 8
@@ -489,7 +411,6 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 					return this.byte(Byte.binary)
 				case this.boolean:
 					return this.byte(Byte.boolean)
-				case this.smallInteger:
 				case this.integer:
 					return this.byte(Byte.integer)
 				case this.positiveInteger:
@@ -502,10 +423,6 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 					return this.byte(Byte.bigInteger)
 				case this.number:
 					return this.byte(Byte.number)
-				case this.number32:
-					return this.byte(Byte.number32)
-				case this.number64:
-					return this.byte(Byte.number64)
 				case this.string:
 					return this.byte(Byte.string)
 				case this.regularExpression:

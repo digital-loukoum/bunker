@@ -131,7 +131,6 @@ export function encoderToDecoder(schema: Schema): DecoderDispatcher {
 				return decoder.binary
 			case encoder.boolean:
 				return decoder.boolean
-			case encoder.smallInteger:
 			case encoder.integer:
 				return decoder.integer
 			case encoder.integer32:
@@ -144,10 +143,6 @@ export function encoderToDecoder(schema: Schema): DecoderDispatcher {
 				return decoder.bigInteger
 			case encoder.number:
 				return decoder.number
-			case encoder.number32:
-				return decoder.number32
-			case encoder.number64:
-				return decoder.number64
 			case encoder.string:
 				return decoder.string
 			case encoder.regularExpression:

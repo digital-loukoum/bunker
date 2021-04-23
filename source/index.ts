@@ -47,8 +47,6 @@ export const {
 	integer64,
 	integer,
 	bigInteger,
-	number32,
-	number64,
 	number,
 	string,
 	regularExpression,
@@ -70,8 +68,6 @@ bunker.integer32 = integer32
 bunker.integer64 = integer64
 bunker.integer = integer
 bunker.bigInteger = bigInteger
-bunker.number32 = number32
-bunker.number64 = number64
 bunker.number = number
 bunker.string = string
 bunker.regularExpression = regularExpression

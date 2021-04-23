@@ -9,8 +9,6 @@ enum Byte {
 	integer64,
 	integer,
 	bigInteger,
-	number32,
-	number64,
 	number,
 	string,
 	regularExpression,

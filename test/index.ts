@@ -324,7 +324,7 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 			{
 				const value = new Zabu("Coco")
 				const buffer = bunker(value)
-				const result = debunker(buffer)
+				const result = debunker(buffer) as Zabu
 				same(value.zabu(), result.zabu(), "Guess instance")
 			}
 		}
