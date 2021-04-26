@@ -7,86 +7,83 @@ This document is the official specifications for the bunker 3 binary format.
 All future versions of bunker will be compatible with this specification.
 
 ### Table of contents
-1. **Data structure**
+1. [**Data structure**](#data-structure)
 
-2. **Enumerations**
-   - Type
-   - NullableValue
-   - Byte
+2. [**Enumerations**](#enumerations)
+   - [Type](#enumeration-type)
+   - [NullableValue](#enumeration-nullable-value)
+   - [Byte](#enumeration-byte)
 
-3. **Special number formats**
-   - Positive elastic integers
-   - Elastic integers
-   - Elastic numbers
+3. [**Elastic integers**](#elastic-integers)
+   - [Positive elastic integers](#unsigned-elastic-integers)
+   - [Signed elastic integers](#signed-elastic-integers)
 
-4. **The string format**
+4. [**Strings**](#string)
 
-5. **Memory and references**
-   - Schema memory
-   - Raw data memory
+5. [**Encoding schema**](#encoding-schema)
+   5.1. [Primitive values](#encoding-schema-primitives-values)
 
-6. **Encoding schema**
-   6.1. Primitive values
+   5.2. [Composed values](#encoding-schema-composed-values)
+   - [nullable](#encoding-schema-nullable)
+	- [tuple](#encoding-schema-tuple)
+	- [recall](#encoding-schema-recall)
 
-   6.2. Composed values
-   - nullable
-	- tuple
-	- recall
+   5.3. [Object values](#encoding-schema-object-values)
+	- [object](#encoding-schema-object)
+	- [array](#encoding-schema-array)
+	- [set](#encoding-schema-set)
+	- [map](#encoding-schema-map)
+	- [instance](#encoding-schema-instance)
 
-   6.3. Objects
-	- object
-	- array
-	- set
-	- map
-	- instance
+6. [**Encoding data**](#encoding-data)
+   6.1. [*Primitive values*](#encoding-data-primitive-values)
+	- [character](#encoding-data-character)
+	- [binary](#encoding-data-binary)
+	- [boolean](#encoding-data-boolean)
+	- [positiveInteger](#encoding-data-positive-integer)
+   - [integer](#encoding-data-integer)
+	- [bigInteger](#encoding-data-big-integer)
+	- [number](#encoding-data-number)
+	- [string](#encoding-data-string)
+	- [regularExpression](#encoding-data-regular-expression)
+	- [date](#encoding-data-date)
+	- [any](#encoding-data-any)
 
-7. **Encoding data**
-   7.1. *Primitive values*
-   - unknown
-	- character
-	- binary
-	- boolean
-	- positiveInteger
-   - integer
-	- bigInteger
-	- number
-	- string
-	- regularExpression
-	- date
-	- any
+   6.2. [*Composed values*](#encoding-data-composed-values)
+   - [nullable](#encoding-data-nullable)
+   - [tuple](#encoding-data-tuple)
 
-   7.2. *Composed values*
-   - nullable
-   - tuple
-   - recall
+   6.3. [*Object values*](#encoding-data-object-values)
+   - [object](#encoding-data-object)
+   - [array](#encoding-data-array)
+   - [set](#encoding-data-set)
+   - [map](#encoding-data-map)
+   - [instance](#encoding-data-instance)
 
-   7.3. *Objects*
-   - object
-   - array
-   - set
-   - map
-   - instance
+7. [**Implementation tips**](#implementation-tips)
+   - [String references](#string-references)
 
-8. **Implementation tips**
-   - String references
-
-## Data structure
+## Data structure <a href="#data-structure"></a>
 
 Bunker data is composed of two parts:
 
-- the encoded `schema`,
-- the encoded `data`.
+- first the encoded `schema`,
+- then the encoded `data`.
 
-For example, if you run `bunker(3)` you will get the following buffer: `[7, 3]`.
+For example, if you run `bunker(3)` you will get the following data buffer: `[7, 3]`.
 
 - `7` is the byte that indicates an integer (see the [Type](#enumeration-type) enumeration),
 - `3` is the data value encoded as an [elastic integer](#elastic-integers).
 
-## Enumerations
+The whole schema is encoded before the whole data part.
+
+Encoding the schema along the data might seem unnecessary, but it brings safety: you can decode any data without having to know what schema was used when it is encoded.
+
+## Enumerations <a href="#enumerations"></a>
 
 The following enumerations will be used throughout the whole document in the form: `EnumerationName.key`.
 
-### Type
+### Type <a href="#enumeration-type"></a>
 The `Type` enumeration is used to encode the `schema`.
 ```ts
 enum Type {
@@ -115,10 +112,6 @@ enum Type {
    set,
    map,
    instance,
-
-   // special types
-   reference = 0xf8,
-   stringReference = 0xf9,
 }
 ```
 
@@ -127,7 +120,7 @@ enum Type {
 
 
 
-### NullableValue
+### NullableValue <a href="#enumeration-nullable-value"></a>
 
 The `NullableValue` enumeration is used by the nullable type to indicate whether a nullable value is null, undefined, or defined.
   ```ts
@@ -139,45 +132,46 @@ The `NullableValue` enumeration is used by the nullable type to indicate whether
   ```
 
 
-### Byte
+### Byte <a href="#enumeration-byte"></a>
 
 Miscellaneous byte values.
 
 ```ts
 enum Byte {
+   reference = 0xf8,
+   stringReference = 0xf9,
    start = 0xfe,
    stop = 0xff,
 }
 ```
 
-## Special number formats
+## Elastic integers <a href="#elastic-integers"></a>
 
-Bunker use three custom binary formats to store numbers:
+Bunker use custom binary formats to store integers:
 
-- `positive elastic integers` to store unsigned integers,
-- `elastic integers` to store signed integers,
-- `elastic numbers` to store signed decimal numbers.
+- `unsigned elastic integers` to store unsigned integers,
+- `signed elastic integers` to store signed integers.
 
 They are called *elastic* because they use as few data space as possible and they can scale infinitely.
 
-### Positive elastic integers
+### Unsigned elastic integers <a href="#unsigned-elastic-integers"></a>
 
-A positive elastic integer is made by following this simple rule:
+An unsigned elastic integer is similar to a regular integer, except that the first bit of each byte - instead describing the number value - is used as a "continuation bit":
 
 - if the first bit of the current byte is `1`, then the next byte continue to describe the number,
-- if the first bit of the current byte is `0`, then this is the last byte.
+- if the first bit of the current byte is `0`, then this byte is the last byte.
 
 #### Example of algorithm
 
 Let's encode the arbitrary positive integer `42345`:
 
-1. convert it into a binary format: `1010010101101001`,
+1. write it in binary format: `1010010101101001`,
 2. split it into chunks of seven bits: `0000010` `1001010` `1101001`
 3. add `0` in front of the last chunk and `1` in front of the others: `10000010` `11001010` `01101001`.
 
-This is the 3-bytes positive elastic integer representation of `42345`.
+=> `[10000010, 11001010, 01101001]` is the 3-bytes representation of `42345`.
 
-#### Examples of elastic positive integer representations
+#### Examples of unsigned elastic integer representations
 
 `0` -> `00000000`
 `1` -> `00000001`
@@ -187,7 +181,7 @@ This is the 3-bytes positive elastic integer representation of `42345`.
 `129` -> `10000001 00000001`
 
 
-### Elastic integers
+### Signed elastic integers <a href="#signed-elastic-integers"></a>
 
 It works the same way as positive elastic integers, except that the first bit of the first byte is used to indicate the sign:
 
@@ -209,53 +203,12 @@ For the first byte exclusively, it is the second bit that is the "continuation b
 `-65` -> `11000001 00000001`
 
 
-### Elastic numbers
-
-Encoding a decimal number in a compact and extensible way is not easy work.
-
-Since we humans think and write numbers in base-10, it happens it is quite often space-efficient to store a number as a string rather than as a float64.
-
-For example, writing "1.2" is a three-bytes length only when it would take eight bytes to write it in the float64 format.
-
-Bunker use the fact that we are humans and store all numbers into a base-10 string representation of the number using the following 4-bits characters:
-
-`0` -> `0000`
-`1` -> `0001`
-`2` -> `0010`
-`3` -> `0011`
-`4` -> `0100`
-`5` -> `0101`
-`6` -> `0110`
-`7` -> `0111`
-`8` -> `1000`
-`9` -> `1001`
-`.` -> `1010`
-`+` -> `1011`
-`-` -> `1100`
-`e` -> `1101`
-
-The `1111` 4-bits character indicates the end of the string.
-
-If there is an odd number of 4-bits characters, a `0000` is appended to finish the last byte.
-
-There are special bytes:
-
-- `1110 1011` is `infinity`,
-- `1110 1100` is `-infinity`,
-- `1110 0000` is `not a number`.
-
-### Examples
-
-`1124` -> `0001 0001 0010 0100` (encoded in 2 bytes)
-`1.2` -> `0001 1010 0010 0000` (encoded in 2 bytes)
-`1.324e12` -> `0001 1010 0011 0010 0100 1101 0001 0010` (encoded in 4 bytes)
-
-## Strings
+## Strings <a href="#strings"></a>
 
 All bunker strings:
 
 - are encoded in UTF-8,
-- finish with a trailing zero.
+- end with a trailing zero.
 
 ### Examples
 
@@ -265,277 +218,287 @@ All bunker strings:
 `"😋"` -> `[240, 159, 152, 139, 0]`
 
 
-### References
+## Encoding schema  <a href="#encoding-schema"></a>
 
-References is one of the key features of Bunker. It enables you to use circular references and it helps to reduce the encoded size.
+The first step when encoding with bunker is to encode the schema.
 
-There are three types of references:
+### Primitive values  <a href="#encoding-schema-primitive-values"></a>
+`[Type.{primitive}]` is written as a byte, where `{primitive}` is one of the primitive types:
+- `unknown`
+- `character`
+- `binary`
+- `boolean`
+- `positiveInteger`
+- `integer`
+- `bigInteger`
+- `number`
+- `string`
+- `regularExpression`
+- `date`
+- `any`
 
-- object references in schema,
-- object references in data,
-- string references in data.
+### Composed values  <a href="#encoding-schema-composed-values"></a>
 
-Usually when you need to deal with references, you would create a dictionary which contains all your referenced objects / strings, and when you need to access the object you point to it with its index.
+Composed values are constructed from primitive types but they are not object.
 
-This approach would force you to use a dictionary on one hand, the data on the other, and finally merge the two. This is sub-optimal because it would cause need to copy-paste all the data in memory when the encoding is done.
+#### nullable(type)
+A nullable is value is a value that can be `null` or `undefined`.
 
-The Bunker way is to not use a separate dictionary. Every encountered object is stored in an array and the position in the array is its index. Concretely:
+`Type.nullable` is written as a byte, then the schema of `type`.
 
-- when you encode data, it means every time you encounter an object, you push it to your refererences' array, and in case you encounter the object again, you write its index as reference instead of writing again the object;
-- and when you decode data, every time you encounter an object you push it to your references array, and when you encounter a reference, you retrieve the right object from this array.
+Examples:
 
-Three arrays are needed: one for object references in schema, one for object references in encoded data, and one for string references in encoded data. The indexes don't mix between those three arrays.
-
-## Specifications
-
-### Schema specifications
-
-- `Primitive`
-
-  The type of the primitive is written as a byte.
-
-  Primitive types are: unknown, null, any, boolean, character, integer, positiveInteger, bigInteger, number, string, regExp, date and reference.
-
-  Example: for a boolean, write `Type.boolean` - which is equal to `3`. For a character, write `Type.character`, etc...
-
-  Size (in bytes): `1`
-
-
-- `Object`
-
-  `Type.object` is written as a byte, then all the keys following by their value's schema, then a finishing `ByteIndicator.stop`.
-
-  Examples:
-
-  ```ts
-  data: {}
-  schema: [Type.object, ByteIndicator.stop]
-  ```
-
-  ```ts
-  data: { foo: "bar", x: 12 }
-  schema: [Type.object, "foo", Type.string, "x", Type.number, ByteIndicator.stop]
-  ```
+```ts
+// nullable integer
+[Type.nullable, Type.integer]
+// nullable object with a 'foo' key with a string value
+[Type.nullable, Type.object, "foo", Type.string, ByteIndicator.stop]
+```
 
 
-  Size: `1 + sizeof(keys) + sizeof(T)`
+#### tuple(type1, type2, type3, ...)
 
-- `Reference<T>`
-
-  A reference to a previously used schema object.
-
-  `Type.reference` is written as a byte, then its index as an `positive integer`.
-
-  Examples:
-
-  ```ts
-  data: { self: data }
-  schema: [Type.object, "self", Type.reference, 0, ByteIndicator.stop]
-  // we reference to 0 because the first encountered object is `data`
-  // if `data` was nested inside another object, its index would not be 0
-  ```
-
-  ```ts
-  data: { meta: { foo: "bar" }, referenceToMeta: data.meta }
-  schema: [Type.object, "meta", Type.object, "foo", Type.string, ByteIndicator.stop, "referenceToMeta", Type.reference, 1, ByteIndicator.stop]
-  // we reference to 1 because data.meta is the second encountered object
-  ```
-
-- `Nullable<T>`
-
-  A nullable is value is a value that can be null or undefined.
-
-  `Type.nullable` is written as a byte, then T's schema is written.
-
-  Size: `1 + sizeof(T)`
-
-  Examples:
-
-  ```ts
-  // nullable integer
-  [Type.nullable, Type.integer]
-  // nullable object with a 'foo' key with a string value
-  [Type.nullable, Type.object, "foo", Type.string, ByteIndicator.stop]
-  ```
-
-- `Array<T, properties: O>`
-
-  `Type.array` is written as a byte, then T's schema is written, then O's schema.
-
-  Examples:
-
-  ```ts
-  data: [1, 2, 3]
-  schema: [Type.array, Type.number, ByteIndicator.stop]  // the `ByteIndicator.stop` is indicating the array has no properties
-  ```
-
-  ```ts
-  data: [1, 2, 3, length: 3, capacity: 12]  // this is an array with properties
-  schema: [Type.array, Type.number, "length", Type.number, "capacity", Type.number, ByteIndicator.stop]
-  ```
-
-  Size: `1 + sizeof(T) + sizeof(O)`
-
-- `Set<T, properties: O>`
-
-  `Type.set` is written as a byte, then T's schema is written, then O's schema.
-
-  Size: `1 + sizeof(T) + sizeof(O)`
-
-- `Map<T, properties: O>`
-
-  All map keys must be strings.
-
-  `Type.map` is written as a byte, then T's schema is written, then O's schema.
-
-  Size: `1 + sizeof(T) + sizeof(O)`
-
-- `Record<T>`
-
-  A `record` is similar to a map: it's a dictionary with strings a key and with T as the type of the values.
-
-  The difference between a record and a map depends on the language. In Javascript the record is an object while a map is a Map. In C++, both are the same - except a record cannot have properties.
-
-  `Type.record` is written as a byte, then T's schema is written.
-
-  Size: `1 + sizeof(T)`
-
-- `Tuple<T1, T2, T3, ...>`
-
-  `Type.tuple` is written as a byte, then the tuple length is written as a `positive integer`, then T1's schema is written, then T2's, etc...
-
-  Size: `1 + sizeof(length) + sizeof(T1) + sizeof(T2) + ...`
+`Type.tuple` is written as a byte, then the tuple length is written as a `positive integer`, then `type1` schema is written, then `type2` schema, etc...
 
 
-### Encoded data specifications
+#### recall(index)
+A reference to a previously encountered object schema (arrays, maps and sets are considered objects).
+
+> The recall type happens when bunker has to guess the type of a recursive object.
+
+`index` is the position of the encountered schema in the array of all encountered schemas (object schemas only). **The index is relative to the current scope:** every encountered `any` type has its own scope with its own array of encountered object schemas.
+
+`Type.recall` is written as a byte, then `index` as a `positive integer`.
+
+> Bunker implementations that do not dynamically guess types don't have to bother with the recall schema when encoding. They still have to deal with it when decoding.
+
+##### Examples
+```ts
+value: { self: data }
+encoded schema: [Type.object, "self", Type.reference, 0, ByteIndicator.stop]
+// we reference to 0 because the first encountered object is `data`
+// if `data` was nested inside another object, its index would not be 0
+```
+
+```ts
+value: {
+   meta: {
+      foo: "bar"
+   },
+   referenceToMeta: data.meta
+}
+encoded schema: [
+   Type.object,
+   "meta",
+   Type.object,
+   "foo",
+   Type.string,
+   ByteIndicator.stop,
+   "referenceToMeta",
+   Type.reference,
+   1,
+   ByteIndicator.stop
+]
+// we reference to 1 because data.meta is the second encountered object
+// // (the first encountered object is 'data')
+```
+
+
+### Object values  <a href="#encoding-schema-object-values"></a>
+
+#### object  <a href="#encoding-schema-object"></a>
+
+Encode: `[Type.object, "first key", (first key value type), "second key", (second key value type), ..., Byte.stop]`
+
+`Type.object` is written as a byte, then all the keys following by their value's schema, then a finishing `Byte.stop`.
+
+Examples:
+
+```ts
+value: {}
+encoded schema: [Type.object, ByteIndicator.stop]
+```
+
+```ts
+value: { foo: "bar", x: 12 }
+encoded schema: [
+   Type.object,
+   "foo",
+   Type.string,
+   "x",
+   Type.number,
+   ByteIndicator.stop
+]
+```
+
+
+#### array(type, properties)
+
+  `Type.array` is written as a byte, then `type` schema is written, then `properties` schema.
+
+##### Examples
+
+```ts
+value: [1, 2, 3]
+// the `ByteIndicator.stop` is indicating the array has no properties
+encoded schema: [Type.array, Type.integer, ByteIndicator.stop]
+```
+
+```ts
+// this is an array with properties
+value: [1, 2, 3, length: 3, capacity: 12]
+encoded schema: [
+  Type.array,
+  Type.integer,
+  "length",
+  Type.integer,
+  "capacity",
+  Type.integer,
+  ByteIndicator.stop
+]
+```
+
+#### set(type, properties)
+
+`Type.set` is written as a byte, then `type` schema is written, then `properties` schema.
+
+#### map(keyType, valueType, properties)
+
+`Type.map` is written as a byte, then `keyType` schema is written, then `valueType` schema, then `properties` schema.
+
+## Encoding data
 
 After the schema comes the encoded data. You no longer encode the type of the data but its value.
 
-#### Primitive values
+### Primitive values
 
-- `Character`
+#### character
 
-  A character is a single byte value that goes from 0 to 255.
+A character is a single byte value that goes from `0` to `255`.
 
-  Size: `1`
+Size: `1`
 
-- `Unknown`
+#### boolean
 
-  The `unknown` type is used to describe the values type of an empty array, empty set, empty map or empty record. It can be encoded in the schema but not in the data.
+If true, write the character `1`, else write the character `0`.
 
-  Size: `0` (cannot happen in encoded data)
+Size: `1`
 
-- `Boolean`
+#### integer
 
-  If true, write the character `1`, else write the character `0`.
+Write the integer's value as an elastic signed integer.
 
-  Size: `1`
+Size: `1+`
 
-- `Integer`
+#### positiveInteger
 
-  Write the integer's value as an elastic signed integer.
+Write the integer's value as an elastic unsigned integer.
 
-  Size: `1+`
+Size: `1+`
 
-- `PositiveInteger`
+#### number
 
-  Write the integer's value as an elastic unsigned integer.
+Write the number's value as a float64 number in little endian format.
 
-  Size: `1+`
+Size: `8`
 
-- `Number`
+#### bigInteger
 
-  Write the number's value as an elastic floating number.
+Write the big integer's value as an elastic signed integer.
 
-  Size: `2+`
+Size: `1+`
 
-- `BigInteger`
+#### string
 
-  Write the big integer's value as an elastic signed integer.
+- If the string has already been encountered:
 
-  Size: `1+`
+   Write `Byte.stringReference` and the position of the string in the array of encountered strings as a `positive integer`.
 
-- `String`
+- If the string has not been encountered:
 
-  If the first byte is `ByteIndicator.reference`, then the string is a reference to a previously encountered string and the next value is a `positive integer` which indicates the index of the string in the array of encountered strings.
+   Write the string encoded in `utf-8` with a trailing zero at the end.
 
-  Size: `1 + sizeof(index)`
+When decoding, check the first byte. If it is equal to `Byte.stringReference`, then you have a string reference. Otherwise you can read the string up to the trailing zero (first byte included).
 
-  Else, write the string with a trailing zero at the end.
+> Since `Byte.stringReference` is a character that cannot happen in utf-8, there is no chance to mix a raw string with a string reference.
 
-  Size: `1 + sizeof(string encoded as utf-8)`
+#### regularExpression
 
-  > Note: since the `ByteIndicator.reference` is a character that cannot happen in utf-8, there is no chance to mix a string with a string reference.
+A regular expression consists of two parts:
 
-- `RegularExpression`
+- the `expression` itself,
+- and its `flags` (`'g' | 'i' | 'm' | ...`)
 
-  Write the expression as a string, then the flags as a string.
+Write the `expression` as a string, then the `flags` as a string.
 
-  Size: `2+`
+Size: `2+`
 
-- `Date`
+#### date
 
-  Write the timestamp as an elastic signed integer.
+Write the number of milliseconds since 1970 as an elastic signed integer.
 
-  Size: `1+`
+A negative number means a date before 1970.
 
-- `Tuple`
+Since elastic integers can be as big as possible, any date can be encoded with a millisecond-precision.
 
-  Write the values of the tuple one after the other, in the same order as defined in the schema.
+Size: `1+`
 
-  Size: `0+`
+### Composed values
 
-- `Reference`
+#### tuple
 
-  Any non-primitive value or string can be a reference to a previously encountered non-primitive value or string.
+Write the values of the tuple one after the other, in the same order as defined in the schema.
 
-  > Note: empty strings should not be referenced.
+Size: `0+`
 
-  Write `Byte.reference`, then the index of the object or the string in its corresponding array.
+#### recall
 
-  Size: `2+`
+#### nullable
 
-- `Nullable`
+First write:
 
-  First write:
+- `NullableValue.null` is the value is null,
+- or `NullableValue.undefined` is the value is undefined,
+- or `NullableValue.defined` is the value is defined,
 
-  - `NullableValue.null` is the value is null,
-  - or `NullableValue.undefined` is the value is undefined,
-  - or `NullableValue.defined` is the value is defined,
-
-  and then if the value is defined, write the value.
-
-  Size: `1` if null or undefined, `2+` elsewhere.
+If the value is defined, then write the value.
 
 
-#### Non-primitive values
+### Object values
+Every object value can be a reference to a previously encountered object.
 
-Non-primitive values are constructed from primitive values.
+This rule applies to all the following types:
 
-When decoding and for each of the following types, the first byte must be checked: if it equals `Byte.reference`, then the value should be treated as a reference.
+- if the object to encode has already been encoutered, write `Byte.reference` then the index of the object in the array of all previously encountered objects,
+- else, write the value of the object depending on its type, as indicated after.
 
-- `Object`
+#### object
 
-  Write the values of the object one after the other, in the same order as defined in the schema.
+Write `Type.object`, then the values of the object one after the other in the same order as their respective keys (previously encoded in the schema).
 
-  Size: `0+`
+> The `Type.object` prefix byte guarantees there is no mix between a raw object and the reference of an object.
 
-- `Array` and `Set`
+#### array
 
-  Write the length of the array as an `elastic signed integer`, then write all the array values, then the array's properties as an object.
+Write the length of the array as an `elastic signed integer`, then write all the array values, then the array's properties as a <u>raw object</u>.
 
-  > Note: it is important to write the length as a signed integer instead of an unsigned even if an array length is always positive, so that there is no chance to mix a length byte with a `Byte.reference` character.
+> It is important to write the length as a <u>signed integer</u>. Since an array length is always positive the first bit will be `0` - so there is no chance to mix it with a `Byte.reference` byte.
 
-  Size: `0+`
+A *raw object* is an encoded object without the `Type.object` prefix byte.
 
-- `Record` and `Map`
+#### set
 
-  Write the values of the map / record one after the other, in the same order as defined in the schema.
+Write the length of the set as an `elastic signed integer`, then write all the set values, then the set's properties as a <u>raw object</u>.
 
-  Then write the record or map properties as an object.
+A *raw object* is an encoded object without the `Type.object` prefix byte.
 
-  Size: `1+`
+#### map
 
+Write the number of entries as an `elastic signed integer`, then the first key of the map, then its associated value, then the second key, then its associate value, etc...
+
+Then write the map properties as a <u>raw object</u>.
+
+A *raw object* is an encoded object without the `Type.object` prefix byte.
 
 ## Implementation advices
 
@@ -546,3 +509,62 @@ Checking if a string has already been referenced can impact badly the encoding s
 You should compare pointers of strings instead of comparing content (not possible in every language), and if you have to compare contents, only compare small strings.
 
 It also means two bunker files can have different sizes depending on the implementation.
+
+
+
+## Memory and references
+
+References is one of the key features of Bunker. It enables you to handle circular references and it greatly helps to reduce the data size.
+
+It is also the most complex feature to implement.
+
+Usually when you need to deal with references, you would create a dictionary which contains all your referenced objects / strings, and when you need to access the object you point to it with its index.
+
+This approach would force you to use a dictionary on one hand, the data on the other, and finally merge the two. This is suboptimal because then you would need to copy-paste all the data in memory when the encoding is done.
+
+Bunker does not use a separate dictionary. Instead, every time an object to memorized is encountered, it is stored in an array and we can reference it later by using its index.
+
+There are two types of memory:
+
+- schema memory,
+- data memory.
+
+### Schema memory
+
+We need memory for schema when guessing the type of an object with a circular reference.
+
+> Bunker implementations that do not have the capacity to dynamically guess a type from a value dont have to deal with schema memory when encoding.
+
+Imagine this use case:
+
+```ts
+import { bunker, any } from "@digitak/bunker";
+
+const objectWithCircularReference = {};
+objectWithCircularReference.self = objectWithCircularReference;
+
+bunker(objectWithCircularReference, any);
+```
+
+Since bunker does not know the type of `objectWithCircularReference`, it will try to guess it. And it will guess the following schema:
+
+```ts
+object({
+   self: recall(0)
+})
+```
+
+But what does `recall(0)` mean? This is what happens:
+
+- when starting to guess the value, we first encounter the `objectWithCircularReference` object,
+- since it is an object we memorize it,
+- when guessing the type of property `self` we realize we are encountering an already encountered object. So instead of trying infinitely to guess its type, we say "it's the same type as the first object we encountered (ie at index 0 in memory)".
+
+
+ Concretely:
+
+- when you encode data, it means every time you encounter an object, you push it to your refererences' array, and in case you encounter the object again, you write its index as reference instead of writing again the object;
+- and when you decode data, every time you encounter an object you push it to your references array, and when you encounter a reference, you retrieve the right object from this array.
+
+
+Three arrays are needed: one for object references in schema, one for object references in encoded data, and one for string references in encoded data. The indexes don't mix between those three arrays.
