@@ -5,68 +5,30 @@ Bunker is a very efficient binary data format that can be used as a replacement 
 This document is the official specifications for the **bunker 3 binary format**.
 
 ### Table of contents
-1. [**Data structure**](#data-structure)
+1. [Data structure](#data-structure)
 
-2. [**Enumerations**](#enumerations)
-   - [Type](#enumeration-type)
-   - [NullableValue](#enumeration-nullable-value)
-   - [Byte](#enumeration-byte)
+2. [Enumerations](#enumerations)
+   - [Type](#type)
+   - [NullableValue](#nullablevalue)
+   - [Byte](#byte)
 
-3. [**Elastic integers**](#elastic-integers)
-   - [Positive elastic integers](#unsigned-elastic-integers)
+3. [Elastic integers](#elastic-integers)
+   - [Unsigned elastic integers](#unsigned-elastic-integers)
    - [Signed elastic integers](#signed-elastic-integers)
 
-4. [**Strings**](#string)
+4. [Strings](#strings)
 
-5. [**Encoding schema**](#encoding-schema)
-   - [Primitive values](#encoding-schema-primitives-values)
+5. [Encoding schema](#encoding-schema)
 
-   - [Object values](#encoding-schema-object-values)
-      - [object](#encoding-schema-object)
-      - [array](#encoding-schema-array)
-      - [set](#encoding-schema-set)
-      - [map](#encoding-schema-map)
+6. [Encoding data](#encoding-data)
 
-   - [Composed values](#encoding-schema-composed-values)
-
-      - [nullable](#encoding-schema-nullable)
-      - [tuple](#encoding-schema-tuple)
-      - [instance](#encoding-schema-instance)
-      - [recall](#encoding-schema-recall)
-
-6. [**Encoding data**](#encoding-data)
-   -  [Primitive values](#encoding-data-primitive-values)
-      - [character](#encoding-data-character)
-      - [binary](#encoding-data-binary)
-      - [boolean](#encoding-data-boolean)
-      - [positiveInteger](#encoding-data-positive-integer)
-      - [integer](#encoding-data-integer)
-      - [bigInteger](#encoding-data-big-integer)
-      - [number](#encoding-data-number)
-      - [string](#encoding-data-string)
-      - [regularExpression](#encoding-data-regular-expression)
-      - [date](#encoding-data-date)
-      - [any](#encoding-data-any)
-
-   - [Object values](#encoding-data-object-values)
-      - [object](#encoding-data-object)
-      - [array](#encoding-data-array)
-      - [set](#encoding-data-set)
-      - [map](#encoding-data-map)
-
-   - [Composed values](#encoding-data-composed-values)
-      - [nullable](#encoding-data-nullable)
-      - [tuple](#encoding-data-tuple)
-      - [instance](#encoding-data-instance)
-
-7. [**Implementation tips**](#implementation-tips)
+7. [Implementation tips](#implementation-tips)
    - [String references](#string-references)
    - [Object references](#object-references)
       - [Schema memory](#schema-memory)
       - [Data memory](#data-memory)
 
-
-## Data structure 
+## Data structure
 
 Bunker data is composed of two parts:
 
@@ -82,11 +44,11 @@ The whole schema is encoded before the whole data part.
 
 Encoding the schema along the data might seem unnecessary, but it brings safety: you can decode any data without having to know what schema was used when it is encoded.
 
-## Enumerations 
+## Enumerations
 
 The following enumerations will be used throughout the whole document in the form: `EnumerationName.key`.
 
-### Type 
+### Type
 The `Type` enumeration is used to encode the `schema`.
 ```ts
 enum Type {
@@ -123,7 +85,7 @@ enum Type {
 
 
 
-### NullableValue 
+### NullableValue
 
 The `NullableValue` enumeration is used by the nullable type to indicate whether a nullable value is null, undefined, or defined.
   ```ts
@@ -135,7 +97,7 @@ The `NullableValue` enumeration is used by the nullable type to indicate whether
   ```
 
 
-### Byte 
+### Byte
 
 Miscellaneous byte values.
 
@@ -148,7 +110,7 @@ enum Byte {
 }
 ```
 
-## Elastic integers 
+## Elastic integers
 
 Bunker use custom binary formats to store integers:
 
@@ -157,7 +119,7 @@ Bunker use custom binary formats to store integers:
 
 They are called *elastic* because they use as few data space as possible and they can scale infinitely.
 
-### Unsigned elastic integers 
+### Unsigned elastic integers
 
 An unsigned elastic integer is similar to a regular integer, except that the first bit of each byte - instead describing the number value - is used as a "continuation bit":
 
@@ -184,7 +146,7 @@ Let's encode the arbitrary positive integer `42345`:
 `129` -> `10000001 00000001`
 
 
-### Signed elastic integers 
+### Signed elastic integers
 
 It works the same way as positive elastic integers, except that the first bit of the first byte is used to indicate the sign:
 
@@ -206,7 +168,7 @@ For the first byte exclusively, it is the second bit that is the "continuation b
 `-65` -> `11000001 00000001`
 
 
-## Strings 
+## Strings
 
 All bunker strings:
 
@@ -589,7 +551,7 @@ Write the instance value depending on the schema of its class (an object most of
 
 
 
-## Implementation advices  
+## Implementation tips  
 
 ### String references  
 
