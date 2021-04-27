@@ -25,8 +25,6 @@ Unlike JSON and MessagePack, Bunker correctly encode and decode:
 - **instances of classes**: you can store and retrieve your prototypes,
 - and **circular references**.
 
-This is the official bunker
-
 ## Usage
 
 Bunker exports two main functions to encode and decode data:
@@ -255,3 +253,5 @@ If you don't find a bunker library with your programming language, you can creat
 ## Comparisons
 
 ### Output size
+
+![Data size comparison](https://github.com/digital-loukoum/bunker/tree/main/assets/bunker-data-size-comparison.png)
