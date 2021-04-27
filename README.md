@@ -3,7 +3,7 @@ Bunker is a fast and compact JSON alternative to store and share data in a binar
 
 It can be compared to [MessagePack](https://msgpack.org/index.html) or [Protocol Buffers](https://developers.google.com/protocol-buffers).
 
-Bunker is finely optimized to be very compact. In average, its output is **2.5x smaller than JSON** and **2x smaller than MessagePack**. See the [data size comparison](#data-size-comparison) appendice for more details.
+Bunker is finely optimized to be very compact. In average, its output is **2.5x smaller than JSON** and **2x smaller than MessagePack**. See the [data size comparison](#comparison-output-size) appendice for more details.
 
 Bunker achieves this extreme density by:
 
@@ -80,9 +80,39 @@ console.log(decoded.foo)  // print "12"
 ```
 
 
+### Reading and writing files with bunker
+
+Bunker also exports two functions to easily encode to a file / decode from a file:
+
+```ts
+async function bunkerFile(file: string, value: any, schema?: Schema): void
+async function debunkerFile(file: string): unknown
+```
+
+These two functions scale well: you can load huge files without affecting your memory.
+
+#### Basic example
+
+```ts
+import { bunkerFile, debunkerFile } from '@digitak/bunker/io'
+
+const myObject = {
+   foo: 12,
+   bar: {
+      hello: "Hello",
+      you: "world"
+   }
+}
+
+bunkerFile('./myFile.bunker', myObject)
+const decoded = debunkerFile('myFile.bunker')
+
+console.log(decoded.foo)  // print "12"
+```
 
 
-## Schema
+
+### Using a schema
 
 When you encode data with bunker, the first step is to guess the schema of the object.
 
@@ -97,11 +127,11 @@ For the exhaustive list of schema types exported by Bunker you can read the [com
 
 You can also browse [examples of schemas written in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema.md).
 
-### On the fly schema
+#### On the fly schema
 
 You pass the schema as a second argument to the `bunker` function.
 
-#### Basic example
+##### Basic example
 
 ```ts
 import { bunker, integer, string } from '@digitak/bunker'
@@ -125,10 +155,10 @@ The `debunker` function does not need to know the schema since it is encoded alo
 
 > Be cautious, a bad schema for a given value may cause unpredictable bugs!
 
-### Schema compilation
+#### Schema compilation
 
 
-#### Basic example
+##### Basic example
 ```ts
 import { bunker, number } from '@digitak/bunker'
 
@@ -162,40 +192,68 @@ console.log(decodeNaked(encoded36)) // print 36
 
 Naked encoding slightly improves data density as well as encoding / decoding speed, but you take the risk of ***losing your data*** if you lose the schema you used.
 
+### Encoding and decoding instances
 
-## Reading and writing files with bunker
+In order to encode and decode an instance, its class has to be registered.
 
-Bunker also exports two functions to easily encode to a file / decode from a file:
+To register a class, use the `register` function with the following arguments:
+
+- a **constructor function** (used to decode instances),
+- the **schema** of the class (used to encode and decode instances),
+- and optionally a **name** if it differs from the constructor's name.
 
 ```ts
-async function bunkerFile(file: string, value: any, schema?: Schema): void
-async function debunkerFile(file: string): unknown
+import { register } from '@digitak/bunker'
+
+register(
+   constructor: InstanceConstructor,
+   schema: Schema,
+   name?: string
+): void
 ```
 
-These two functions scale well: you can load huge files without affecting your memory.
+#### Example
 
-#### Basic example
-
+Let's say we have this simple `Foo` class:
 ```ts
-import { bunkerFile, debunkerFile } from '@digitak/bunker/io'
+class Foo {
+   constructor(public name: string) {}
 
-const myObject = {
-   foo: 12,
-   bar: {
-      hello: "Hello",
-      you: "world"
+   sayHello() {
+      console.log(`Hello, I'm ${this.name}!`)
    }
 }
+```
 
-bunkerFile('./myFile.bunker', myObject)
-const decoded = debunkerFile('myFile.bunker')
+First we register it so that we can encode and decode it with bunker:
+```ts
+import { register, object, string } from '@digitak/bunker'
 
-console.log(decoded.foo)  // print "12"
+register(Foo, object({ name: string }))
+```
+
+Then we can encode and decode as many instances of `Foo` as we like:
+
+```ts
+import { bunker, debunker } from '@digitak/bunker'
+
+const bar = new Foo("Bar")
+const encodedBar = bunker(bar)
+const decodedBar = debunker(encodedBar)
+
+decodedBar.sayHello() // will print "Hello, I'm Bar!"
+```
+
+Here bunker automatically guessed that `bar` is an instance of `Foo`, but we can also indicate manually what the type of `bar` is:
+
+```ts
+import { bunker, instance } from '@digitak/bunker'
+
+const encodedBar = bunker(bar, instance("Foo"))
 ```
 
 
-
-## Fetching bunker binary data from browser
+### How to fetch bunker binary data from browser
 
 Using the fetch API:
 
@@ -212,12 +270,14 @@ Using axios:
 ```ts
 import { debunker } from '@digitak/bunker'
 
-const response = await axios.get('https://my-url/my-data.bunker', { responseType: 'arraybuffer' })
+const response = await axios.get('https://my-url/my-data.bunker', {
+   responseType: 'arraybuffer'
+})
 const data = debunker(response.data)
 ```
 
 
-## Serving bunker binary data from a node server
+### How to serve bunker binary data from a node server
 
 If you serve a file, it is recommended to use streams:
 
@@ -260,9 +320,10 @@ http.createServer((request, response) => {
 ```
 
 
+
 ## Comparisons
 
-### Output size
+### Output size  <a href="comparison-output-size"></a>
 
 Here is the comparison between JSON, Bunker (with and without schema) and MessagePack using a variety of object patterns frequently used:
 
@@ -275,8 +336,12 @@ In average, Bunker's encoded data is:
 - **2.5x smaller** than JSON (**2.75x** smaller for naked encoding),
 - **2.1x smaller** than MessagePack (**2.35x** smaller for naked encoding).
 
+For small and non-repetitive objects Bunker will not improve size drastically, but for huge and repetitive objects (like `big-regular`), it can be up to **5x smaller** than JSON.
+
 ### Encoding / decoding speed
 
 If you manually indicates the schema of your values, this Typescript implementation of the bunker binary format specification is extremely fast.
 
-If you let Bunker guess the schema of your value though your performances will fall down.
+Letting Bunker guessing the schema of your values will badly affect your performances, especially when encoding. But you should worry about performances only if you encode / decode a lot of data because it's still going to be quite fast.
+
+On the other hand, the bunker type guesser will do an awesome job at guessing very precisely the type of any value.
