@@ -25,9 +25,11 @@ Unlike JSON and MessagePack, Bunker correctly encode and decode:
 - **instances of classes** (you can store and retrieve your prototypes),
 - and **circular references**.
 
+This library is written in **Typescript** so you don't need to import types. It is compatible with Node, Deno and a browser environment (except for `bunkerFile` and `debunkerFile` that are only compatibles with Node).
+
 ## Use cases
 
-Bunker is great to **store** or **share** data between processes.
+Bunker is great to store and share data between processes.
 
 For example you can use Bunker to communicate between a server and a client with more efficiency and versatility than JSON.
 
@@ -35,7 +37,7 @@ You can also save your objects into bunker files and load them later on.
 
 Or you can use Bunker to communicate between a process written in language X and another one written in language Y.
 
-If you don't find a bunker library with your programming language, feel free to create your own by following the [official bunker binary format specifications](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
+If you don't find a bunker library written in your favorite programming language, feel free to create your own by following the [official bunker binary format specifications](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
 
 
 ## API
@@ -62,11 +64,11 @@ You can encode and decode any value except functions.
 import { bunker, debunker } from '@digitak/bunker'
 
 const myObject = {
-  foo: 12,
-  bar: {
-    hello: "Hello",
-    you: "world"
-  }
+   foo: 12,
+   bar: {
+      hello: "Hello",
+      you: "world"
+   }
 }
 
 const encoded = bunker(myObject)
@@ -88,9 +90,9 @@ You can use a schema in two ways:
 - on the fly by passing the schema to the `bunker` function,
 - or you can compile it to get an encoder and a decoder function.
 
-For the exhaustive list of schema types exported by Bunker, you can read the [complete schema reference](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
+For the exhaustive list of schema types exported by Bunker you can read the [complete schema reference](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
 
-You can also [browse examples of schemas in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema).
+You can also browse [examples of schemas written in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema).
 
 ### On the fly schema
 
@@ -175,11 +177,11 @@ These two functions scale well: you can load huge files without affecting your m
 import { bunkerFile, debunkerFile } from '@digitak/bunker/io'
 
 const myObject = {
-  foo: 12,
-  bar: {
-    hello: "Hello",
-    you: "world"
-  }
+   foo: 12,
+   bar: {
+      hello: "Hello",
+      you: "world"
+   }
 }
 
 bunkerFile('./myFile.bunker', myObject)
@@ -222,16 +224,16 @@ import http from 'http'
 import { bunker } from '@digitak/bunker'
 
 http.createServer((request, response) => {
-  const filePath = 'myfile.bunker'
-  const stat = fs.statSync(filePath)
+   const filePath = 'myfile.bunker'
+   const stat = fs.statSync(filePath)
 
-  response.writeHead(200, {
+   response.writeHead(200, {
       'Content-Type': 'application/octet-stream',
       'Content-Length': stat.size,
-  })
+   })
 
-  const readStream = fs.createReadStream(filePath)
-  readStream.pipe(response)
+   const readStream = fs.createReadStream(filePath)
+   readStream.pipe(response)
 })
 
 ```
@@ -243,14 +245,14 @@ import http from 'http'
 import { bunker } from '@digitak/bunker'
 
 http.createServer((request, response) => {
-  const encoded = bunker(12)
+   const encoded = bunker(12)
 
-    response.writeHead(200, {
-        'Content-Type': 'application/octet-stream',
-        'Content-Length': encoded.length,
-    })
+   response.writeHead(200, {
+     'Content-Type': 'application/octet-stream',
+     'Content-Length': encoded.length,
+   })
 
-    response.end(encoded)
+   response.end(encoded)
 })
 ```
 
