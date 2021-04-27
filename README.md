@@ -93,9 +93,9 @@ You can use a schema in two ways:
 - on the fly by passing the schema to the `bunker` function,
 - or you can compile it to get an encoder and a decoder function.
 
-For the exhaustive list of schema types exported by Bunker you can read the [complete schema reference](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md).
+For the exhaustive list of schema types exported by Bunker you can read the [complete schema reference](https://github.com/digital-loukoum/bunker/tree/main/documentation/schema-reference.md).
 
-You can also browse [examples of schemas written in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md).
+You can also browse [examples of schemas written in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema.md).
 
 ### On the fly schema
 
