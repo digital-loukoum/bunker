@@ -41,13 +41,13 @@ A binary is an arbitrary list of bytes.
 A boolean is a `true` or `false` value.
 
 #### integer
-An integer is encoded as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
+An integer is encoded as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md#elastic-integers).
 
 #### positiveInteger
-A positive integer is encoded as a [positive elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
+A positive integer is encoded as a [positive elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md#elastic-integers).
 
 #### bigInteger
-A bigInteger can be arbitrarily large. It is encoded as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
+A bigInteger can be arbitrarily large. It is encoded as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md#elastic-integers).
 
 #### number
 An number is a signed 64-bit float (a double) stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
@@ -60,7 +60,7 @@ A type to store regular expressions.
 
 #### date
 
-The number of milliseconds since 1970 stored as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
+The number of milliseconds since 1970 stored as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md#elastic-integers).
 
 Can be negative for pre-1970 dates.
 
@@ -146,4 +146,4 @@ The class has to be registered so that it can be retrieved by its name.
 
 ### Examples
 
-You can view [here](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema) examples of schemas written in Javascript and using the official Bunker library.
+You can view [here](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md) examples of schemas written in Javascript and using the official Bunker library.

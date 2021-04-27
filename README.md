@@ -7,7 +7,7 @@ Bunker is finely optimized to be very compact. In average, its output is **2.5x 
 
 Bunker achieves this extreme density by:
 
-- using a **custom binary format for integers** called  [elastic integers](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers),
+- using a **custom binary format for integers** called  [elastic integers](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md#elastic-integers),
 - working well with **arrays of objects**. Instead of writing repeatedly all objects with all keys like JSON and MessagePack do, it guesses the most accurate schema and write keys and types only once,
 - **memorizing** and **reusing strings and objects** so that nothing is encoded twice.
 
@@ -29,7 +29,10 @@ This library is written in **Typescript** so you don't need to import types. It 
 
 ## Use cases
 
-Bunker is great to store and share data between processes.
+Bunker is great to:
+
+- store data,
+- share data between processes.
 
 For example you can use Bunker to communicate between a server and a client with more efficiency and versatility than JSON.
 
@@ -37,7 +40,7 @@ You can also save your objects into bunker files and load them later on.
 
 Or you can use Bunker to communicate between a process written in language X and another one written in language Y.
 
-If you don't find a bunker library written in your favorite programming language, feel free to create your own by following the [official bunker binary format specifications](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
+If you don't find a bunker library written in your favorite programming language, feel free to create your own by following the [official bunker binary format specifications](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md).
 
 
 ## API
@@ -90,9 +93,9 @@ You can use a schema in two ways:
 - on the fly by passing the schema to the `bunker` function,
 - or you can compile it to get an encoder and a decoder function.
 
-For the exhaustive list of schema types exported by Bunker you can read the [complete schema reference](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
+For the exhaustive list of schema types exported by Bunker you can read the [complete schema reference](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md).
 
-You can also browse [examples of schemas written in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema).
+You can also browse [examples of schemas written in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md).
 
 ### On the fly schema
 
