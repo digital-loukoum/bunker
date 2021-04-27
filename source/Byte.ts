@@ -12,14 +12,14 @@ enum Byte {
 	regularExpression,
 	date,
 	any,
-	nullable, // ... composed
-	tuple,
-	recall,
 	object, // ... objects
 	array,
 	set,
 	map,
+	nullable, // ... composed
+	tuple,
 	instance,
+	recall,
 
 	// special bytes
 	reference = 0xf8, // used to indicate if the value is a reference to a previously encountered object
