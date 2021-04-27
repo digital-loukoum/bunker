@@ -52,7 +52,7 @@ Bunker exports two main functions to encode and decode data:
 
 ```ts
 function bunker(value: any, schema?: Schema): Uint8Array
-function debunker(data: Uint8Array): any
+function debunker(data: Uint8Array): unknown
 ```
 
 You can encode and decode any value except functions.
