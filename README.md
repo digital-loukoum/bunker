@@ -1,5 +1,5 @@
 # Bunker
-Bunker is a fast and compact JSON alternative to store, pass and retrieve data in a binary format with a friendly API.
+Bunker is a fast and compact JSON alternative to store and share data in a binary format with a friendly API.
 
 It can be compared to [MessagePack](https://msgpack.org/index.html) or [Protocol Buffers](https://developers.google.com/protocol-buffers).
 
@@ -7,9 +7,9 @@ Bunker is finely optimized to be very compact. In average, its output is **2.5x 
 
 Bunker achieves this extreme density by:
 
-- using a custom binary format for integers (this special format is called  elastic integers),
-- working well with arrays of objects. Instead of writing repeatedly all objects with all keys like JSON and MessagePack do, it guesses the most accurate schema and write keys and types only once,
-- memorizing and reusing strings and objects so that nothing is encoded twice.
+- using a **custom binary format for integers** called  [elastic integers](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers),
+- working well with **arrays of objects**. Instead of writing repeatedly all objects with all keys like JSON and MessagePack do, it guesses the most accurate schema and write keys and types only once,
+- **memorizing** and **reusing strings and objects** so that nothing is encoded twice.
 
 Bunker is very compact but also extremely versatile as it can encode any data type.
 
@@ -22,10 +22,23 @@ Unlike JSON and MessagePack, Bunker correctly encode and decode:
 - maps,
 - sets,
 - maps and sets with properties,
-- **instances of classes**: you can store and retrieve your prototypes,
+- **instances of classes** (you can store and retrieve your prototypes),
 - and **circular references**.
 
-## Usage
+## Use cases
+
+Bunker is great to **store** or **share** data between processes.
+
+For example you can use Bunker to communicate between a server and a client with more efficiency and versatility than JSON.
+
+You can also save your objects into bunker files and load them later on.
+
+Or you can use Bunker to communicate between a process written in language X and another one written in language Y.
+
+If you don't find a bunker library with your programming language, feel free to create your own by following the [official bunker binary format specifications](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
+
+
+## API
 
 Bunker exports two main functions to encode and decode data:
 
@@ -145,9 +158,7 @@ console.log(decodeNaked(encoded36)) // print 36
 Naked encoding slightly improves data density as well as encoding / decoding speed, but you take the risk of ***losing your data*** if you lose the schema you used.
 
 
-## Use cases
-
-### Reading and writing files with bunker
+## Reading and writing files with bunker
 
 Bunker also exports two functions to easily encode to a file / decode from a file:
 
@@ -179,7 +190,7 @@ console.log(decoded.foo)  // print "12"
 
 
 
-### Fetching bunker binary data from browser
+## Fetching bunker binary data from browser
 
 Using the fetch API:
 
@@ -201,7 +212,7 @@ const data = debunker(response.data)
 ```
 
 
-### Serving bunker binary data from a node server
+## Serving bunker binary data from a node server
 
 If you serve a file, it is recommended to use streams:
 
@@ -243,15 +254,24 @@ http.createServer((request, response) => {
 })
 ```
 
-### Communicating between processes
-
-Because of its versatility and its small size, bunker is a great choice for process communication.
-
-If you don't find a bunker library with your programming language, you can create your own by following the [official bunker binary format specifications](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
-
 
 ## Comparisons
 
 ### Output size
 
-![Data size comparison](https://github.com/digital-loukoum/bunker/tree/main/assets/bunker-data-size-comparison.png)
+Here is the comparison between JSON, Bunker (with and without schema) and MessagePack using a variety of object patterns frequently used:
+
+![Data size comparison](https://raw.githubusercontent.com/digital-loukoum/bunker/main/assets/bunker-data-size-comparisons.png)
+
+Naked bunker (ie. without the schema encoded, only data) is obviously the winner in all categories, but embedding the schema is not as costy as we may think, especially for large objects.
+
+In average, Bunker's encoded data is:
+
+- **2.5x smaller** than JSON (**2.75x** smaller for naked encoding),
+- **2.1x smaller** than MessagePack (**2.35x** smaller for naked encoding).
+
+### Encoding / decoding speed
+
+If you manually indicates the schema of your values, this Typescript implementation of the bunker binary format specification is extremely fast.
+
+If you let Bunker guess the schema of your value though your performances will fall down.

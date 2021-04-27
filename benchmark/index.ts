@@ -138,7 +138,7 @@ async function benchmark(fn: Function, iterations = 500) {
 		"bunker (naked)": async ([value]: any) =>
 			bunker.compile(schemaOf(value)).encodeNaked(value),
 		msgpack: async ([value]: any) => msgpack.encode(value),
-		notepack: async ([value]: any) => notepack.encode(value),
+		// notepack: async ([value]: any) => notepack.encode(value),
 	}
 
 	const encoded = {}
@@ -175,7 +175,7 @@ async function benchmark(fn: Function, iterations = 500) {
 			"bunker (compiled)": async (encoded: any) =>
 				encoded["bunker"][1](encoded["bunker"][0]),
 			msgpack: async (encoded: any) => msgpack.decode(encoded.msgpack[0]),
-			notepack: async (encoded: any) => notepack.decode(encoded.notepack[0]),
+			// notepack: async (encoded: any) => notepack.decode(encoded.notepack[0]),
 		},
 		format: (value: number) => Intl.NumberFormat().format(~~value) + " ops/s",
 		apply: benchmark,
@@ -193,7 +193,7 @@ async function benchmark(fn: Function, iterations = 500) {
 			// "bunker (naked)": ([value, , compiled]: any) => compiled.encodeNaked(value),
 			"bunker (compiled)": async ([value, , compiled]: any) => compiled.encode(value),
 			msgpack: async ([value]: any) => msgpack.encode(value),
-			notepack: async ([value]: any) => notepack.encode(value),
+			// notepack: async ([value]: any) => notepack.encode(value),
 		},
 		format: (value: number) => Intl.NumberFormat().format(~~value) + " ops/s",
 		apply: benchmark,
