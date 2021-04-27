@@ -1,7 +1,7 @@
 {
 	"name": "@digitak/bunker",
-	"version": "3.0.0",
-	"description": "A fast and compact JSON alternative to store, pass and retrieve data",
+	"version": "3.0.1",
+	"description": "A fast and compact JSON alternative to store and share data",
 	"type": "module",
 	"main": "library/index.js",
 	"files": [
@@ -16,8 +16,16 @@
 		"type": "git",
 		"url": "git+https://github.com/digital-loukoum/bunker.git"
 	},
-	"keywords": [],
-	"author": "",
+	"keywords": [
+		"JSON",
+		"binary",
+		"data",
+		"store",
+		"share",
+		"process",
+		"MessagePack"
+	],
+	"author": "Gin Quin",
 	"license": "GNU GPL 3",
 	"bugs": {
 		"url": "https://github.com/digital-loukoum/bunker/issues"
