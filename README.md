@@ -79,7 +79,7 @@ You can use a schema in two ways:
 
 For the exhaustive list of schema types exported by Bunker, you can read the [complete schema reference](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications).
 
-You can also [browse examples of schemas in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema.md).
+You can also [browse examples of schemas in Javascript](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema).
 
 ### On the fly schema
 
@@ -255,7 +255,3 @@ If you don't find a bunker library with your programming language, you can creat
 ## Comparisons
 
 ### Output size
-
-### Encoding speed
-
-### Decoding speed

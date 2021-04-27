@@ -16,74 +16,56 @@ This page indexes all the types exported by Bunker to create your schemas.
    - [any](#any)
    - [binary](#binary)
 
-2. [**Composed values**](#composed-values)
-   - [nullable](#nullable)
-   - [tuple](#tuple)
-
-3. [**Objects**](#objects)
+2. [**Objects**](#objects)
    - [object](#object)
    - [array](#array)
    - [set](#set)
    - [map](#map)
 
-4. [**Instances**](#instances)
+3. [**Composed values**](#composed-values)
+   - [nullable](#nullable)
+   - [tuple](#tuple)
+   - [instance](#instance)
 
-5. [**Examples**](#examples)
+4. [**Examples**](#examples)
 
 ### <a name="primitive-values"></a> Primitive values
 
-##### character
+#### character
 A character is a one-byte value, ie. a number between `0` and `255`.
 
-##### boolean
+#### binary
+A binary is an arbitrary list of bytes.
+
+#### boolean
 A boolean is a `true` or `false` value.
 
-##### positiveInteger
-A positive integer is encoded as a [positive elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#positive-elastic-integers).
-
-##### integer
+#### integer
 An integer is encoded as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
 
-##### bigInteger
+#### positiveInteger
+A positive integer is encoded as a [positive elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
+
+#### bigInteger
 A bigInteger can be arbitrarily large. It is encoded as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
 
-##### number
+#### number
 An number is a signed 64-bit float (a double) stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
 
-##### string
+#### string
 A string is an UTF-8 list of characters with a trailing zero at the end.
 
-##### regularExpression
-Use this type to store regular expressions.
+#### regularExpression
+A type to store regular expressions.
 
-##### date
+#### date
 
 The number of milliseconds since 1970 stored as an [elastic integer](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications#elastic-integers).
 
 Can be negative for pre-1970 dates.
 
-##### any
+#### any
 A any type can be any primitive, composed or object type.
-
-##### binary
-A binary is an arbitrary list of bytes.
-
-
-### <a name="composed-values"></a> Composed values
-
-Composed values are built from other types but are not objects: they are not stored in memory and so cannot be referenced.
-
-##### nullable
-A nullable is a value that can be `null` or `undefined`. In some languages it is called an optional.
-```ts
-nullable(type: Type): Type
-```
-
-##### tuple
-A tuple is a finite list of types. A tuple is not considered an object and so is not memorized.
-```ts
-tuple(Type[]): Type
-```
 
 
 ### Objects
@@ -91,13 +73,13 @@ tuple(Type[]): Type
 Objects are built from other types but are not objects: they are not stored in memory and so cannot be referenced.
 
 
-##### object
+#### object
 An object contains a finite number of typed fields.
 ```ts
 object({ [key: string]: Type }): Type
 ```
 
-##### array
+#### array
 An array is an any-length list of a given type.
 
 ```ts
@@ -110,7 +92,7 @@ array(Type, { [key: string]: Type }): Type
 ```
 
 
-##### set
+#### set
 A set is an any-length list of a given type.
 
 Unlike an array, every element in a set is unique.
@@ -124,8 +106,8 @@ Since a set is also an object, it can have its own properties:
 set(Type, { [key: string]: Type }): Type
 ```
 
-##### map
-A map is a list of typed `<key, value>` pairs.
+#### map
+A map is a list of typed `[key, value]` pairs.
 
 ```ts
 map(KeyType, ValueType): Type
@@ -136,8 +118,23 @@ Since a map is also an object, it can have its own properties:
 map(KeyType, ValueType, { [key: string]: Type }): Type
 ```
 
+### <a name="composed-values"></a> Composed values
 
-### Instances
+Composed values are built from other types but are not objects: they are not stored in memory and so cannot be referenced.
+
+#### nullable
+A nullable is a value that can be `null` or `undefined`. In some languages it is called an optional.
+```ts
+nullable(type: Type): Type
+```
+
+#### tuple
+A tuple is a finite list of types. A tuple is not considered an object and so is not memorized.
+```ts
+tuple(Type[]): Type
+```
+
+#### instance
 An instance is a value constructed from a class.
 
 ```ts
