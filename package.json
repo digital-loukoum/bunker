@@ -1,6 +1,6 @@
 {
 	"name": "@digitak/bunker",
-	"version": "3.0.2",
+	"version": "3.0.3",
 	"description": "A fast and compact JSON alternative to store and share data",
 	"type": "module",
 	"main": "library/index.js",
