@@ -323,7 +323,7 @@ http.createServer((request, response) => {
 
 ## Comparisons
 
-### Output size  <a href="comparison-output-size"></a>
+### Output size  <a name="comparison-output-size"></a>
 
 Here is the comparison between JSON, Bunker (with and without schema) and MessagePack using a variety of object patterns frequently used:
 
