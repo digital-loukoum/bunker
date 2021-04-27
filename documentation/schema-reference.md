@@ -146,4 +146,4 @@ The class has to be registered so that it can be retrieved by its name.
 
 ### Examples
 
-You can view [here](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md) examples of schemas written in Javascript and using the official Bunker library.
+You can view [here](https://github.com/digital-loukoum/bunker/tree/main/documentation/examples/ecmascript/schema.md) examples of schemas written in Javascript and using the official Bunker library.
