@@ -3,11 +3,11 @@ Bunker is a fast and compact JSON alternative to store and share data in a binar
 
 It can be compared to [MessagePack](https://msgpack.org/index.html) or [Protocol Buffers](https://developers.google.com/protocol-buffers).
 
-Bunker is finely optimized to be very compact. In average, its output is **2.5x smaller than JSON** and **2x smaller than MessagePack**. See the [data size comparison](#comparison-output-size) appendice for more details.
+Bunker is finely optimized to be very compact. In average, its output is **2.5x smaller than JSON** and **2x smaller than MessagePack**. See the [data size comparison](#output-size--) appendice for more details.
 
 Bunker achieves this extreme density by:
 
-- using a **custom binary format for integers** called  [elastic integers](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md#elastic-integers),
+- using a **custom binary format for integers** called  [elastic integers](https://github.com/digital-loukoum/bunker/tree/main/documentation/specifications.md#elastic-integers--),
 - working well with **arrays of objects**. Instead of writing repeatedly all objects with all keys like JSON and MessagePack do, it guesses the most accurate schema and write keys and types only once,
 - **memorizing** and **reusing strings and objects** so that nothing is encoded twice.
 
@@ -323,7 +323,7 @@ http.createServer((request, response) => {
 
 ## Comparisons
 
-### Output size  <a name="comparison-output-size"></a>
+### Output size
 
 Here is the comparison between JSON, Bunker (with and without schema) and MessagePack using a variety of object patterns frequently used:
 

@@ -66,7 +66,7 @@ This document is the official specifications for the **bunker 3 binary format**.
       - [Data memory](#data-memory)
 
 
-## Data structure <a name="#data-structure"></a>
+## Data structure 
 
 Bunker data is composed of two parts:
 
@@ -82,11 +82,11 @@ The whole schema is encoded before the whole data part.
 
 Encoding the schema along the data might seem unnecessary, but it brings safety: you can decode any data without having to know what schema was used when it is encoded.
 
-## Enumerations <a name="#enumerations"></a>
+## Enumerations 
 
 The following enumerations will be used throughout the whole document in the form: `EnumerationName.key`.
 
-### Type <a name="#enumeration-type"></a>
+### Type 
 The `Type` enumeration is used to encode the `schema`.
 ```ts
 enum Type {
@@ -123,7 +123,7 @@ enum Type {
 
 
 
-### NullableValue <a name="#enumeration-nullable-value"></a>
+### NullableValue 
 
 The `NullableValue` enumeration is used by the nullable type to indicate whether a nullable value is null, undefined, or defined.
   ```ts
@@ -135,7 +135,7 @@ The `NullableValue` enumeration is used by the nullable type to indicate whether
   ```
 
 
-### Byte <a name="#enumeration-byte"></a>
+### Byte 
 
 Miscellaneous byte values.
 
@@ -148,7 +148,7 @@ enum Byte {
 }
 ```
 
-## Elastic integers <a name="#elastic-integers"></a>
+## Elastic integers 
 
 Bunker use custom binary formats to store integers:
 
@@ -157,7 +157,7 @@ Bunker use custom binary formats to store integers:
 
 They are called *elastic* because they use as few data space as possible and they can scale infinitely.
 
-### Unsigned elastic integers <a name="#unsigned-elastic-integers"></a>
+### Unsigned elastic integers 
 
 An unsigned elastic integer is similar to a regular integer, except that the first bit of each byte - instead describing the number value - is used as a "continuation bit":
 
@@ -184,7 +184,7 @@ Let's encode the arbitrary positive integer `42345`:
 `129` -> `10000001 00000001`
 
 
-### Signed elastic integers <a name="#signed-elastic-integers"></a>
+### Signed elastic integers 
 
 It works the same way as positive elastic integers, except that the first bit of the first byte is used to indicate the sign:
 
@@ -206,7 +206,7 @@ For the first byte exclusively, it is the second bit that is the "continuation b
 `-65` -> `11000001 00000001`
 
 
-## Strings <a name="#strings"></a>
+## Strings 
 
 All bunker strings:
 
@@ -238,11 +238,11 @@ The schema and the data share the same string memory: if a string is used in sch
 `"😋"` -> `[240, 159, 152, 139, 0]`
 
 
-## Encoding schema  <a name="#encoding-schema"></a>
+## Encoding schema  
 
 The first step when encoding with bunker is to encode the schema.
 
-### Primitive values  <a name="#encoding-schema-primitive-values"></a>
+### Primitive values  
 `[Type.{primitive}]` is written as a byte, where `{primitive}` is one of the primitive types:
 - `unknown`
 - `character`
@@ -258,9 +258,9 @@ The first step when encoding with bunker is to encode the schema.
 - `any`
 
 
-### Object values  <a name="#encoding-schema-object-values"></a>
+### Object values  
 
-#### object  <a name="#encoding-schema-object"></a>
+#### object  
 
 Encode: `[Type.object, "first key", (first key value type), "second key", (second key value type), ..., Byte.stop]`
 
@@ -319,11 +319,11 @@ encoded schema: [
 
 `Type.map` is written as a byte, then `keyType` schema is written, then `valueType` schema, then `properties` schema.
 
-### Composed values  <a name="#encoding-schema-composed-values"></a>
+### Composed values  
 
 Composed values are constructed from primitive types but they are not object.
 
-#### nullable(type)  <a name="#encoding-schema-nullable"></a>
+#### nullable(type)  
 A nullable is value is a value that can be `null` or `undefined`.
 
 `Type.nullable` is written as a byte, then the schema of `type`.
@@ -338,12 +338,12 @@ Examples:
 ```
 
 
-#### tuple(type1, type2, type3, ...)  <a name="#encoding-schema-tuple"></a>
+#### tuple(type1, type2, type3, ...)  
 
 `Type.tuple` is written as a byte, then the tuple length is written as a `positive integer`, then `type1` schema is written, then `type2` schema, etc...
 
 
-#### instance(name)  <a name="#encoding-schema-instance"></a>
+#### instance(name)  
 
 An instance is a value instantiated from a class.
 
@@ -414,7 +414,7 @@ encoded schema: [
 ```
 
 
-#### recall(index)  <a name="#encoding-schema-recall"></a>
+#### recall(index)  
 A reference to a previously encountered object schema (arrays, maps and sets are considered objects).
 
 > The recall type happens when bunker has to guess the type of a recursive object.
@@ -460,55 +460,55 @@ encoded schema: [
 
 
 
-## Encoding data  <a name="#encoding-data"></a>
+## Encoding data  
 
 After the schema comes the encoded data. You no longer encode the type of the data but its value.
 
-### Primitive values  <a name="#encoding-data-primitive-values"></a>
+### Primitive values  
 
-#### character  <a name="#encoding-data-character"></a>
+#### character  
 
 A character is a single byte value that goes from `0` to `255`.
 
 Size: `1` byte
 
-#### boolean  <a name="#encoding-data-boolean"></a>
+#### boolean  
 
 If true, write the character `1`, else write the character `0`.
 
 Size: `1` byte
 
-#### integer  <a name="#encoding-data-integer"></a>
+#### integer  
 
 Write the integer's value as an elastic signed integer.
 
 Size: `1+` byte(s)
 
-#### positiveInteger  <a name="#encoding-data-positive-integer"></a>
+#### positiveInteger  
 
 Write the integer's value as an elastic unsigned integer.
 
 Size: `1+` byte(s)
 
-#### number  <a name="#encoding-data-number"></a>
+#### number  
 
 Write the number's value as a float64 number in little endian format.
 
 Size: `8` bytes
 
-#### bigInteger  <a name="#encoding-data-big-integer"></a>
+#### bigInteger  
 
 Write the big integer's value as an elastic signed integer.
 
 Size: `1+` byte(s)
 
-#### string  <a name="#encoding-data-string"></a>
+#### string  
 
 Write the string value as specified in the [strings](#strings) section.
 
 Size: `1+` byte(s)
 
-#### regularExpression  <a name="#encoding-data-regular-expression"></a>
+#### regularExpression  
 
 A regular expression consists of two parts:
 
@@ -519,7 +519,7 @@ Write the `expression` as a string, then the `flags` as a string.
 
 Size: `2+` bytes
 
-#### date  <a name="#encoding-data-date"></a>
+#### date  
 
 Write the number of milliseconds since 1970 as an elastic signed integer.
 
@@ -529,7 +529,7 @@ Since elastic integers can be as big as possible, any date can be encoded with a
 
 Size: `1+` byte(s)
 
-### Object values  <a name="#encoding-data-object-values"></a>
+### Object values  
 Every object value can be a reference to a previously encountered object.
 
 This rule applies to all the following types:
@@ -537,13 +537,13 @@ This rule applies to all the following types:
 - if the object to encode has already been encoutered, write `Byte.reference` then the index of the object in the array of all previously encountered objects,
 - else, write the value of the object depending on its type, as indicated after.
 
-#### object  <a name="#encoding-data-object"></a>
+#### object  
 
 Write `Type.object`, then the values of the object one after the other in the same order as their respective keys (previously encoded in the schema).
 
 > The `Type.object` prefix byte guarantees there is no mix between a raw object and the reference of an object.
 
-#### array  <a name="#encoding-data-array"></a>
+#### array  
 
 Write the length of the array as an `elastic signed integer`, then write all the array values, then the array's properties as a <u>raw object</u>.
 
@@ -551,13 +551,13 @@ Write the length of the array as an `elastic signed integer`, then write all the
 
 A *raw object* is an encoded object without the `Type.object` prefix byte.
 
-#### set  <a name="#encoding-data-set"></a>
+#### set  
 
 Write the length of the set as an `elastic signed integer`, then write all the set values, then the set's properties as a <u>raw object</u>.
 
 A *raw object* is an encoded object without the `Type.object` prefix byte.
 
-#### map  <a name="#encoding-data-map"></a>
+#### map  
 
 Write the number of entries as an `elastic signed integer`, then the first key of the map, then its associated value, then the second key, then its associate value, etc...
 
@@ -566,13 +566,13 @@ Then write the map properties as a <u>raw object</u>.
 A *raw object* is an encoded object without the `Type.object` prefix byte.
 
 
-### Composed values  <a name="#encoding-data-composed-values"></a>
+### Composed values  
 
-#### tuple  <a name="#encoding-data-tuple"></a>
+#### tuple  
 
 Write the values of the tuple one after the other, in the same order as defined in the schema.
 
-#### nullable  <a name="#encoding-data-nullable"></a>
+#### nullable  
 
 First write:
 
@@ -582,16 +582,16 @@ First write:
 
 If the value is defined, then write the value.
 
-#### instance  <a name="#encoding-data-instance"></a>
+#### instance  
 
 Write the instance value depending on the schema of its class (an object most of the time, but it can also be instances of classes that inherited maps or arrays).
 
 
 
 
-## Implementation advices  <a name="implementation-advices"></a>
+## Implementation advices  
 
-### String references  <a name="string-references"></a>
+### String references  
 
 The string memory is common between schema and data.
 
@@ -604,7 +604,7 @@ You should compare pointers of strings instead of comparing content (not possibl
 It also means two bunker files can have different sizes depending on the implementation.
 
 
-### Object references  <a name="object-references"></a>
+### Object references  
 
 References is one of the key features of Bunker. It enables you to handle circular references and it greatly helps to reduce the data size.
 
@@ -621,7 +621,7 @@ There are two types of object memory:
 - schema memory,
 - data memory.
 
-#### Schema memory  <a name="schema-memory"></a>
+#### Schema memory  
 
 We need schema memory to deal with the [recall](#encoding-schema-recall) type, which happens when dynamically guessing a schema and finding out the same object multiple times.
 
@@ -657,7 +657,7 @@ The memory index **is relative to the current scope**. There are two kinds of sc
 
 Values of type `any` have their schema encoded within the data just before their value. This "inline schema" use its own schema memory. This is done so that you can guess a schema separately from an Encoder.
 
-#### Data memory  <a name="data-memory"></a>
+#### Data memory  
 
 Data memory is simpler to handle than schema memory because there is only one global scope.
 
