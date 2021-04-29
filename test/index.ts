@@ -5,15 +5,14 @@ import {
 	bunker,
 	debunker,
 	schemaOf,
-	nullable,
 	integer,
 	string,
 	array,
 	any,
 	tuple,
 	object,
-} from "../library/index"
-import { bunkerFile, debunkerFile } from "../library/io"
+} from "../source/index"
+import { bunkerFile, debunkerFile } from "../source/io"
 import { existsSync, mkdirSync, readFileSync } from "fs"
 
 start(`Bunker i/o `, async function ({ stage, same }) {
@@ -209,9 +208,9 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 				],
 			}
 			const schema = object({
-				tuple: tuple(string, integer),
+				tuple: tuple([string, integer]),
 				array: array(any),
-				arrayOfTuples: array(tuple(string, integer)),
+				arrayOfTuples: array(tuple([string, integer])),
 			})
 			const buffer = bunker(value, schema)
 			const result = debunker(buffer)

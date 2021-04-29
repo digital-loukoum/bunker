@@ -12,7 +12,7 @@ import BufferDecoder from "./decode/BufferDecoder"
 import { isAugmented } from "./augment"
 import { hasMemory, DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
 
-export default function compile(schema: Schema | SchemaWithMemory) {
+export default function compile<Type>(schema: Schema<Type> | SchemaWithMemory<Type>) {
 	const schemaEncoder = new BufferEncoder()
 	let dispatcher!: Schema
 	if (hasMemory(schema)) {
@@ -54,7 +54,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 		 * so that the treatment is never done if the user only needs to compile
 		 * the encoder.
 		 */
-		decode(decoder: Decoder | Uint8Array) {
+		decode(decoder: Decoder | Uint8Array): Type {
 			if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
 			decoder.reset()
 			const encodedSchema = decoder.bytes(data.byteLength)
@@ -63,7 +63,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 					console.log(
 						"[Decoder] The compiled schema is not the same as in the encoded data; recompiling schema before decoding"
 					)
-					return decoder.decode()
+					return decoder.decode() as Type
 				}
 			}
 			// if the schema is the same, we can use the compiled dispatcher
@@ -71,7 +71,7 @@ export default function compile(schema: Schema | SchemaWithMemory) {
 			return (decoderDispatcher as DecoderDispatcher).call(decoder)
 		},
 
-		decodeNaked(decoder: Decoder | Uint8Array) {
+		decodeNaked(decoder: Decoder | Uint8Array): Type {
 			if (decoder instanceof Uint8Array) decoder = new BufferDecoder(decoder)
 			decoder.reset()
 			decoder.memory = decoderMemory
@@ -113,8 +113,7 @@ export function encoderToDecoder(schema: Schema): DecoderDispatcher {
 				)
 			case encoder.map:
 				return decoder.map(
-					encoderToDecoder(schema["0"]),
-					encoderToDecoder(schema["1"]),
+					[encoderToDecoder(schema["0"]), encoderToDecoder(schema["1"])],
 					encoderToDecoderProperties(schema["2"])
 				)
 			default:

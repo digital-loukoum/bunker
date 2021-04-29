@@ -67,7 +67,7 @@ bunker([11, -3], schema)
 ```ts
 import { bunker, map, integer } from "@digitak/bunker"
 
-const schema = map(string, integer)
+const schema = map([string, integer])
 
 bunker(new Map([
    ['first', 1],
@@ -80,7 +80,7 @@ Maps can have any type as keys, not only strings:
 ```ts
 import { bunker, map, tuple, integer } from "@digitak/bunker"
 
-const schema = map(tuple([integer, integer]), integer)
+const schema = map([tuple([integer, integer]), integer])
 
 bunker(new Map([
    [[0, 0], 0],

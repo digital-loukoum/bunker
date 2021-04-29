@@ -10,16 +10,20 @@ export function bunker(
 	value: any,
 	schema?: Schema | SchemaWithMemory,
 	encoder = new BufferEncoder()
-) {
+): Uint8Array {
 	if (!schema) schema = schemaOf(value)
-	return encoder.encode(value, schema) as Uint8Array
+	return encoder.encode(value, schema)
+}
+
+export function debunker(data: Uint8Array): unknown {
+	return new BufferDecoder(data).decode()
 }
 
 export function register(
 	constructor: InstanceConstructor,
 	schema: Schema,
 	name?: string
-) {
+): void {
 	registry.add(constructor, schema, name)
 }
 
@@ -32,10 +36,6 @@ bunker.compile = compile
 bunker.registry = registry
 bunker.register = register
 bunker.encodeSchema = encodeSchema
-
-export function debunker(data: Uint8Array) {
-	return new BufferDecoder(data).decode()
-}
 
 // we export the schema constructors
 export const {

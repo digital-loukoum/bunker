@@ -16,7 +16,7 @@ export async function bunkerFile(
 	})
 }
 
-export async function debunkerFile(fileName: string): Promise<any> {
+export async function debunkerFile(fileName: string): Promise<unknown> {
 	return new Promise((resolve, reject) => {
 		open(fileName, "r", (error, fileDescriptor) => {
 			if (error) reject(error)

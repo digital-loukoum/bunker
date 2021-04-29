@@ -509,15 +509,15 @@ Write `Type.object`, then the values of the object one after the other in the sa
 
 Write the length of the array as an `elastic signed integer`, then write all the array values, then the array's properties as a <u>raw object</u>.
 
-> It is important to write the length as a <u>signed integer</u>. Since an array length is always positive the first bit will be `0` - so there is no chance to mix it with a `Byte.reference` byte.
+> A *raw object* is an encoded object without the `Type.object` prefix byte.
 
-A *raw object* is an encoded object without the `Type.object` prefix byte.
+> It is important to write the length as a <u>signed integer</u>. Since an array length is always positive the first bit will be `0` - so there is no chance to mix it with a `Byte.reference` byte.
 
 #### set  
 
 Write the length of the set as an `elastic signed integer`, then write all the set values, then the set's properties as a <u>raw object</u>.
 
-A *raw object* is an encoded object without the `Type.object` prefix byte.
+> A *raw object* is an encoded object without the `Type.object` prefix byte.
 
 #### map  
 
@@ -525,7 +525,7 @@ Write the number of entries as an `elastic signed integer`, then the first key o
 
 Then write the map properties as a <u>raw object</u>.
 
-A *raw object* is an encoded object without the `Type.object` prefix byte.
+> A *raw object* is an encoded object without the `Type.object` prefix byte.
 
 
 ### Composed values  

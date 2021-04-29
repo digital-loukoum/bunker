@@ -1,13 +1,14 @@
 import Coder from "../Coder"
 import Memory from "../Memory"
 import Byte from "../Byte"
-import augment, { isAugmented } from "../augment"
+import augment, { Augmented, isAugmented } from "../augment"
 import DataBuffer from "../DataBuffer"
 import schemaOf, { DispatcherWithMemory, hasMemory } from "../schemaOf"
 import registry from "../registry"
 
-export type Dispatcher = (value: any) => void
-export type DispatcherRecord = Record<string, Dispatcher>
+export type Dispatcher<Type = any> = (value: Type) => void
+export type DispatcherRecord<Type = any> = Record<string, Dispatcher<Type>>
+export type PropertiesDispatcher<O> = { [K in keyof O]: Dispatcher<O[K]> }
 
 /**
  * The Encoder abstract class implements the encoding logic without the details.
@@ -47,7 +48,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		this.memory.strings.length = 0
 	}
 
-	encode(value: any, schema?: Dispatcher | DispatcherWithMemory): unknown {
+	encode(value: any, schema?: Dispatcher | DispatcherWithMemory): any {
 		this.reset()
 		if (!schema) schema = schemaOf(value)
 		if (hasMemory(schema)) {
@@ -210,9 +211,9 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	/**
 	 * --- Constructibles
 	 */
-	nullable(dispatch: Dispatcher = this.unknown) {
+	nullable<T>(dispatch: Dispatcher<T> = this.unknown) {
 		return augment(
-			function (this: Encoder, value: any) {
+			function (this: Encoder, value: T | null | undefined) {
 				if (value === null) this.byte(Byte.null)
 				else if (value === undefined) this.byte(Byte.undefined)
 				else {
@@ -225,9 +226,11 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		)
 	}
 
-	tuple(...dispatchers: Dispatcher[]) {
+	tuple<Tuple extends [...unknown[]]>(
+		dispatchers: { [Index in keyof Tuple]: Dispatcher<Tuple[Index]> }
+	) {
 		return augment(
-			function (this: Encoder, value: any[]) {
+			function (this: Encoder, value: Tuple) {
 				for (let i = 0; i < dispatchers.length; i++) dispatchers[i].call(this, value[i])
 			},
 			Encoder.prototype.tuple,
@@ -259,13 +262,16 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	/**
 	 * --- Objects
 	 */
-	private properties(properties: DispatcherRecord, value: Record<string, any>) {
-		for (const key in properties) properties[key].call(this, value[key])
+	private properties(
+		properties: DispatcherRecord | undefined,
+		value: Record<string, any>
+	) {
+		if (properties) for (const key in properties) properties[key].call(this, value[key])
 	}
 
-	object(properties: DispatcherRecord = {}) {
+	object<O extends object>(properties: PropertiesDispatcher<O>) {
 		return augment(
-			function (this: Encoder, value: Record<string, any>) {
+			function (this: Encoder, value: O) {
 				if (this.inMemory(value)) return
 				this.byte(Byte.object) // first byte
 				this.properties(properties, value)
@@ -275,9 +281,17 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		)
 	}
 
-	array(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
+	array<T>(dispatch: Dispatcher<T>): Augmented<(this: Encoder, value: T[]) => void>
+	array<T, P>(
+		dispatch: Dispatcher<T>,
+		properties: PropertiesDispatcher<P>
+	): Augmented<(this: Encoder, value: T[] & P) => void>
+	array<T, P extends object>(
+		dispatch: Dispatcher<T>,
+		properties?: PropertiesDispatcher<P>
+	) {
 		return augment(
-			function (this: Encoder, value: any[]) {
+			function (this: Encoder, value: T[] & P) {
 				if (this.inMemory(value)) return
 				this.integer(value.length)
 				for (const element of value) dispatch.call(this, element)
@@ -289,9 +303,17 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		)
 	}
 
-	set(dispatch: Dispatcher = this.unknown, properties: DispatcherRecord = {}) {
+	set<T>(dispatch: Dispatcher<T>): Augmented<(this: Encoder, value: Set<T>) => void>
+	set<T, P>(
+		dispatch: Dispatcher<T>,
+		properties: PropertiesDispatcher<P>
+	): Augmented<(this: Encoder, value: Set<T> & P) => void>
+	set<T, P extends object>(
+		dispatch: Dispatcher<T>,
+		properties?: PropertiesDispatcher<P>
+	) {
 		return augment(
-			function (this: Encoder, value: Set<any>) {
+			function (this: Encoder, value: Set<T> & P) {
 				if (this.inMemory(value)) return
 				this.integer(value.size)
 				for (const element of value) dispatch.call(this, element)
@@ -303,13 +325,19 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		)
 	}
 
-	map(
-		keyDispatcher: Dispatcher,
-		valueDispatcher: Dispatcher = this.unknown,
-		properties: DispatcherRecord = {}
+	map<K, V>([keyDispatcher, valueDispatcher]: [Dispatcher<K>, Dispatcher<V>]): Augmented<
+		(this: Encoder, value: Map<K, V>) => void
+	>
+	map<K, V, P>(
+		[keyDispatcher, valueDispatcher]: [Dispatcher<K>, Dispatcher<V>],
+		properties: PropertiesDispatcher<P>
+	): Augmented<(this: Encoder, value: Map<K, V> & P) => void>
+	map<K, V, P>(
+		[keyDispatcher, valueDispatcher]: [Dispatcher<K>, Dispatcher<V>],
+		properties?: PropertiesDispatcher<P>
 	) {
 		return augment(
-			function (this: Encoder, map: Map<any, any>) {
+			function (this: Encoder, map: Map<K, V> & P) {
 				if (this.inMemory(map)) return
 				this.positiveInteger(map.size)
 				for (const [key, value] of map.entries()) {

@@ -3,24 +3,27 @@ import Encoder, { Dispatcher, DispatcherRecord } from "./encode/Encoder"
 import { isAugmented } from "./augment"
 import registry from "./registry"
 
-export class DispatcherWithMemory {
-	constructor(public dispatcher: Dispatcher, public memory: SchemaMemory<Dispatcher>) {}
+export class DispatcherWithMemory<Type = any> {
+	constructor(
+		public dispatcher: Dispatcher<Type>,
+		public memory: SchemaMemory<Dispatcher>
+	) {}
 }
 
-export default function schemaOf(value: any): DispatcherWithMemory {
+export default function schemaOf(value: any): DispatcherWithMemory<any> {
 	return new SchemaGuesser().guessSchema(value)
 }
 
-export function hasMemory(
-	dispatcher: Dispatcher | DispatcherWithMemory
-): dispatcher is DispatcherWithMemory {
+export function hasMemory<T>(
+	dispatcher: Dispatcher<T> | DispatcherWithMemory<T>
+): dispatcher is DispatcherWithMemory<T> {
 	return dispatcher.constructor == DispatcherWithMemory
 }
 
 class SchemaGuesser {
 	memory = new SchemaMemory<Dispatcher>()
 
-	guessSchema(value: any): DispatcherWithMemory {
+	guessSchema(value: any): DispatcherWithMemory<any> {
 		const dispatcher = this.dispatcher(value)
 		return new DispatcherWithMemory(dispatcher, this.memory)
 	}
@@ -69,7 +72,7 @@ class SchemaGuesser {
 	}
 
 	propertiesDispatcher(value: Record<string, any>) {
-		let properties: DispatcherRecord = {}
+		let properties: DispatcherRecord<any> = {}
 		for (const key in value) properties[key] = this.dispatcher(value[key])
 		return properties
 	}
@@ -106,7 +109,7 @@ class SchemaGuesser {
 			valueType = this.joinDispatchers(valueType, this.dispatcher(value))
 		}
 
-		return Encoder.prototype.map(keyType, valueType, this.propertiesDispatcher(map))
+		return Encoder.prototype.map([keyType, valueType], this.propertiesDispatcher(map))
 	}
 
 	joinDispatchers(a: Dispatcher, b: Dispatcher): Dispatcher {
@@ -160,8 +163,7 @@ class SchemaGuesser {
 				)
 			} else if (a.target == Encoder.prototype.map) {
 				joint = Encoder.prototype.map(
-					this.joinDispatchers(a["0"], b["0"]),
-					this.joinDispatchers(a["1"], b["1"]),
+					[this.joinDispatchers(a["0"], b["0"]), this.joinDispatchers(a["1"], b["1"])],
 					this.joinDispatcherProperties(a["2"], b["2"])
 				)
 			} else joint = Encoder.prototype.any

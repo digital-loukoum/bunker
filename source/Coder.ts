@@ -20,14 +20,13 @@ type Coder<Dispatcher extends Function> = {
 	any: Dispatcher
 
 	nullable(dispatch: Dispatcher): Dispatcher
-	tuple(...dispatch: Dispatcher[]): Dispatcher
+	tuple(dispatch: [...Dispatcher[]]): Dispatcher
 
 	object(dispatch: Record<string, Dispatcher>): Dispatcher
 	array(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Dispatcher
 	set(dispatch: Dispatcher, properties: Record<string, Dispatcher>): Dispatcher
 	map(
-		key: Dispatcher,
-		value: Dispatcher,
+		[key, value]: [Dispatcher, Dispatcher],
 		properties: Record<string, Dispatcher>
 	): Dispatcher
 }

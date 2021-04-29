@@ -199,7 +199,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 		}
 	}
 
-	tuple(...dispatchers: Dispatcher[]) {
+	tuple(dispatchers: [...Dispatcher[]]) {
 		return function (this: Decoder, constructor = Array): [...any] {
 			const tuple = new constructor()
 			for (let i = 0; i < dispatchers.length; i++) {
@@ -272,8 +272,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	map(
-		keyDispatcher: Dispatcher = this.unknown,
-		valueDispatcher: Dispatcher = this.unknown,
+		[keyDispatcher, valueDispatcher]: [Dispatcher, Dispatcher],
 		properties: DispatcherRecord = {}
 	) {
 		return function (this: Decoder, constructor = Map) {
@@ -335,7 +334,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 				const length = this.positiveInteger()
 				const dispatchers: Dispatcher[] = []
 				for (let i = 0; i < length; i++) dispatchers[i] = this.schema()
-				return this.tuple.apply(this, dispatchers)
+				return this.tuple(dispatchers)
 			}
 
 			default: {
@@ -354,7 +353,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 						dispatcher = this.set(this.schema(), this.schemaProperties())
 						break
 					case Byte.map:
-						dispatcher = this.map(this.schema(), this.schema(), this.schemaProperties())
+						dispatcher = this.map([this.schema(), this.schema()], this.schemaProperties())
 						break
 					default:
 						throw this.error(`Unknown byte`)

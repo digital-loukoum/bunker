@@ -110,12 +110,12 @@ set(Type, { [key: string]: Type }): Type
 A map is a list of typed `[key, value]` pairs.
 
 ```ts
-map(KeyType, ValueType): Type
+map([KeyType, ValueType]): Type
 ```
 
 Since a map is also an object, it can have its own properties:
 ```ts
-map(KeyType, ValueType, { [key: string]: Type }): Type
+map([KeyType, ValueType], { [key: string]: Type }): Type
 ```
 
 ###  Composed values
@@ -131,7 +131,7 @@ nullable(type: Type): Type
 #### tuple
 A tuple is a finite list of types. A tuple is not considered an object and so is not memorized.
 ```ts
-tuple(Type[]): Type
+tuple([Type1, Type2, ...]): Type
 ```
 
 #### instance
