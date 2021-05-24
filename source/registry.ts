@@ -1,6 +1,6 @@
 import { Dispatcher as Schema } from "./encode/Encoder"
 import { Dispatcher as DecoderDispatcher } from "./decode/Decoder"
-import { encoderToDecoder } from "./compile"
+import encoderToDecoder from "./encoderToDecoder"
 
 export type InstanceConstructor<T = any> = new (...args: any[]) => T
 
