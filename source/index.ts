@@ -52,6 +52,7 @@ export const {
 	any,
 	nullable,
 	tuple,
+	instance,
 	object,
 	array,
 	set,
@@ -70,6 +71,7 @@ bunker.date = date
 bunker.any = any
 bunker.nullable = nullable
 bunker.tuple = tuple
+bunker.instance = map
 bunker.object = object
 bunker.array = array
 bunker.set = set
