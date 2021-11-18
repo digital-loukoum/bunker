@@ -7,6 +7,9 @@
 	"files": [
 		"library/**/*"
 	],
+	"exports": {
+		"./": "./library"
+	},
 	"scripts": {
 		"check": "tsc --noEmit",
 		"test": "esrun test",
