@@ -5,6 +5,7 @@ import augment, { Augmented, isAugmented } from "../augment"
 import DataBuffer from "../DataBuffer"
 import schemaOf, { DispatcherWithMemory, hasMemory } from "../schemaOf"
 import registry from "../registry"
+import { big0, big128, big64 } from "../bigIntegers"
 
 export type Dispatcher<Type = any> = (value: Type) => void
 export type DispatcherRecord<Type = any> = Record<string, Dispatcher<Type>>
@@ -115,17 +116,17 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 
 	bigInteger(value: bigint) {
 		let sign = 0
-		if (value < 0n) {
+		if (value < big0) {
 			sign = 128
 			value = -value
 		}
-		let nextValue = value / 64n
-		this.byte(sign + (nextValue ? 64 : 0) + Number(value % 64n))
+		let nextValue = value / big64
+		this.byte(sign + (nextValue ? 64 : 0) + Number(value % big64))
 		if (nextValue) {
 			value = nextValue
 			do {
-				nextValue = value / 128n
-				this.byte((nextValue ? 128 : 0) + Number(value % 128n))
+				nextValue = value / big128
+				this.byte((nextValue ? 128 : 0) + Number(value % big128))
 				value = nextValue
 			} while (value)
 		}
@@ -226,9 +227,9 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 		)
 	}
 
-	tuple<Tuple extends [...unknown[]]>(
-		dispatchers: { [Index in keyof Tuple]: Dispatcher<Tuple[Index]> }
-	) {
+	tuple<Tuple extends [...unknown[]]>(dispatchers: {
+		[Index in keyof Tuple]: Dispatcher<Tuple[Index]>
+	}) {
 		return augment(
 			function (this: Encoder, value: Tuple) {
 				for (let i = 0; i < dispatchers.length; i++) dispatchers[i].call(this, value[i])

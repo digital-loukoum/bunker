@@ -3,6 +3,7 @@ import Memory, { SchemaMemory } from "../Memory"
 import Byte from "../Byte"
 import DataBuffer from "../DataBuffer"
 import registry from "../registry"
+import { big1, big128, big64 } from "../bigIntegers"
 
 export type Dispatcher = (_?: any) => any
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -119,20 +120,20 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	bigInteger() {
-		let sign = 1n
+		let sign = big1
 		let bigint = BigInt(this.byte())
-		if (bigint & 128n) {
-			sign = -1n
-			bigint %= 128n
+		if (bigint & big128) {
+			sign = -big1
+			bigint %= big128
 		}
-		if (bigint & 64n) {
-			let base = 64n
+		if (bigint & big64) {
+			let base = big64
 			let byte: number
-			bigint %= 64n
+			bigint %= big64
 			do {
 				byte = this.byte()
 				bigint += base * BigInt(byte % 128)
-				base *= 128n
+				base *= big128
 			} while (byte & 128)
 		}
 		return sign * bigint
