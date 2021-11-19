@@ -1,6 +1,6 @@
 {
 	"name": "@digitak/bunker",
-	"version": "3.0.8",
+	"version": "3.0.9",
 	"description": "A fast and compact JSON alternative to store and share data",
 	"type": "module",
 	"main": "library/index.js",
@@ -8,7 +8,7 @@
 		"library/**/*"
 	],
 	"exports": {
-		"./": "./library"
+		"./io": "./library/io.js"
 	},
 	"scripts": {
 		"check": "tsc --noEmit",
