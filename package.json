@@ -9,12 +9,15 @@
 	],
 	"exports": {
 		".": "./library/index.js",
+		"./*": "./library/*",
+		"./library/*": "./library/*",
 		"./io": "./library/io.js"
 	},
 	"scripts": {
 		"check": "tsc --noEmit",
 		"test": "esrun test",
-		"build": "esrun scripts/build"
+		"build": "esrun scripts/build",
+		"deploy": "yarn build && yarn test && yarn publish"
 	},
 	"repository": {
 		"type": "git",
@@ -36,7 +39,8 @@
 	},
 	"homepage": "https://github.com/digital-loukoum/bunker#readme",
 	"devDependencies": {
-		"@digitak/esrun": "^1.0.6",
+		"@digitak/esrun": "^3.0.2",
+		"@digitak/tsc-esm": "^2.0.4",
 		"@msgpack/msgpack": "^2.3.0",
 		"@types/node": "^14.14.35",
 		"benchtable": "^0.1.0",
@@ -49,7 +53,5 @@
 		"ts-node": "^9.1.1",
 		"typescript": "^4.2.3"
 	},
-	"dependencies": {
-		"@digitak/tsc-esm": "^1.0.3"
-	}
+	"dependencies": {}
 }
