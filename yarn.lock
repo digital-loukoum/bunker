@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@digitak/esrun@^3.0.2":
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/@digitak/esrun/-/esrun-3.0.2.tgz#25a9e0692901eff682d8e7cd2e67bab9a88c929c"
-  integrity sha512-0lpWgpfJOgSYMVm6wBsLg+tSJmpHvYA4d7Ibu/zy8qeHyDHc/rpKGHi5E4zbzygy6JlOgUp0JEaDTcWwujFaYw==
+"@digitak/esrun@^3.0.3":
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/@digitak/esrun/-/esrun-3.0.3.tgz#a06e029619d4b62d31cebf8515ec12ff98f7dc24"
+  integrity sha512-9y5P3ENRALoeJezuoPYU9EAGnqMwXLhpRlY1hdHnZoC9go5Zmx4zIetFBOzbf9FMqselUUDJfURgVfmQ4DlbAA==
   dependencies:
     "@digitak/grubber" "^2.0.4"
     "@digitak/tsc-esm" "^2.0.3"
