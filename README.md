@@ -82,7 +82,7 @@ console.log(decoded.foo)  // print "12"
 
 ### Reading and writing files with bunker
 
-Bunker also exports two functions in `@digitak/bunker/library/io` to easily encode to a file or decode from a file:
+Bunker also exports two functions in `@digitak/bunker/io` to easily encode to a file or decode from a file:
 
 ```ts
 async function bunkerFile(file: string, value: any, schema?: Schema): void
@@ -94,7 +94,7 @@ These two functions scale well: you can load huge files without affecting your m
 #### Basic example
 
 ```ts
-import { bunkerFile, debunkerFile } from '@digitak/bunker/library/io'
+import { bunkerFile, debunkerFile } from '@digitak/bunker/io'
 
 const myObject = {
    foo: 12,
