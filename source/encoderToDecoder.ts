@@ -1,12 +1,12 @@
 import Encoder, {
 	Dispatcher as Schema,
 	DispatcherRecord as EncoderDispatcherRecord,
-} from "./encode/Encoder"
+} from "./encode/Encoder.js"
 import Decoder, {
 	Dispatcher as DecoderDispatcher,
 	DispatcherRecord as DecoderDispatcherRecord,
-} from "./decode/Decoder"
-import { isAugmented } from "./augment"
+} from "./decode/Decoder.js"
+import { isAugmented } from "./augment.js"
 
 /**
  * Transform a EncoderDispatcher into a DecoderDispatcher

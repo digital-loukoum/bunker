@@ -1,5 +1,5 @@
-import Encoder from "./Encoder"
-import DataBuffer from "../DataBuffer"
+import Encoder from "./Encoder.js"
+import DataBuffer from "../DataBuffer.js"
 
 export default class BufferEncoder extends Encoder {
 	onCapacityFull(demandedSize: number) {

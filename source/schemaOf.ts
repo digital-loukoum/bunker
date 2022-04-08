@@ -1,7 +1,7 @@
-import { SchemaMemory } from "./Memory"
-import Encoder, { Dispatcher, DispatcherRecord } from "./encode/Encoder"
-import { isAugmented } from "./augment"
-import registry from "./registry"
+import { SchemaMemory } from "./Memory.js"
+import Encoder, { Dispatcher, DispatcherRecord } from "./encode/Encoder.js"
+import { isAugmented } from "./augment.js"
+import registry from "./registry.js"
 
 export class DispatcherWithMemory<Type = any> {
 	constructor(

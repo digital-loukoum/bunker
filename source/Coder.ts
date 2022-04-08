@@ -1,4 +1,4 @@
-import Memory from "./Memory"
+import Memory from "./Memory.js"
 
 /**
  * Base interface used by Encoder and Decoder

@@ -1,10 +1,10 @@
-import Memory from "./Memory"
-import { Dispatcher as Schema } from "./encode/Encoder"
-import Decoder, { Dispatcher as DecoderDispatcher } from "./decode/Decoder"
-import encoderToDecoder from "./encoderToDecoder"
-import BufferEncoder from "./encode/BufferEncoder"
-import BufferDecoder from "./decode/BufferDecoder"
-import { hasMemory, DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
+import Memory from "./Memory.js"
+import { Dispatcher as Schema } from "./encode/Encoder.js"
+import Decoder, { Dispatcher as DecoderDispatcher } from "./decode/Decoder.js"
+import encoderToDecoder from "./encoderToDecoder.js"
+import BufferEncoder from "./encode/BufferEncoder.js"
+import BufferDecoder from "./decode/BufferDecoder.js"
+import { hasMemory, DispatcherWithMemory as SchemaWithMemory } from "./schemaOf.js"
 
 export default function compile<Type>(schema: Schema<Type> | SchemaWithMemory<Type>) {
 	const schemaEncoder = new BufferEncoder()

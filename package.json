@@ -1,20 +1,15 @@
 {
 	"name": "@digitak/bunker",
-	"version": "3.2.1",
+	"version": "3.3.0",
 	"description": "A fast and compact JSON alternative to store and share data",
 	"type": "module",
-	"main": "library/index.js",
-	"files": [
-		"library/**/*"
-	],
+	"main": "./index.js",
 	"exports": {
-		".": "./library/index.js",
-		"./library/*": "./library/*.js",
-		"./io": "./library/io.js",
-		"./*": "./library/*.js"
+		".": "./index.js",
+		"./*": "./*.js"
 	},
 	"scripts": {
-		"check": "tsc --noEmit",
+		"check": "tsc --noEmit --watch",
 		"test": "esrun test",
 		"build": "esrun scripts/build",
 		"deploy": "yarn build && yarn test && yarn publish"
@@ -40,7 +35,7 @@
 	"homepage": "https://github.com/digital-loukoum/bunker#readme",
 	"devDependencies": {
 		"@digitak/esrun": "^3.1.0",
-		"@digitak/tsc-esm": "^3.0.1",
+		"@digitak/print": "^1.1.4",
 		"@msgpack/msgpack": "^2.3.0",
 		"@types/node": "^14.14.35",
 		"benchtable": "^0.1.0",
@@ -51,7 +46,6 @@
 		"notepack.io": "^2.3.0",
 		"pako": "^2.0.3",
 		"ts-node": "^9.1.1",
-		"typescript": "^4.2.3"
-	},
-	"dependencies": {}
+		"typescript": "^4.7.0-dev.20220408"
+	}
 }

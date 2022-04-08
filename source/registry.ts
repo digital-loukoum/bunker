@@ -1,6 +1,6 @@
-import { Dispatcher as Schema } from "./encode/Encoder"
-import { Dispatcher as DecoderDispatcher } from "./decode/Decoder"
-import encoderToDecoder from "./encoderToDecoder"
+import { Dispatcher as Schema } from "./encode/Encoder.js"
+import { Dispatcher as DecoderDispatcher } from "./decode/Decoder.js"
+import encoderToDecoder from "./encoderToDecoder.js"
 
 export type InstanceConstructor<T = any> = new (...args: any[]) => T
 

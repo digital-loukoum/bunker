@@ -1,9 +1,9 @@
-import Coder from "../Coder"
-import Memory, { SchemaMemory } from "../Memory"
-import Byte from "../Byte"
-import DataBuffer from "../DataBuffer"
-import registry from "../registry"
-import { big1, big128, big64 } from "../bigIntegers"
+import Coder from "../Coder.js"
+import Memory, { SchemaMemory } from "../Memory.js"
+import Byte from "../Byte.js"
+import DataBuffer from "../DataBuffer.js"
+import registry from "../registry.js"
+import { big1, big128, big64 } from "../bigIntegers.js"
 
 export type Dispatcher = (_?: any) => any
 export type DispatcherRecord = Record<string, Dispatcher>

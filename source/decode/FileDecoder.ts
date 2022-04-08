@@ -1,5 +1,5 @@
 import { readSync, closeSync } from "fs"
-import ChunkDecoder from "./ChunkDecoder"
+import ChunkDecoder from "./ChunkDecoder.js"
 
 export default class FileDecoder extends ChunkDecoder {
 	offset = 0

@@ -1,7 +1,7 @@
 import { open } from "fs"
-import FileDecoder from "./decode/FileDecoder"
-import FileEncoder from "./encode/FileEncoder"
-import { Schema, SchemaWithMemory } from "./index"
+import FileDecoder from "./decode/FileDecoder.js"
+import FileEncoder from "./encode/FileEncoder.js"
+import { Schema, SchemaWithMemory } from "./index.js"
 
 export async function bunkerFile(
 	fileName: string,

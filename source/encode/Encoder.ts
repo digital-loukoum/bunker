@@ -1,11 +1,11 @@
-import Coder from "../Coder"
-import Memory from "../Memory"
-import Byte from "../Byte"
-import augment, { Augmented, isAugmented } from "../augment"
-import DataBuffer from "../DataBuffer"
-import schemaOf, { DispatcherWithMemory, hasMemory } from "../schemaOf"
-import registry from "../registry"
-import { big0, big128, big64 } from "../bigIntegers"
+import Coder from "../Coder.js"
+import Memory from "../Memory.js"
+import Byte from "../Byte.js"
+import augment, { Augmented, isAugmented } from "../augment.js"
+import DataBuffer from "../DataBuffer.js"
+import schemaOf, { DispatcherWithMemory, hasMemory } from "../schemaOf.js"
+import registry from "../registry.js"
+import { big0, big128, big64 } from "../bigIntegers.js"
 
 export type Dispatcher<Type = any> = (value: Type) => void
 export type DispatcherRecord<Type = any> = Record<string, Dispatcher<Type>>

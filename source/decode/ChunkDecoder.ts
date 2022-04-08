@@ -1,5 +1,5 @@
-import Decoder from "./Decoder"
-import DataBuffer from "../DataBuffer"
+import Decoder from "./Decoder.js"
+import DataBuffer from "../DataBuffer.js"
 
 /**
  * An abstract class to help decoding data by chunks.

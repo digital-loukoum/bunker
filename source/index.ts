@@ -1,10 +1,11 @@
-import compile from "./compile"
-import Encoder, { Dispatcher as Schema } from "./encode/Encoder"
-import schemaOf, { DispatcherWithMemory as SchemaWithMemory } from "./schemaOf"
-import registry, { InstanceConstructor } from "./registry"
+import compile from "./compile.js"
+import Encoder, { Dispatcher as Schema } from "./encode/Encoder.js"
+import schemaOf, { DispatcherWithMemory as SchemaWithMemory } from "./schemaOf.js"
+import registry, { InstanceConstructor } from "./registry.js"
+import BufferEncoder from "./encode/BufferEncoder.js"
+import BufferDecoder from "./decode/BufferDecoder.js"
+
 export { schemaOf, Schema, SchemaWithMemory, compile, registry }
-import BufferEncoder from "./encode/BufferEncoder"
-import BufferDecoder from "./decode/BufferDecoder"
 
 export function bunker(
 	value: any,

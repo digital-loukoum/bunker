@@ -1,6 +1,6 @@
-import Encoder, { Dispatcher } from "./Encoder"
 import { writeSync, closeSync } from "fs"
-import { DispatcherWithMemory } from "../schemaOf"
+import Encoder, { Dispatcher } from "./Encoder.js"
+import { DispatcherWithMemory } from "../schemaOf.js"
 
 export default class FileEncoder extends Encoder {
 	constructor(public fileDescriptor: number, chunkSize?: number) {
