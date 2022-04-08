@@ -11,8 +11,8 @@ import {
 	any,
 	tuple,
 	object,
-} from "../library/index"
-import { bunkerFile, debunkerFile } from "../library/io"
+} from "../package/index.js"
+import { bunkerFile, debunkerFile } from "../package/io.js"
 import { existsSync, mkdirSync, readFileSync } from "fs"
 
 start(`Bunker i/o `, async function ({ stage, same }) {
@@ -250,7 +250,7 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 			{
 				const value = [new Zabu(), new Zabu("Coco")]
 				const buffer = bunker(value)
-				const result = debunker(buffer)
+				const result: any = debunker(buffer)
 				same(value, result, "Basic instance test: same values")
 				same(value[0].zabu(), result[0].zabu(), "Basic instance test: same prototype [0]")
 				same(value[1].zabu(), result[1].zabu(), "Basic instance test: same prototype [1]")
@@ -260,7 +260,7 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 				const value = [new NamedArray(), new NamedArray("Coco")]
 				value[0].push(4, 6, 2)
 				const buffer = bunker(value)
-				const result = debunker(buffer)
+				const result: any = debunker(buffer)
 				same(value, result, "Basic instance test: same values")
 				same(
 					value[0].getName(),
@@ -279,14 +279,14 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 				const zabu = new Zabu()
 				const value = [zabu, zabu]
 				const buffer = bunker(value)
-				const result = debunker(buffer)
+				const result: any = debunker(buffer)
 				test(result[0] === result[1], "References of instances work [object]")
 			}
 			{
 				const namedArray = new NamedArray()
 				const value = [namedArray, namedArray]
 				const buffer = bunker(value)
-				const result = debunker(buffer)
+				const result: any = debunker(buffer)
 				test(result[0] === result[1], "References of instances work [array]")
 			}
 
