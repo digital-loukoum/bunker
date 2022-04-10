@@ -11,8 +11,8 @@
 	"scripts": {
 		"check": "tsc --noEmit --watch",
 		"test": "esrun test",
-		"build": "esrun scripts/build",
-		"deploy": "yarn build && yarn test && yarn publish"
+		"build": "npm run test && esrun scripts/build",
+		"deploy": "npm run test && esrun scripts/deploy"
 	},
 	"repository": {
 		"type": "git",
