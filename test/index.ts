@@ -11,8 +11,8 @@ import {
 	any,
 	tuple,
 	object,
-} from "../package/index.js"
-import { bunkerFile, debunkerFile } from "../package/io.js"
+} from "../source"
+import { bunkerFile, debunkerFile } from "../source/io.js"
 import { existsSync, mkdirSync, readFileSync } from "fs"
 
 start(`Bunker i/o `, async function ({ stage, same }) {
