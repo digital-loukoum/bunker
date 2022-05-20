@@ -118,6 +118,37 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 			same(value, result, name)
 		}
 
+		stage("Binary")
+		for (const [name, value] of Object.entries({
+			emptyUint8array: new Uint8Array(),
+			uint8array: Uint8Array.of(0, 1, 2),
+			uint8ClampedArray: Uint8ClampedArray.of(0, 1, 2),
+			uint16array: Uint16Array.of(0, 1, 2),
+			uint32array: Uint32Array.of(0, 1, 2),
+			int8array: Int8Array.of(0, 1, 2),
+			int16array: Int16Array.of(0, 1, 2),
+			int32array: Int32Array.of(0, 1, 2),
+			float32array: Float32Array.of(0, 1, 2),
+			float64array: Float64Array.of(0, 1, 2),
+			bigInt64array: BigInt64Array.of(BigInt(0), BigInt(1)),
+			bigUint64array: BigUint64Array.of(BigInt(0), BigInt(1)),
+			arrayBuffer: new ArrayBuffer(4),
+			dataView: new DataView(new ArrayBuffer(4)),
+		})) {
+			const buffer = bunker(value)
+			const result = debunker(buffer)
+			same(value.constructor, (result as any).constructor, name)
+			same(value, result, name)
+		}
+		{
+			const name = "Buffer"
+			const value = Buffer.from("foo")
+			const buffer = bunker(value)
+			const result = debunker(buffer)
+			same(Uint8Array, (result as any).constructor, name)
+			same(new Uint8Array(value), result, name)
+		}
+
 		stage("Objects")
 		for (const [name, value] of Object.entries({
 			"Standard object": { x: 12, y: 121 },

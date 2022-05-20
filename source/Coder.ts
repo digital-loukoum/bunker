@@ -9,6 +9,19 @@ type Coder<Dispatcher extends Function> = {
 	unknown: Dispatcher
 	character: Dispatcher
 	binary: Dispatcher
+	uint8Array: Dispatcher
+	uint16Array: Dispatcher
+	uint32Array: Dispatcher
+	uint8ClampedArray: Dispatcher
+	int8Array: Dispatcher
+	int16Array: Dispatcher
+	int32Array: Dispatcher
+	float32Array: Dispatcher
+	float64Array: Dispatcher
+	bigInt64Array: Dispatcher
+	bigUint64Array: Dispatcher
+	arrayBuffer: Dispatcher
+	dataView: Dispatcher
 	boolean: Dispatcher
 	integer: Dispatcher
 	positiveInteger: Dispatcher

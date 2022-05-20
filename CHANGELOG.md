@@ -1,3 +1,6 @@
+## 3.3.5
+- Add native support for typed arrays
+
 ## 3.3.4
 - Fix deploy script
 

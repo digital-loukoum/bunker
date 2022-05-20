@@ -9,7 +9,8 @@
 		"./*": "./*.js"
 	},
 	"scripts": {
-		"check": "tsc --noEmit --watch",
+		"dev": "esrun --watch test",
+		"check": "tsc --noEmit",
 		"test": "esrun test",
 		"build": "npm run test && esrun scripts/build",
 		"deploy": "npm run test && esrun scripts/deploy"

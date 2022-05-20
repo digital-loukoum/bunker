@@ -64,7 +64,50 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	binary(): Uint8Array {
 		if (this.nextByteIs(Byte.reference)) return this.reference() as Uint8Array
 		const length = this.integer()
-		return this.bytes(length)
+		const bytes = this.bytes(length)
+		return new Uint8Array(bytes)
+	}
+
+	uint8Array(): Uint8Array {
+		return this.binary()
+	}
+	uint16Array(): Uint16Array {
+		return new Uint16Array(this.binary())
+	}
+	uint32Array(): Uint32Array {
+		return new Uint32Array(this.binary())
+	}
+	uint8ClampedArray(): Uint8ClampedArray {
+		return new Uint8ClampedArray(this.binary())
+	}
+	int8Array(): Int8Array {
+		return new Int8Array(this.binary())
+	}
+	int16Array(): Int16Array {
+		return new Int16Array(this.binary())
+	}
+	int32Array(): Int32Array {
+		return new Int32Array(this.binary())
+	}
+	float32Array(): Float32Array {
+		return new Float32Array(this.binary())
+	}
+	float64Array(): Float64Array {
+		return new Float64Array(this.binary())
+	}
+	bigInt64Array(): BigInt64Array {
+		return new BigInt64Array(this.binary().buffer)
+	}
+	bigUint64Array(): BigUint64Array {
+		return new BigUint64Array(this.binary().buffer)
+	}
+
+	arrayBuffer(): ArrayBuffer {
+		return this.binary().buffer
+	}
+
+	dataView(): DataView {
+		return new DataView(this.binary().buffer)
 	}
 
 	boolean() {
@@ -303,6 +346,32 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 				return this.character
 			case Byte.binary:
 				return this.binary
+			case Byte.uint8Array:
+				return this.uint8Array
+			case Byte.uint16Array:
+				return this.uint16Array
+			case Byte.uint32Array:
+				return this.uint32Array
+			case Byte.uint8ClampedArray:
+				return this.uint8ClampedArray
+			case Byte.int8Array:
+				return this.int8Array
+			case Byte.int16Array:
+				return this.int16Array
+			case Byte.int32Array:
+				return this.int32Array
+			case Byte.float32Array:
+				return this.float32Array
+			case Byte.float64Array:
+				return this.float64Array
+			case Byte.bigInt64Array:
+				return this.bigInt64Array
+			case Byte.bigUint64Array:
+				return this.bigUint64Array
+			case Byte.arrayBuffer:
+				return this.arrayBuffer
+			case Byte.dataView:
+				return this.dataView
 			case Byte.integer:
 				return this.integer
 			case Byte.positiveInteger:

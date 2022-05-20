@@ -53,6 +53,20 @@ class SchemaGuesser {
 				if (entry) return Encoder.prototype.instance(entry.name)
 				if (value instanceof Date) return Encoder.prototype.date
 				if (value instanceof RegExp) return Encoder.prototype.regularExpression
+				if (value instanceof Uint8ClampedArray) return Encoder.prototype.uint8ClampedArray
+				if (value instanceof Uint8Array) return Encoder.prototype.uint8Array
+				if (value instanceof Uint16Array) return Encoder.prototype.uint16Array
+				if (value instanceof Uint32Array) return Encoder.prototype.uint32Array
+				if (value instanceof Int8Array) return Encoder.prototype.int8Array
+				if (value instanceof Int16Array) return Encoder.prototype.int16Array
+				if (value instanceof Int32Array) return Encoder.prototype.int32Array
+				if (value instanceof Float32Array) return Encoder.prototype.float32Array
+				if (value instanceof Float64Array) return Encoder.prototype.float64Array
+				if (value instanceof BigInt64Array) return Encoder.prototype.bigInt64Array
+				if (value instanceof BigUint64Array) return Encoder.prototype.bigUint64Array
+
+				if (value instanceof DataView) return Encoder.prototype.dataView
+				if (value instanceof ArrayBuffer) return Encoder.prototype.arrayBuffer
 
 				// new object
 				let index = this.memory.objects.indexOf(value)
