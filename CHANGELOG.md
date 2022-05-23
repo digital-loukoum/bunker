@@ -1,3 +1,6 @@
+## 3.3.6
+- Remove memorizing typed arrays (could cause bugs)
+
 ## 3.3.5
 - Add native support for typed arrays
 
