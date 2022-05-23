@@ -62,7 +62,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 	}
 
 	binary(): Uint8Array {
-		if (this.nextByteIs(Byte.reference)) return this.reference() as Uint8Array
+		// if (this.nextByteIs(Byte.reference)) return this.reference() as Uint8Array
 		const length = this.integer()
 		const bytes = this.bytes(length)
 		return new Uint8Array(bytes)

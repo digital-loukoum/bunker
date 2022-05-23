@@ -64,7 +64,6 @@ class SchemaGuesser {
 				if (value instanceof Float64Array) return Encoder.prototype.float64Array
 				if (value instanceof BigInt64Array) return Encoder.prototype.bigInt64Array
 				if (value instanceof BigUint64Array) return Encoder.prototype.bigUint64Array
-
 				if (value instanceof DataView) return Encoder.prototype.dataView
 				if (value instanceof ArrayBuffer) return Encoder.prototype.arrayBuffer
 

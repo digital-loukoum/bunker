@@ -1,5 +1,6 @@
 import start from "fartest"
 import sample from "./sample"
+import sample2 from "./sample2"
 import samples from "../samples"
 import {
 	bunker,
@@ -44,6 +45,12 @@ start(`Bunker`, function Bunker({ stage, same, test }) {
 		{
 			const data = bunker(sample)
 			same(sample, debunker(data), "Sample")
+		}
+
+		stage("Sample 2")
+		{
+			const data = bunker(sample2)
+			same(sample2, debunker(data), "Sample 2")
 		}
 
 		stage("Random samples")

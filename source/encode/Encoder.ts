@@ -86,7 +86,7 @@ export default abstract class Encoder implements Coder<Dispatcher> {
 	}
 
 	binary(value: Uint8Array) {
-		if (this.inMemory(value)) return
+		// if (this.inMemory(value)) return
 		this.integer(value.byteLength)
 		this.bytes(value)
 	}
