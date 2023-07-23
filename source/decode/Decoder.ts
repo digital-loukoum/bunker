@@ -4,6 +4,7 @@ import Byte from "../Byte.js"
 import DataBuffer from "../DataBuffer.js"
 import registry from "../registry.js"
 import { big1, big128, big64 } from "../bigIntegers.js"
+import { stringFromCharCode } from "../stringFromCharCode.js"
 
 export type Dispatcher = (_?: any) => any
 export type DispatcherRecord = Record<string, Dispatcher>
@@ -222,7 +223,7 @@ export default abstract class Decoder implements Coder<Dispatcher> {
 			}
 		}
 
-		const decoded = String.fromCharCode.apply(null, characters)
+		const decoded = stringFromCharCode(characters)
 		if (decoded.length > 1) this.memory.strings.push(decoded)
 		return decoded
 	}

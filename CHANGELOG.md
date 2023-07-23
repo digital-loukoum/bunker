@@ -1,3 +1,6 @@
+## 3.3.7
+- Handle strings larger than 125434 characters
+
 ## 3.3.6
 - Remove memorizing typed arrays (could cause bugs)
 
