@@ -7,6 +7,8 @@ import BufferDecoder from "./decode/BufferDecoder.js"
 
 export { schemaOf, Schema, SchemaWithMemory, compile, registry }
 
+export type { SchemaToType } from "./SchemaToType.js"
+
 export function bunker(
 	value: any,
 	schema?: Schema | SchemaWithMemory,
