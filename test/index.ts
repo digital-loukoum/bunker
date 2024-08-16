@@ -12,6 +12,7 @@ import {
 	any,
 	tuple,
 	object,
+	debunkerMany,
 } from "../source"
 import { bunkerFile, debunkerFile } from "../source/io.js"
 import { existsSync, mkdirSync, readFileSync } from "fs"
@@ -377,5 +378,41 @@ start(`Precompiled`, function BunkerCompile({ stage, same }) {
 			const decoded = decodeNaked(data)
 			same(value, decoded)
 		}
+	}
+})
+
+start(`Debunker many`, ({ stage, same }) => {
+	stage("1 value")
+	{
+		const data = bunker(sample)
+		const decoded = debunkerMany(data)
+		same(sample, decoded[0])
+	}
+
+	stage("2 same values")
+	{
+		const data = Buffer.concat([bunker(sample), bunker(sample)])
+		const decoded = debunkerMany(data)
+		same(decoded.length, 2)
+		same(sample, decoded[0])
+		same(sample, decoded[1])
+	}
+
+	stage("5 different values")
+	{
+		const data = Buffer.concat([
+			bunker(sample),
+			bunker(sample2),
+			bunker(12),
+			bunker(true),
+			bunker({ toto: null }),
+		])
+		const decoded = debunkerMany(data)
+		same(decoded.length, 5)
+		same(decoded[0], sample)
+		same(decoded[1], sample2)
+		same(decoded[2], 12)
+		same(decoded[3], true)
+		same(decoded[4], { toto: null })
 	}
 })

@@ -1,3 +1,6 @@
+## 3.3.9
+- Add debunkerMany function--notabley to handle streaming data
+
 ## 3.3.8
 - Add SchemaToType utility function
 

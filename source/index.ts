@@ -18,8 +18,25 @@ export function bunker(
 	return encoder.encode(value, schema)
 }
 
+/**
+ * Decode a single values encoded into an Uint8Array
+ */
 export function debunker(data: Uint8Array): unknown {
 	return new BufferDecoder(data).decode()
+}
+
+/**
+ * Decode many values sequenced into a single Uint8Array
+ */
+export function debunkerMany(data: Uint8Array): unknown[] {
+	const result: unknown[] = []
+	let cursor = 0
+	do {
+		const decoder = new BufferDecoder(data, cursor)
+		result.push(decoder.any())
+		cursor = decoder.cursor
+	} while (cursor < data.length)
+	return result
 }
 
 export function register(
