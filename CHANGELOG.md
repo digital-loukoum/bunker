@@ -1,3 +1,6 @@
+## 3.3.8
+- Add SchemaToType utility function
+
 ## 3.3.7
 - Handle strings larger than 125434 characters
 

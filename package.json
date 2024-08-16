@@ -35,7 +35,7 @@
 	},
 	"homepage": "https://github.com/digital-loukoum/bunker#readme",
 	"devDependencies": {
-		"@digitak/esrun": "^3.1.0",
+		"@digitak/esrun": "^3.2.26",
 		"@digitak/print": "^1.1.4",
 		"@msgpack/msgpack": "^2.3.0",
 		"@types/node": "^14.14.35",
