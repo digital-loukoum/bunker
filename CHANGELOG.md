@@ -1,5 +1,8 @@
+## 3.3.10
+- Make `stringFromCharCode` resilient to any size of char codes
+
 ## 3.3.9
-- Add debunkerMany function--notabley to handle streaming data
+- Add debunkerMany function, notably to handle streaming data
 
 ## 3.3.8
 - Add SchemaToType utility function
